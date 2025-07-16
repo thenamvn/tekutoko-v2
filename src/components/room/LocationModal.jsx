@@ -262,7 +262,7 @@ const LocationModal = ({
 
   // Hàm đóng modal và reset state
   const handleClose = () => {
-    console.log('handleClose called');
+    // console.log('handleClose called');
     setCurrentLocation(null);
     setManualLocation('');
     setLocationError('');

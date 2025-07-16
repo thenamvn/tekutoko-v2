@@ -56,7 +56,7 @@ const QuizRoom = () => {
   // --- Mock Data Fetching ---
   useEffect(() => {
     let currentUsername = getUsernameFromToken();
-    console.log("Current Username:", currentUsername);
+    // console.log("Current Username:", currentUsername);
     if (!isTokenValid()) {
       currentUsername = null;
     }
