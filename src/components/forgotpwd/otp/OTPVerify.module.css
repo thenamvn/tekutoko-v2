@@ -1,0 +1,103 @@
+.verificationContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f5f5f5;
+}
+
+.verificationBox {
+    background-color: white;
+    padding: 40px;
+    border-radius: 16px;
+    max-width: 30rem;
+    text-align: center;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+    font-size: 1.7rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.header p {
+    font-size: 1rem;
+    color: #6b7280;
+}
+
+.otpInputs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.otpInput {
+    width: 56px;
+    height: 56px;
+    text-align: center;
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #1f2937;
+    background-color: #f3f4f6;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 16px;
+    outline: none;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.otpInput:hover {
+    border-color: #d1d5db;
+}
+
+.otpInput:focus {
+    background-color: white;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.submitButtonContainer {
+    max-width: 260px;
+    margin: 0 auto 16px;
+}
+
+.submitButton {
+    width: 100%;
+    background-color: #6366f1;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    box-shadow: 0px 4px 6px rgba(99, 102, 241, 0.1);
+    cursor: pointer;
+    transition: background-color 0.15s;
+    border: none;
+    outline: none;
+}
+
+.submitButton:hover {
+    background-color: #4f46e5;
+}
+
+.submitButton:focus {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+.resend {
+    font-size: 1rem;
+    color: #6b7280;
+}
+
+.resend a {
+    color: #6366f1;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.resend a:hover {
+    color: #4f46e5;
+}

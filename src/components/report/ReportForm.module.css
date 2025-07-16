@@ -1,0 +1,31 @@
+.reportFormContainer {
+    padding: 1rem;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%; /* Giới hạn chiều rộng tối đa */
+    margin: auto; /* Căn giữa form */
+}
+
+.reportFormContainer h2 {
+    margin-bottom: 1rem; /* Khoảng cách dưới tiêu đề */
+    font-size: 1.75rem; /* Kích thước chữ tiêu đề */
+    text-align: center; /* Căn giữa tiêu đề */
+}
+
+.select {
+    width: 100%; /* Chiều rộng 100% */
+    margin-bottom: 10px; /* Khoảng cách dưới select */
+}
+  
+.textField {
+    width: 100%; /* Chiều rộng 100% */
+    margin-bottom: 10px; /* Khoảng cách dưới text field */
+    scrollbar-width: thin;
+}
+  
+.reportFormContainer button {
+    margin-top: 10px; /* Khoảng cách trên nút */
+    width: 100%; /* Chiều rộng 100% */
+}

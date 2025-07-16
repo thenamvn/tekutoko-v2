@@ -1,0 +1,633 @@
+{
+    "accountPage": {
+        "accountInformation": "アカウント情報",
+        "email": "メール",
+        "fullName": "氏名",
+        "update": "更新",
+        "changePassword": "パスワードを変更",
+        "newPassword": "新しいパスワード",
+        "confirmPassword": "パスワードを確認",
+        "passwordsDoNotMatch": "パスワードが一致しません！",
+        "accountProfile": "アカウントプロフィール",
+        "linkProfile": "プロフィールをリンク",
+        "createProfile": "プロフィールを作成",
+        "modifyProfile": "プロフィールを修正",
+        "changeLanguage": "言語を変更",
+        "termsAndConditions": "利用規約",
+        "logout": "ログアウト",
+        "accountDeleted": "アカウントが正常に削除されました。"
+    },
+    "room": {
+        "Completed": "完了",
+        "howToPlay": "遊び方（ルール）",
+        "howToPlayDefault": "遊ぶには、答えたい質問をクリックするだけです。どの順番でも答えることができます。頑張って！",
+        "rewards": "利用可能な報酬",
+        "rewardDescription": "すべての質問に正しく答えて報酬を獲得しよう！",
+        "viewRewards": "報酬を見る",
+        "questions": "質問リスト",
+        "userSubmissions": "ユーザーの提出物",
+        "scanQRCode": "QRコードをスキャンしてルームに参加",
+        "shareThisQuiz": "このクイズをシェア",
+        "copyLink": "リンクをコピー",
+        "copiedToClipboard": "クリップボードにコピーしました！",
+        "qrCode": "QRコード",
+        "deleteRoom": "ルームを削除"
+    },
+    "setupRoom": {
+        "title": "新しいクイズルームを作成",
+        "roomInformation": "ルーム情報",
+        "roomTitle": "ルームタイトル",
+        "roomTitlePlaceholder": "例：日本語漢字チャレンジ",
+        "description": "説明",
+        "descriptionPlaceholder": "ゲームプレイを説明してください",
+        "rules": "ルール",
+        "rulesPlaceholder": "ルールを説明してください",
+        "roomThumbnail": "ルームサムネイル",
+        "thumbnailUpload": "ファイルをアップロード",
+        "thumbnailRemove": "削除",
+        "thumbnailRecommendation": "推奨：JPG、PNG、GIF、WEBP。最大2MB。",
+        "noPreview": "プレビューなし",
+        "roomReward": "ルーム報酬（オプション）",
+        "rewardType": "報酬タイプ",
+        "expirationDate": "有効期限",
+        "discountVoucher": "割引バウチャー",
+        "ticketPrize": "チケット/景品",
+        "voucherName": "バウチャー名",
+        "voucherNamePlaceholder": "例：次回購入20%オフ",
+        "discountValue": "割引額",
+        "discountValuePlaceholder": "例：20%または$10",
+        "rewardDescription": "説明",
+        "rewardDescriptionPlaceholder": "利用規約",
+        "ticketName": "チケット名",
+        "ticketNamePlaceholder": "例：コンサートチケット",
+        "ticketDescription": "説明",
+        "ticketDescriptionPlaceholder": "チケット詳細",
+        "ticketImage": "チケット画像",
+        "uploadImage": "画像をアップロード",
+        "addedQuestions": "追加された質問",
+        "addNewQuestion": "新しい質問を追加",
+        "questionText": "質問文",
+        "questionTextPlaceholder": "質問を入力してください",
+        "questionType": "質問タイプ",
+        "textInput": "テキスト入力",
+        "multipleChoice": "選択肢",
+        "fileUpload": "ファイルアップロード",
+        "hint": "ヒント（オプション）",
+        "hintPlaceholder": "必要に応じてヒントを提供してください",
+        "primaryAnswer": "主要な正解",
+        "primaryAnswerPlaceholder": "主要な正解を入力してください",
+        "japaneseHint": "日本語の場合：ひらがな、カタカナ、漢字が使用できます",
+        "alternativeAnswers": "代替正解（オプション）",
+        "addAlternative": "+ 代替案を追加",
+        "removeAlternative": "✕",
+        "alternativeAnswerPlaceholder": "代替答案",
+        "alternativeHelp": "代替答案は以下に役立ちます：",
+        "alternativeHelpItems": [
+            "異なる日本語文字体系（ひらがな、カタカナ、漢字）",
+            "一般的なバリエーションや同義語",
+            "異なる受け入れ可能な形式"
+        ],
+        "options": "選択肢（正解をマークしてください）",
+        "optionPlaceholder": "選択肢",
+        "addOption": "+ 選択肢を追加",
+        "removeOption": "✕",
+        "uploadInfo": "ここでは答えは必要ありません。ユーザーはクイズ中にファイルをアップロードします。",
+        "explanation": "説明（オプション）",
+        "explanationPlaceholder": "正解を説明するか、追加情報を提供してください",
+        "addThisQuestion": "この質問をリストに追加",
+        "saveRoom": "ルーム設定全体を保存",
+        "saving": "保存中...",
+        "addAtLeastOne": "保存する前に少なくとも1つの質問を追加してください。",
+        "correctAnswers": "正解：",
+        "remove": "削除",
+        "selected": "選択済み：",
+        "processing": "画像処理中...",
+        "savingRoom": "ルーム保存中...",
+        "validation": {
+            "questionTextRequired": "質問文は空にできません。",
+            "correctAnswerRequired": "テキスト質問には少なくとも1つの正解を提供してください。",
+            "fillAdditionalAnswers": "すべての追加正解を入力するか、空のものを削除してください。",
+            "multipleChoiceMinOptions": "選択肢問題には少なくとも2つの選択肢が必要です。",
+            "fillAllOptions": "すべての選択肢のテキストを入力してください。",
+            "markCorrectOption": "選択肢問題の正解を1つマークしてください。",
+            "roomTitleRequired": "ルームタイトルは空にできません。",
+            "addAtLeastOneQuestion": "ルームに少なくとも1つの質問を追加してください。",
+            "setExpirationDate": "報酬の有効期限を設定してください。",
+            "expirationDatePast": "有効期限は過去の日付にできません。",
+            "enterDiscountName": "割引名を入力してください。",
+            "enterDiscountValue": "割引額を入力してください。",
+            "enterTicketName": "チケット名を入力してください。",
+            "uploadTicketImage": "チケット画像をアップロードしてください。"
+        },
+        "success": {
+            "roomCreated": "ルームが正常に作成されました！",
+            "roomAndRewardCreated": "ルームと報酬が正常に作成されました！",
+            "roomCreatedRewardFailed": "ルームは正常に作成されましたが、報酬の作成に失敗しました。後で報酬を追加できます。",
+            "roomCreatedImageFailed": "ルームは作成されましたが、チケット画像のアップロードに失敗しました。後で報酬を追加できます。"
+        },
+        "errors": {
+            "loginRequired": "ルームを作成するにはログインが必要です",
+            "failedToCreate": "ルームの作成に失敗しました",
+            "savingError": "保存中に不明なエラーが発生しました。",
+            "uploadError": "サムネイルのアップロードに失敗しました。もう一度お試しください。",
+            "compressionError": "画像の圧縮エラー。もう一度お試しください。"
+        }
+    },
+    "questionPage": {
+        "title": "クイズの質問",
+        "hint": "ヒント",
+        "yourAnswer": "あなたの答え",
+        "inputPlaceholder": "ここに答えを入力してください",
+        "submitAnswer": "答えを送信",
+        "alreadyAnswered": "回答済み",
+        "alreadyAnsweredMessage": "この質問にはすでに回答しています。",
+        "previousSubmissionIncorrect": "前回の提出は不正解でした。",
+        "submitting": "送信中...",
+        "correctAnswer": "✓ 正解！",
+        "incorrectAnswer": "✗ 再試行する",
+        "explanation": "解説",
+        "continue": "続ける"
+    },
+    "forgotPassword": {
+        "title": "パスワードを忘れましたか？",
+        "rememberPassword": "パスワードを覚えていますか？",
+        "loginHere": "ここでログイン",
+        "emailLabel": "メールアドレス",
+        "emailPlaceholder": "メールアドレスを入力",
+        "resetPasswordButton": "パスワードをリセット",
+        "error": "エラーが発生しました: {{error}}"
+    },
+    "changePassword": {
+        "title": "パスワードを更新",
+        "password": "パスワード",
+        "confirmPassword": "パスワードを確認",
+        "passwordsDoNotMatch": "パスワードが一致しません",
+        "updateSuccess": "パスワードが正常に更新されました。再度ログインしてください",
+        "updateButton": "パスワードを更新",
+        "error": "エラーが発生しました: {{error}}"
+    },
+    "otpVerify": {
+        "title": "メールを確認",
+        "description": "メールに送信された4桁の確認コードを入力してください。",
+        "verifyButton": "アカウントを確認",
+        "resend": "再送",
+        "error": "エラーが発生しました: {{error}}"
+    },
+    "couponCard": {
+        "scanReward": "報酬をスキャン",
+        "scanQRCode": "QRコードをスキャン",
+        "vouchers": "バウチャー",
+        "tickets": "チケット",
+        "validTill": "有効期限",
+        "use": "使用",
+        "qrCode": "QRコード",
+        "close": "閉じる",
+        "invalidQRCode": "無効なQRコード",
+        "noVouchersFound": "このユーザーのバウチャーが見つかりません",
+        "noTicketsFound": "このユーザーのチケットが見つかりません",
+        "fetchError": "バウチャーの取得エラー",
+        "permissionDenied": "カメラアクセスが拒否されました",
+        "noCameraFound": "カメラデバイスが見つかりません",
+        "showQrCode": "報酬を受け取るにはこのQRコードを表示してください"
+    },
+    "discovery": {
+        "title": "TEKUTOKO",
+        "searchPlaceholder": "部屋コード、タイトルを入力...",
+        "noMoreGames": "これ以上のゲームはありません"
+    },
+    "dashboard": {
+        "title": "マイルーム",
+        "createGameButton": "新しいゲームを作成",
+        "createRoom": "新規作成",
+        "joinWithCode": "コードで参加",
+        "joinCodePlaceholder": "ルームコードを入力",
+        "joinButton": "参加",
+        "host": "ホスト",
+        "hostedByYou": "あなたが作成",
+        "noRooms": "利用可能なルームがありません",
+        "joined": "参加済み",
+        "joinedByYou": "参加したルーム",
+        "noRoomsYet": "まだルームを作成または参加していません。"
+    },
+    "userProfileCard": {
+        "introduction": "自己紹介",
+        "links": "リンク",
+        "createdRooms": "作成したルーム",
+        "follow": "フォロー",
+        "unfollow": "フォロー解除",
+        "followers": "フォロワー",
+        "following": "フォロー中",
+        "noCreatedRooms": "このユーザーはまだルームを作成していません。"
+    },
+    "userProfileCardCreator": {
+        "uploadAvatar": "アバターをアップロード",
+        "uploadBackground": "背景をアップロード",
+        "job": "仕事",
+        "jobPlaceholder": "仕事を入力（例：ビジネス、会社）",
+        "address": "住所",
+        "addressPlaceholder": "住所を入力",
+        "description": "説明",
+        "descriptionPlaceholder": "あなたについての説明を入力",
+        "socialLinks": "ソーシャルリンク",
+        "instagramPlaceholder": "Instagram URL",
+        "twitterPlaceholder": "Twitter URL",
+        "linkedinPlaceholder": "LinkedIn URL",
+        "facebookPlaceholder": "Facebook URL",
+        "homepagePlaceholder": "ホームページ URL",
+        "submit": "送信"
+    },
+    "userProfileCardModify": {
+        "uploadAvatar": "アバターをアップロード",
+        "uploadBackground": "背景をアップロード",
+        "job": "仕事",
+        "jobPlaceholder": "仕事を入力（例：ビジネス、会社）",
+        "address": "住所",
+        "addressPlaceholder": "住所を入力",
+        "description": "説明",
+        "descriptionPlaceholder": "あなたについての説明を入力",
+        "socialLinks": "ソーシャルリンク",
+        "instagramPlaceholder": "Instagram URL",
+        "twitterPlaceholder": "Twitter URL",
+        "linkedinPlaceholder": "LinkedIn URL",
+        "facebookPlaceholder": "Facebook URL",
+        "homepagePlaceholder": "ホームページ URL",
+        "submit": "更新",
+        "noProfile": "ユーザープロフィールが存在しません。まずプロフィールを作成してください。",
+        "createProfile": "プロフィールを作成",
+        "errorUploadingImages": "画像のアップロードエラー",
+        "errorUpdatingProfile": "プロフィールの更新エラー",
+        "profileUpdatedSuccessfully": "プロフィールが正常に更新されました"
+    },
+    "loginForm": {
+        "emailPlaceholder": "メール",
+        "passwordPlaceholder": "パスワード",
+        "forgotPassword": "パスワードを忘れましたか？",
+        "rememberMe": "ログイン状態を保持",
+        "showPassword": "パスワードを表示",
+        "signIn": "ログイン",
+        "or": "または",
+        "loginWithGoogle": "Googleでログイン",
+        "loginWithLine": "Lineでログイン",
+        "processingLogin": "ログイン中...",
+        "googleLoginFailure": "Googleログインエラー",
+        "noAccount": "アカウントを持っていませんか？",
+        "signUp": "サインアップ"
+    },
+    "signupForm": {
+        "fullNamePlaceholder": "氏名",
+        "emailPlaceholder": "メール",
+        "passwordPlaceholder": "新しいパスワード",
+        "confirmPasswordPlaceholder": "パスワードを確認",
+        "signUpButton": "サインアップ",
+        "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
+        "signIn": "ログイン",
+        "fullNameRequired": "*氏名は必須です",
+        "emailRequired": "*メールは必須です",
+        "passwordRequired": "*パスワードは必須です",
+        "confirmPasswordRequired": "*パスワードの確認は必須です",
+        "passwordsDoNotMatch": "*パスワードが一致しません",
+        "termsTitle": "利用規約",
+        "termsDescription": "<ol><li><strong>規約の承諾</strong></li></ol><ul><li>ユーザーは、アカウントを作成する際に<strong>TEKUTOKO</strong> (以下「甲」といいます) の規約に同意し、甲がこれらの規約を随時更新または変更する可能性があることを了承します。</li></ul><p>&nbsp;</p><ol start=\"2\"><li><strong>ユーザーの義務</strong></li></ol><ul><li>ユーザーは、掲載する写真およびコンテンツについて、他者の権利（例えば、著作権、プライバシー）を侵害してはならない。</li><li>ユーザーは、有害、攻撃的、または違法なコンテンツをアップロードしてはならない。</li><li>ユーザーは、自分のアカウントのセキュリティを維持する責任があり、ログイン資格情報を他のユーザーと共有してはならない。</li></ul><p>&nbsp;</p><ol start=\"2\"><li><strong>禁止行為</strong></li></ol><ul><li>甲は、ユーザーが以下の行為を行うことを禁止します。<ul><li>露骨、暴力的、またはその他の不適切なコンテンツの共有。</li><li>無断で写真等をアップロードすることにより他人のプライバシーを侵害する行為。</li><li>甲の提供するサービスを通じて嫌がらせ、虐待、または違法行為を行うこと。</li><li>悪意のあるソフトウェア、スパムの拡散、またはその他の有害な活動に従事するために甲のサービスを使用すること。</li></ul></li></ul><p>&nbsp;</p><ol start=\"4\"><li><strong>プライバシーとデータ使用</strong></li></ol><ul><li>甲は、サービス向上のために、氏名、メールアドレス、位置情報、写真のメタデータ、ユーザー行動などのユーザーの個人データを収集することがあります。</li><li>第三者との共有について、甲は、プロモーション目的または特定の条件下で、ユーザーデータを第三者と共有することがあります。</li><li>甲は、ユーザーデータがどのように収集され、使用され、広告主や分析会社を含む第三者と共有される可能性があるかを明確に説明します。</li><li>甲は、法律に基づく要請、または公的機関 (法執行機関や政府機関など) からの正当な要請に応じて、個人情報を開示する場合があります。</li></ul><p>&nbsp;</p><ol start=\"5\"><li><strong>コンテンツの削除とアカウントの終了</strong></li></ol><ul><li>甲は、事前の通知なしに、甲の規約に違反するコンテンツを削除またはアクセスを制限する権利を持ちます。</li><li>利用者が甲のガイドラインに違反し、または不適切な行為を繰り返した場合、甲は事前に通知することなく当該利用者のアカウントを停止または削除することがあります。</li><li>甲は、予告なしにすべてのサービスを終了することがあります。</li><li>ユーザーはコンテンツとアカウントの削除を要求することができ、甲はユーザーのデータとアップロードされたコンテンツを削除することでこれに応じます。</li></ul><p>&nbsp;</p><ol start=\"6\"><li><strong>法的責任の制限</strong></li></ol><ul><li>甲は、プライバシーの侵害、サービスの中断、データ侵害など、甲のサービスの使用から生じる可能性のある損害または損失に対する責任を負いません。</li></ul><p>&nbsp;</p><ol start=\"7\"><li><strong>コンテンツの保存と削除</strong></li></ol><ul><li>ユーザーは自分のデータの削除を要求できます。ただし、特定の情報(例えば、法律上またはビジネス上の目的)については、甲は削除後も保持する場合があります。</li><li>甲は、削除要求後にアカウントデータを甲のシステムまたはバックアップに残す期間を決定する権利を保持します。</li><li>ユーザーは、システムの機能を維持するために必要に応じてアップロードしたコンテンツを削除することを甲に明示的に許可します。</li></ul><p>&nbsp;</p><ol start=\"8\"><li><strong>管轄および準拠法</strong></li></ol><ul><li>甲は、紛争が解決される法的管轄権と、甲のサービスの使用に適用される準拠法を指定します。</li></ul>",
+        "agreeButton": "同意する",
+        "cancelButton": "同意しない"
+    },
+    "denyForm": {
+        "title": "申し訳ありません！",
+        "message": "残念ながら、あなたの提出物は主催者の要件を満たしていません。",
+        "closeButton": "閉じる",
+        "errorDeletingReward": "報酬の削除エラー: {{error}}",
+        "errorFetchingDenyCheck": "拒否チェックの取得エラー: {{error}}",
+        "rewardDeletedSuccessfully": "報酬が正常に削除されました"
+    },
+    "reward": {
+        "title": "利用可能な報酬",
+        "alreadyReceived": "この報酬はすでに受け取っています。",
+        "yourProgress": "あなたの進捗",
+        "taskCompleted": "タスク完了",
+        "allCorrect": "全問正解 ✓",
+        "someIncorrect": "一部不正解 ✗",
+        "rewardDescription": "すべての質問に正しく答えて報酬を獲得しよう！",
+        "noRewardsAvailable": "このルームには報酬がありません",
+        "notAllCorrect": "報酬を獲得するにはすべての質問に正しく答えてください！",
+        "needToComplete": "報酬を受け取るにはルームを完了する必要があります。",
+        "requirementsNotMet": "条件を満たしていません"
+    },
+    "dashboardAdmin": {
+        "roomsStatistics": "部屋の統計",
+        "usersStatistics": "ユーザーの統計",
+        "totalRooms": "総部屋数: {{totalRooms}}",
+        "totalUsers": "総ユーザー数: {{totalUsers}}",
+        "activeRooms": "アクティブルーム",
+        "emptyRooms": "空室",
+        "activeUsers": "アクティブユーザー",
+        "inactiveUsers": "非アクティブユーザー",
+        "roomStatus": "部屋の状態",
+        "userStatus": "ユーザーの状態",
+        "numberOfRooms": "部屋数",
+        "numberOfUsers": "ユーザー数",
+        "privateRooms": "プライベートルーム",
+        "errorFetchingRoomData": "部屋データの取得エラー: {{error}}",
+        "errorFetchingUserData": "ユーザーデータの取得エラー: {{error}}"
+    },
+    "navigation": {
+        "dashboard": "ダッシュボード",
+        "gameRoomManager": "ゲームルームマネージャー",
+        "userManagement": "ユーザー管理",
+        "userProfile": "ユーザープロフィール",
+        "reportManager": "報告管理",
+        "logout": "ログアウト"
+    },
+    "adminLogin": {
+        "adminPanel": "管理ダッシュボード",
+        "username": "ユーザー名",
+        "password": "パスワード",
+        "loginButton": "ログイン",
+        "forgotPassword": "パスワードを忘れましたか？"
+    },
+    "profileForm": {
+        "passwordUpdate": "パスワードを更新",
+        "currentPassword": "現在のパスワード",
+        "newPassword": "新しいパスワード",
+        "confirmPassword": "パスワードを確認",
+        "changePasswordButton": "パスワードを変更",
+        "passwordMismatch": "パスワードが一致しません",
+        "passwordUpdateSuccess": "パスワードが正常に更新されました。再度ログインしてください。",
+        "currentPasswordIncorrect": "現在のパスワードが正しくありません",
+        "errorUpdatingPassword": "パスワードの更新エラー"
+    },
+    "gameRoomManager": {
+        "title": "ゲームルームマネージャー",
+        "roomList": "部屋リスト",
+        "searchPlaceholder": "IDまたはホスト名で検索",
+        "roomID": "部屋ID",
+        "roomTitle": "部屋名",
+        "roomOwner": "部屋の所有者",
+        "roomMembers": "部屋のメンバー",
+        "roomType": "部屋の状態",
+        "roomActions": "アクション",
+        "deleting": "削除中...",
+        "delete": "削除",
+        "roomFilters": "部屋のフィルター",
+        "allRooms": "すべての部屋",
+        "emptyRooms": "空室",
+        "overMaxRooms": "最大数を超える部屋",
+        "members": "メンバー",
+        "previous": "前",
+        "next": "次"
+    },
+    "userManager": {
+        "title": "ユーザー管理",
+        "userList": "ユーザーリスト",
+        "searchPlaceholder": "名前またはユーザー名で検索",
+        "fullName": "氏名",
+        "username": "ユーザー名",
+        "joinedRooms": "参加した部屋",
+        "createdRooms": "作成した部屋",
+        "actions": "アクション",
+        "delete": "削除",
+        "userFilters": "ユーザーフィルター",
+        "allUsers": "すべてのユーザー",
+        "overMinUsers": "少なくとも",
+        "createdRoomsSuffix": "部屋を作成したユーザー",
+        "inactiveUsers": "非アクティブユーザー（作成または参加した部屋がない）",
+        "previous": "前",
+        "next": "次",
+        "banning": "禁止中...",
+        "ban": "禁止"
+    },
+    "setupVoucher": {
+        "rewardTypeLabel": "報酬タイプ:",
+        "selectRewardType": "-- 報酬タイプを選択 --",
+        "ticket": "チケット",
+        "voucher": "割引バウチャー",
+        "ticketNameLabel": "チケット名:",
+        "ticketNamePlaceholder": "チケット名",
+        "ticketInfoLabel": "チケット情報:",
+        "ticketInfoPlaceholder": "チケットの説明",
+        "ticketImageLabel": "チケット画像:",
+        "expirationDateLabel": "有効期限:",
+        "voucherNameLabel": "割引バウチャー名:",
+        "voucherNamePlaceholder": "割引バウチャー名",
+        "voucherValueLabel": "割引バウチャーの値:",
+        "voucherValuePlaceholder": "割引バウチャーの値",
+        "voucherInfoLabel": "割引バウチャー情報:",
+        "voucherInfoPlaceholder": "割引バウチャーの説明",
+        "saveButton": "保存",
+        "closeButton": "閉じる",
+        "setupSuccess": "報酬の設定に成功しました！",
+        "setupFailure": "報酬の設定に失敗しました。"
+    },
+    "navigationBottom": {
+        "vouchers": "報酬",
+        "game": "ゲームルーム",
+        "myAccount": "マイアカウント",
+        "home": "ホーム"
+    },
+    "languagePrompt": {
+        "selectLanguage": "言語を選択"
+    },
+    "languageSwitcher": {
+        "selectLanguage": "言語を選択",
+        "english": "English",
+        "vietnamese": "Tiếng Việt",
+        "japanese": "日本語"
+    },
+    "confirmDelete": {
+        "title": "削除の確認",
+        "message": "本当にアカウントを削除しますか？この操作は取り消すことができません。",
+        "cancel": "キャンセル",
+        "delete": "削除",
+        "button": "アカウントを削除する"
+    },
+    "NotFoundPage": {
+        "message": "ページが見つかりません",
+        "goback": "戻ってください"
+    },
+    "homepage": {
+        "header": {
+            "logo": "TEKUTOKO",
+            "menu": {
+                "home": "ホーム",
+                "introduction": "紹介",
+                "benefits": "メリット",
+                "features": "機能",
+                "sample": "サンプル",
+                "faq": "よくある質問",
+                "contact": "お問い合わせ"
+            },
+            "languages": {
+                "en": "English",
+                "vi": "Tiếng Việt",
+                "ja": "日本語"
+            }
+        },
+        "hero": {
+            "title": "インタラクティブで簡単で楽しい",
+            "titleHighlight": "イベント開催・参加プラットフォーム！",
+            "description": "今すぐ参加して、素晴らしい体験をお見逃しなく！",
+            "cta": "今すぐ参加"
+        },
+        "introduction": {
+            "quote": "Tekutokoは、顧客エンゲージメントを向上させ、持続的なロイヤルティを育む究極のプラットフォームです。インタラクティブで記憶に残る体験を可能にすることで、企業がより強力な戦略を開発し、リーチを拡大し、売上成長を促進するのに役立ちます。"
+        },
+        "features": {
+            "title": "Tekutokoで何ができるの？",
+            "description": "Tekutokoでは、すべての体験をより魅力的で楽しいものにする、エキサイティングなインタラクティブゲームを開催・参加することができます。",
+            "items": {
+                "photoHunt": {
+                    "title": "フォトスカベンジャーハント",
+                    "description": "写真を撮影・アップロードしてチャレンジを完了。"
+                },
+                "stampCollection": {
+                    "title": "スタンプ収集ゲーム",
+                    "description": "スタンプを集めて目標に到達。"
+                },
+                "riddleChallenge": {
+                    "title": "謎解きチャレンジ",
+                    "description": "クイズや謎を解いて進歩。"
+                },
+                "missionLog": {
+                    "title": "ミッションログ",
+                    "description": "楽しいチャレンジを完了して結果をアップロード。"
+                },
+                "workflowSubmission": {
+                    "title": "ワークフロー提出",
+                    "description": "レポートを提出し、作業タスクを簡単に追跡。"
+                },
+                "homeworkSubmission": {
+                    "title": "宿題提出",
+                    "description": "宿題を簡単にアップロードして追跡！"
+                }
+            }
+        },
+        "detailedFeatures": {
+            "title": "優れた機能",
+            "description": "Tekutokoをイベント主催者と参加者の両方にとってユニークで有用にする機能をご覧ください。",
+            "items": {
+                "eventOrganization": {
+                    "title": "簡単なイベント開催・参加",
+                    "description": "魅力的なタスクでイベントを作成し、参加者を管理し、進捗を簡単に追跡。",
+                    "points": [
+                        "多様なタスク作成",
+                        "参加者管理",
+                        "リアルタイム追跡"
+                    ]
+                },
+                "exclusiveRewards": {
+                    "title": "限定報酬・特典",
+                    "description": "イベントに参加してギフト、割引コード、その他多くの魅力的なオファーを受け取る。",
+                    "points": [
+                        "イベントギフト",
+                        "限定割引コード",
+                        "達成バッジ"
+                    ]
+                },
+                "eventTracking": {
+                    "title": "簡単なイベント追跡・共有",
+                    "description": "お気に入りのイベントを簡単に検索、フォロー、友達やコミュニティと共有。",
+                    "points": [
+                        "ソーシャルメディア共有",
+                        "簡単イベント検索",
+                        "主催者フォロー"
+                    ]
+                }
+            },
+            "cta": {
+                "title": "Tekutokoを体験する準備はできましたか？",
+                "description": "素晴らしいインタラクティブ体験を作成する何千ものユーザーに参加しましょう",
+                "button": "今すぐ始める"
+            },
+            "exploreButton": "機能を探る",
+            "featureLabel": "機能"
+        },
+        "faq": {
+            "title": "よくある質問",
+            "items": {
+                "createEvent": {
+                    "question": "イベントを作成するには？",
+                    "answer": "ログイン後、「イベント作成」ボタンをクリックして、イベントの作成とカスタマイズのプロセスを開始できます。"
+                },
+                "getRewards": {
+                    "question": "参加して報酬を得るには？",
+                    "answer": "ウェブサイトの活動やイベントに参加して魅力的な報酬を受け取ります。「報酬」セクションでQRコード経由で報酬を受け取ることができます。"
+                },
+                "forgotPassword": {
+                    "question": "パスワードを忘れた場合は？",
+                    "answer": "ログインページで「パスワードを忘れた」をクリックすると、パスワードリセット用のメールを送信します。"
+                }
+            }
+        },
+        "footer": {
+            "contact": {
+                "title": "お問い合わせ",
+                "email": "tekutoko.services@gmail.com",
+                "phone": "865638884"
+            },
+            "copyright": "© 2024-2025 TEKUTOKO. All Rights Reserved.",
+            "links": {
+                "privacy": "プライバシーポリシー",
+                "terms": "利用規約"
+            }
+        }
+    },
+    "alert": {
+        "timeout": "要求がタイムアウトしました。インターネット接続を確認してください！",
+        "limitUpload": "アップロードできる画像は最大 {{limit}} 枚までです。",
+        "login": {
+            "incorrect": "ログイン名またはパスワードが正しくありません！",
+            "banned": "アカウントが禁止されました！",
+            "loginFailed": "ログインに失敗しました！",
+            "notFound": "アカウントが存在しません！"
+        },
+        "signUp": {
+            "emailExists": "メールが既に存在します！",
+            "signupFailed": "サインアップに失敗しました！",
+            "banned": "ユーザーが禁止されました！",
+            "signupSuccess": "サインアップに成功しました！再度ログインしてください！"
+        },
+        "room": {
+            "deleteSuccess": "部屋が正常に削除されました！",
+            "leaveSuccess": "部屋から正常に退出しました！",
+            "noFilesUploaded": "アップロードできる画像は最大 {{limit}} 枚までです。",
+            "databaseError": "データベースエラー！",
+            "roomNotExist": "部屋が存在しません！",
+            "firebaseError": "ファイルのアップロードに失敗しました！",
+            "giftsSentToUserSuccessfully": "報酬が正常に送信されました！"
+        },
+        "setupVoucher": {
+            "errorCompressingImage": "画像の圧縮エラー！",
+            "errorDeletingVoucher": "Voucherの削除エラー！",
+            "expirationDateError": "有効期限は現在の日付より後である必要があります！"
+        },
+        "report": {
+            "reportSuccess": "報告が正常に送信されました！",
+            "reportFailed": "報告の送信に失敗しました！",
+            "reportExists": "このユーザーを前に報告しました！",
+            "notChooseReason": "報告理由を選択してください！"
+        }
+    },
+    "reportForm": {
+        "title": "報告",
+        "reason": "報告理由",
+        "additionalInfo": "追加情報 (255文字)",
+        "submit": "報告を送信",
+        "cancel": "キャンセル",
+        "inappropriate": "不適切なコンテンツ",
+        "harassment": "騒ぎ、プライバシー侵害",
+        "spam": "詐欺、敵対行為",
+        "other": "その他"
+    },
+    "reportManager": {
+        "title": "報告管理",
+        "reportList": "報告リスト",
+        "reportID": "報告ID",
+        "reportedUser": "報告されたユーザー",
+        "reportReason": "報告理由",
+        "actions": "アクション",
+        "view": "表示",
+        "ban": "禁止",
+        "remove": "削除 部屋",
+        "roomId": "部屋ID",
+        "delete": "報告を削除"
+    }
+}

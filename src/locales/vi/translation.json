@@ -1,0 +1,634 @@
+{
+    "accountPage": {
+        "accountInformation": "Thông tin tài khoản",
+        "email": "Email",
+        "fullName": "Họ và tên",
+        "update": "Cập nhật",
+        "changePassword": "Đổi mật khẩu",
+        "newPassword": "Mật khẩu mới",
+        "confirmPassword": "Xác nhận mật khẩu",
+        "passwordsDoNotMatch": "Mật khẩu không khớp!",
+        "accountProfile": "Hồ sơ tài khoản",
+        "linkProfile": "Liên kết hồ sơ",
+        "createProfile": "Tạo hồ sơ",
+        "modifyProfile": "Chỉnh sửa hồ sơ",
+        "changeLanguage": "Thay đổi ngôn ngữ",
+        "termsAndConditions": "Điều khoản và điều kiện",
+        "logout": "Đăng xuất",
+        "accountDeleted": "Tài khoản đã bị xóa!"
+    },
+    "room": {
+        "Completed": "hoàn thành",
+        "howToPlay": "Cách chơi (Luật)",
+        "howToPlayDefault": "Để chơi, chỉ cần nhấp vào câu hỏi bạn muốn trả lời. Bạn có thể trả lời theo thứ tự bất kỳ. Chúc may mắn!",
+        "rewards": "Phần thưởng có sẵn",
+        "rewardDescription": "Hoàn thành tất cả câu hỏi một cách chính xác để nhận phần thưởng!",
+        "viewRewards": "Xem phần thưởng",
+        "questions": "Danh sách câu hỏi",
+        "userSubmissions": "Bài nộp của người dùng",
+        "scanQRCode": "Quét mã QR để tham gia phòng",
+        "shareThisQuiz": "Chia sẻ bài quiz này",
+        "copyLink": "Sao chép liên kết",
+        "copiedToClipboard": "Đã sao chép vào clipboard!",
+        "qrCode": "Mã QR",
+        "deleteRoom": "Xóa phòng"
+    },
+    "setupRoom": {
+        "title": "Tạo Phòng Quiz Mới",
+        "roomInformation": "Thông Tin Phòng",
+        "roomTitle": "Tên Phòng",
+        "roomTitlePlaceholder": "VD: Thử Thách Kanji Tiếng Nhật",
+        "description": "Mô Tả",
+        "descriptionPlaceholder": "Mô tả cách chơi",
+        "rules": "Quy Tắc",
+        "rulesPlaceholder": "Mô tả quy tắc",
+        "roomThumbnail": "Ảnh Đại Diện Phòng",
+        "thumbnailUpload": "Tải lên tệp",
+        "thumbnailRemove": "Xóa",
+        "thumbnailRecommendation": "Khuyến nghị: JPG, PNG, GIF, WEBP. Tối đa 2MB.",
+        "noPreview": "Không có xem trước",
+        "roomReward": "Phần Thưởng Phòng (Tùy Chọn)",
+        "rewardType": "Loại Phần Thưởng",
+        "expirationDate": "Ngày Hết Hạn",
+        "discountVoucher": "Voucher Giảm Giá",
+        "ticketPrize": "Vé/Giải Thưởng",
+        "voucherName": "Tên Voucher",
+        "voucherNamePlaceholder": "VD: Giảm 20% Lần Mua Tiếp Theo",
+        "discountValue": "Giá Trị Giảm Giá",
+        "discountValuePlaceholder": "VD: 20% hoặc $10",
+        "rewardDescription": "Mô Tả",
+        "rewardDescriptionPlaceholder": "Điều khoản và điều kiện",
+        "ticketName": "Tên Vé",
+        "ticketNamePlaceholder": "VD: Vé Concert",
+        "ticketDescription": "Mô Tả",
+        "ticketDescriptionPlaceholder": "Chi tiết vé",
+        "ticketImage": "Hình Ảnh Vé",
+        "uploadImage": "Tải Lên Hình Ảnh",
+        "addedQuestions": "Câu Hỏi Đã Thêm",
+        "addNewQuestion": "Thêm Câu Hỏi Mới",
+        "questionText": "Nội Dung Câu Hỏi",
+        "questionTextPlaceholder": "Nhập câu hỏi",
+        "questionType": "Loại Câu Hỏi",
+        "textInput": "Nhập Văn Bản",
+        "multipleChoice": "Trắc Nghiệm",
+        "fileUpload": "Tải Lên Tệp",
+        "hint": "Gợi Ý (Tùy Chọn)",
+        "hintPlaceholder": "Cung cấp gợi ý nếu cần",
+        "primaryAnswer": "Đáp Án Chính Đúng",
+        "primaryAnswerPlaceholder": "Nhập đáp án chính đúng",
+        "japaneseHint": "Đối với tiếng Nhật: Bạn có thể sử dụng Hiragana, Katakana, hoặc Kanji",
+        "alternativeAnswers": "Đáp Án Thay Thế Đúng (Tùy Chọn)",
+        "addAlternative": "+ Thêm Đáp Án Thay Thế",
+        "removeAlternative": "✕",
+        "alternativeAnswerPlaceholder": "Đáp án thay thế",
+        "alternativeHelp": "Đáp án thay thế giúp với:",
+        "alternativeHelpItems": [
+            "Các hệ thống chữ viết tiếng Nhật khác nhau (ひらがな, カタカナ, 漢字)",
+            "Các biến thể thông thường hoặc từ đồng nghĩa",
+            "Các định dạng được chấp nhận khác nhau"
+        ],
+        "options": "Lựa Chọn (Đánh dấu đáp án đúng)",
+        "optionPlaceholder": "Lựa chọn",
+        "addOption": "+ Thêm Lựa Chọn",
+        "removeOption": "✕",
+        "uploadInfo": "Không cần đáp án ở đây. Người dùng sẽ tải lên tệp trong quiz.",
+        "explanation": "Giải Thích (Tùy Chọn)",
+        "explanationPlaceholder": "Giải thích đáp án đúng hoặc cung cấp thông tin bổ sung",
+        "addThisQuestion": "Thêm Câu Hỏi Này Vào Danh Sách",
+        "saveRoom": "Lưu Toàn Bộ Cấu Hình Phòng",
+        "saving": "Đang lưu...",
+        "addAtLeastOne": "Thêm ít nhất một câu hỏi trước khi lưu.",
+        "correctAnswers": "Đáp án đúng:",
+        "remove": "Xóa",
+        "selected": "Đã chọn:",
+        "processing": "Đang xử lý hình ảnh...",
+        "savingRoom": "Đang lưu phòng...",
+        "validation": {
+            "questionTextRequired": "Nội dung câu hỏi không thể để trống.",
+            "correctAnswerRequired": "Vui lòng cung cấp ít nhất một đáp án đúng cho câu hỏi văn bản.",
+            "fillAdditionalAnswers": "Vui lòng điền tất cả đáp án thay thế đúng hoặc xóa những cái trống.",
+            "multipleChoiceMinOptions": "Câu hỏi trắc nghiệm cần ít nhất 2 lựa chọn.",
+            "fillAllOptions": "Vui lòng điền tất cả văn bản lựa chọn.",
+            "markCorrectOption": "Vui lòng đánh dấu một lựa chọn đúng cho trắc nghiệm.",
+            "roomTitleRequired": "Tên phòng không thể để trống.",
+            "addAtLeastOneQuestion": "Vui lòng thêm ít nhất một câu hỏi vào phòng.",
+            "setExpirationDate": "Vui lòng đặt ngày hết hạn cho phần thưởng.",
+            "expirationDatePast": "Ngày hết hạn không thể trong quá khứ.",
+            "enterDiscountName": "Vui lòng nhập tên giảm giá.",
+            "enterDiscountValue": "Vui lòng nhập giá trị giảm giá.",
+            "enterTicketName": "Vui lòng nhập tên vé.",
+            "uploadTicketImage": "Vui lòng tải lên hình ảnh vé."
+        },
+        "success": {
+            "roomCreated": "Phòng đã được tạo thành công!",
+            "roomAndRewardCreated": "Phòng và phần thưởng đã được tạo thành công!",
+            "roomCreatedRewardFailed": "Phòng đã được tạo thành công, nhưng tạo phần thưởng thất bại. Bạn có thể thêm phần thưởng sau.",
+            "roomCreatedImageFailed": "Phòng đã được tạo nhưng không thể tải lên hình ảnh vé. Bạn có thể thêm phần thưởng sau."
+        },
+        "errors": {
+            "loginRequired": "Bạn phải đăng nhập để tạo phòng",
+            "failedToCreate": "Không thể tạo phòng",
+            "savingError": "Đã xảy ra lỗi không xác định trong quá trình lưu.",
+            "uploadError": "Không thể tải lên ảnh đại diện. Vui lòng thử lại.",
+            "compressionError": "Lỗi nén hình ảnh. Vui lòng thử lại."
+        }
+    },
+    "questionPage": {
+        "title": "Câu hỏi quiz",
+        "hint": "Gợi ý",
+        "yourAnswer": "Câu trả lời của bạn",
+        "inputPlaceholder": "Nhập câu trả lời tại đây",
+        "submitAnswer": "Gửi câu trả lời",
+        "alreadyAnswered": "Đã trả lời",
+        "alreadyAnsweredMessage": "Bạn đã trả lời câu hỏi này rồi.",
+        "previousSubmissionIncorrect": "Câu trả lời trước đó của bạn không đúng.",
+        "submitting": "Đang gửi...",
+        "correctAnswer": "✓ Đúng!",
+        "incorrectAnswer": "✗ Thử lại",
+        "explanation": "Giải thích",
+        "continue": "Tiếp tục"
+    },
+    "forgotPassword": {
+        "title": "Quên mật khẩu?",
+        "rememberPassword": "Nhớ mật khẩu?",
+        "loginHere": "Đăng nhập tại đây",
+        "emailLabel": "Địa chỉ email",
+        "emailPlaceholder": "Nhập email của bạn",
+        "resetPasswordButton": "Đặt lại mật khẩu",
+        "error": "Có lỗi xảy ra: {{error}}"
+    },
+    "changePassword": {
+        "title": "Cập nhật mật khẩu",
+        "password": "Mật khẩu",
+        "confirmPassword": "Xác nhận mật khẩu",
+        "passwordsDoNotMatch": "Mật khẩu không khớp",
+        "updateSuccess": "Mật khẩu đã được cập nhật thành công. Vui lòng đăng nhập lại",
+        "updateButton": "Cập nhật mật khẩu",
+        "error": "Có lỗi xảy ra: {{error}}"
+    },
+    "otpVerify": {
+        "title": "Xác minh Email",
+        "description": "Nhập mã xác minh 4 chữ số đã được gửi đến email của bạn.",
+        "verifyButton": "Xác minh tài khoản",
+        "resend": "Gửi lại",
+        "error": "Có lỗi xảy ra: {{error}}"
+    },
+    "couponCard": {
+        "scanReward": "Quét Phần Thưởng",
+        "scanQRCode": "Quét mã QR",
+        "vouchers": "Voucher",
+        "tickets": "Vé",
+        "validTill": "Có hiệu lực đến",
+        "use": "Sử dụng",
+        "qrCode": "Mã QR",
+        "close": "Đóng",
+        "invalidQRCode": "Mã QR không hợp lệ",
+        "noVouchersFound": "Không tìm thấy voucher cho người dùng này",
+        "noTicketsFound": "Không tìm thấy vé cho người dùng này",
+        "fetchError": "Có lỗi xảy ra khi lấy voucher",
+        "permissionDenied": "Quyền truy cập camera bị từ chối",
+        "noCameraFound": "Không tìm thấy thiết bị camera",
+        "showQrCode": "Hiển thị mã QR để đổi phần thưởng"
+    },
+    "discovery": {
+        "title": "TEKUTOKO",
+        "searchPlaceholder": "Nhập mã phòng, tiêu đề...",
+        "noMoreGames": "Không còn trò chơi nào nữa"
+    },
+    "dashboard": {
+        "title": "Phòng của tôi",
+        "createGameButton": "Tạo trò chơi mới",
+        "createRoom": "Tạo mới",
+        "joinWithCode": "Tham gia bằng mã",
+        "joinCodePlaceholder": "Nhập mã phòng",
+        "joinButton": "Tham gia",
+        "host": "Chủ phòng",
+        "hostedByYou": "Do bạn tạo",
+        "noRooms": "Không có phòng nào",
+        "joined": "Đã tham gia",
+        "joinedByYou": "Phòng đã tham gia",
+        "noRoomsYet": "Bạn chưa tạo hoặc tham gia phòng nào."
+    },
+    "userProfileCard": {
+        "introduction": "Giới thiệu",
+        "links": "Liên kết",
+        "createdRooms": "Phòng đã tạo",
+        "follow": "Theo dõi",
+        "unfollow": "Bỏ theo dõi",
+        "followers": "Người theo dõi",
+        "following": "Đang theo dõi",
+        "noCreatedRooms": "Người dùng này chưa tạo phòng nào."
+    },
+    "userProfileCardCreator": {
+        "uploadAvatar": "Tải lên ảnh đại diện",
+        "uploadBackground": "Tải lên ảnh nền",
+        "job": "Công việc",
+        "jobPlaceholder": "Nhập công việc (ví dụ: Kinh doanh, Công ty)",
+        "address": "Địa chỉ",
+        "addressPlaceholder": "Nhập địa chỉ của bạn",
+        "description": "Mô tả",
+        "descriptionPlaceholder": "Nhập mô tả về bạn",
+        "socialLinks": "Liên kết mạng xã hội",
+        "instagramPlaceholder": "URL Instagram",
+        "twitterPlaceholder": "URL Twitter",
+        "linkedinPlaceholder": "URL LinkedIn",
+        "facebookPlaceholder": "URL Facebook",
+        "homepagePlaceholder": "URL Trang chủ",
+        "submit": "Gửi"
+    },
+    "userProfileCardModify": {
+        "uploadAvatar": "Tải lên ảnh đại diện",
+        "uploadBackground": "Tải lên ảnh nền",
+        "job": "Công việc",
+        "jobPlaceholder": "Nhập công việc (ví dụ: Kinh doanh, Công ty)",
+        "address": "Địa chỉ",
+        "addressPlaceholder": "Nhập địa chỉ của bạn",
+        "description": "Mô tả",
+        "descriptionPlaceholder": "Nhập mô tả về bạn",
+        "socialLinks": "Liên kết mạng xã hội",
+        "instagramPlaceholder": "URL Instagram",
+        "twitterPlaceholder": "URL Twitter",
+        "linkedinPlaceholder": "URL LinkedIn",
+        "facebookPlaceholder": "URL Facebook",
+        "homepagePlaceholder": "URL Trang chủ",
+        "submit": "Cập nhật",
+        "noProfile": "Hồ sơ người dùng không tồn tại. Vui lòng tạo hồ sơ trước.",
+        "createProfile": "Tạo hồ sơ",
+        "errorUploadingImages": "Lỗi khi tải lên hình ảnh",
+        "errorUpdatingProfile": "Lỗi khi cập nhật hồ sơ",
+        "profileUpdatedSuccessfully": "Hồ sơ đã được cập nhật thành công"
+    },
+    "loginForm": {
+        "emailPlaceholder": "Email",
+        "passwordPlaceholder": "Mật khẩu",
+        "forgotPassword": "Quên mật khẩu?",
+        "rememberMe": "Ghi nhớ đăng nhập",
+        "showPassword": "Hiển thị mật khẩu",
+        "signIn": "Đăng nhập",
+        "or": "Hoặc",
+        "loginWithGoogle": "Đăng nhập với Google",
+        "loginWithLine": "Đăng nhập với Line",
+        "googleLoginFailure": "Đăng nhập với Google thất bại",
+        "processingLogin": "Đang xử lý đăng nhập...",
+        "noAccount": "Chưa có tài khoản?",
+        "signUp": "Đăng ký"
+    },
+    "signupForm": {
+        "fullNamePlaceholder": "Họ và tên",
+        "emailPlaceholder": "Email",
+        "passwordPlaceholder": "Mật khẩu mới",
+        "confirmPasswordPlaceholder": "Xác nhận mật khẩu",
+        "signUpButton": "Đăng ký",
+        "alreadyHaveAccount": "Đã có tài khoản?",
+        "signIn": "Đăng nhập",
+        "fullNameRequired": "*Họ và tên là bắt buộc",
+        "emailRequired": "*Email là bắt buộc",
+        "passwordRequired": "*Mật khẩu là bắt buộc",
+        "confirmPasswordRequired": "*Xác nhận mật khẩu là bắt buộc",
+        "passwordsDoNotMatch": "*Mật khẩu không khớp",
+        "termsTitle": "Điều khoản và điều kiện",
+        "termsAcceptance": "Bằng cách nhấn vào Đăng ký, bạn đồng ý với",
+        "termsDescription": "<ol><li><strong>Chấp nhận Điều khoản</strong></li></ol><ul><li><strong>TEKUTOKO</strong> (gọi là \"chúng tôi\" hoặc \"chúng ta\") yêu cầu người dùng đồng ý với các điều khoản của chúng tôi khi tạo tài khoản và xác nhận rằng chúng tôi có thể cập nhật hoặc sửa đổi các điều khoản này theo thời gian.</li></ul><p>&nbsp;</p><ol start=\"2\"><li><strong>Trách nhiệm của Người dùng</strong></li></ol><ul><li>Người dùng phải chịu trách nhiệm về các bức ảnh và nội dung họ tải lên, đảm bảo rằng chúng không vi phạm quyền của người khác (ví dụ: quyền tác giả, quyền riêng tư).</li><li>Người dùng phải tránh tải lên nội dung có hại, xúc phạm hoặc bất hợp pháp.</li><li>Người dùng phải chịu trách nhiệm về việc duy trì bảo mật tài khoản của mình và không chia sẻ thông tin đăng nhập với người khác.</li></ul><p>&nbsp;</p><ol start=\"3\"><li><strong>Các hoạt động bị cấm</strong></li></ol><ul><li>Chúng tôi cấm người dùng:<ul><li>Chia sẻ hình ảnh không phù hợp: Hình ảnh có nội dung nhạy cảm, bạo lực hoặc không phù hợp đều bị cấm.</li><li>Vi phạm quyền riêng tư của người khác bằng cách tải lên hình ảnh mà không có sự đồng ý của họ.</li><li>Thực hiện hành vi quấy rối, lạm dụng hoặc bất kỳ hoạt động bất hợp pháp nào qua nền tảng của chúng tôi.</li><li>Sử dụng nền tảng của chúng tôi để phân phối phần mềm độc hại, thư rác, hoặc tham gia vào các hoạt động có hại khác.</li></ul></li></ul><p>&nbsp;</p><ol start=\"4\"><li><strong>Quyền riêng tư và Sử dụng Dữ liệu</strong></li></ol><ul><li>Chúng tôi có thể thu thập dữ liệu cá nhân của người dùng, chẳng hạn như tên, địa chỉ email, vị trí địa lý, siêu dữ liệu từ các bức ảnh và hành vi của người dùng, để cải thiện dịch vụ của chúng tôi.</li><li>Chia sẻ với Bên thứ ba: Chúng tôi có thể chia sẻ dữ liệu cá nhân với bên thứ ba cho mục đích quảng cáo hoặc theo các điều kiện cụ thể.</li><li>Chúng tôi cung cấp giải thích rõ ràng về cách dữ liệu của người dùng được thu thập, sử dụng và có thể được chia sẻ với bên thứ ba, bao gồm cả các nhà quảng cáo và công ty phân tích.</li><li>Chúng tôi có thể tiết lộ thông tin cá nhân nếu yêu cầu theo pháp luật hoặc theo yêu cầu hợp lệ từ các cơ quan công quyền (ví dụ: cơ quan thực thi pháp luật hoặc cơ quan chính phủ).</li></ul><p>&nbsp;</p><ol start=\"5\"><li><strong>Xóa nội dung và Kết thúc tài khoản</strong></li></ol><ul><li>Chúng tôi bảo lưu quyền xóa hoặc hạn chế truy cập vào bất kỳ nội dung nào vi phạm các điều khoản của chúng tôi mà không cần thông báo trước.</li><li>Nếu người dùng vi phạm hướng dẫn của chúng tôi nhiều lần hoặc tham gia vào hành vi không phù hợp, chúng tôi có thể đình chỉ hoặc kết thúc tài khoản của họ mà không cần thông báo trước.</li><li>Chúng tôi bảo lưu quyền kết thúc tất cả các dịch vụ mà không cần thông báo trước.</li><li>Người dùng có thể yêu cầu xóa nội dung và tài khoản của họ, và chúng tôi sẽ thực hiện bằng cách xóa dữ liệu và nội dung đã tải lên của họ.</li></ul><p>&nbsp;</p><ol start=\"6\"><li><strong>Giới Hạn Trách Nhiệm Pháp Lý</strong></li></ol><ul><li>Chúng tôi giới hạn trách nhiệm của mình đối với bất kỳ tổn thất hoặc thiệt hại nào có thể phát sinh từ việc sử dụng dịch vụ của chúng tôi, bao gồm nhưng không giới hạn ở việc lộ ảnh riêng tư, sự gián đoạn dịch vụ, hoặc các vụ vi phạm dữ liệu.</li></ul><p>&nbsp;</p><ol start=\"7\"><li><strong>Lưu trữ và Xóa nội dung</strong></li></ol><ul><li>Người dùng có thể yêu cầu xóa dữ liệu của họ; tuy nhiên, chúng tôi có thể giữ lại một số thông tin (ví dụ: vì lý do pháp lý hoặc kinh doanh) ngay cả sau khi đã xóa.</li><li>Chúng tôi có quyền quyết định thời gian lưu trữ dữ liệu tài khoản trong hệ thống hoặc sao lưu sau khi có yêu cầu xóa.</li><li>Người dùng cho phép chúng tôi xóa nội dung mà họ đã tải lên nếu cần thiết để duy trì chức năng của hệ thống của chúng tôi.</li></ul><p>&nbsp;</p><ol start=\"8\"><li><strong>Thẩm Quyền Pháp Lý và Luật Điều Chỉnh</strong></li></ol><ul><li>Chúng tôi quy định thẩm quyền pháp lý mà theo đó mọi tranh chấp sẽ được giải quyết, và luật điều chỉnh áp dụng cho việc sử dụng nền tảng của chúng tôi.</li></ul>",
+        "agreeButton": "Đồng ý",
+        "cancelButton": "Từ chối"
+    },
+    "denyForm": {
+        "title": "Xin lỗi!",
+        "message": "Rất tiếc, bài nộp của bạn không đáp ứng yêu cầu của người tổ chức.",
+        "closeButton": "Đóng",
+        "errorDeletingReward": "Lỗi khi xóa phần thưởng: {{error}}",
+        "errorFetchingDenyCheck": "Lỗi khi kiểm tra từ chối: {{error}}",
+        "rewardDeletedSuccessfully": "Phần thưởng đã được xóa thành công"
+    },
+    "reward": {
+        "title": "Phần thưởng",
+        "alreadyReceived": "Bạn đã nhận phần thưởng này rồi.",
+        "yourProgress": "Tiến độ của bạn",
+        "taskCompleted": "Nhiệm vụ hoàn thành",
+        "allCorrect": "Tất cả đúng ✓",
+        "someIncorrect": "Một số sai ✗",
+        "rewardDescription": "Hoàn thành tất cả câu hỏi một cách chính xác để nhận phần thưởng!",
+        "noRewardsAvailable": "Không có phần thưởng nào cho phòng này",
+        "notAllCorrect": "Trả lời đúng tất cả câu hỏi để nhận phần thưởng!",
+        "needToComplete": "Bạn cần hoàn thành câu hỏi để nhận phần thưởng.",
+        "requirementsNotMet": "Chưa đáp ứng yêu cầu"
+    },
+    "dashboardAdmin": {
+        "roomsStatistics": "Thống kê phòng",
+        "usersStatistics": "Thống kê người dùng",
+        "totalRooms": "Tổng số phòng: {{totalRooms}}",
+        "totalUsers": "Tổng số người dùng: {{totalUsers}}",
+        "activeRooms": "Phòng hoạt động",
+        "emptyRooms": "Phòng trống",
+        "activeUsers": "Người dùng hoạt động",
+        "inactiveUsers": "Người dùng không hoạt động",
+        "roomStatus": "Trạng thái phòng",
+        "userStatus": "Trạng thái người dùng",
+        "numberOfRooms": "Số lượng phòng",
+        "numberOfUsers": "Số lượng người dùng",
+        "privateRooms": "Phòng riêng tư",
+        "errorFetchingRoomData": "Lỗi khi lấy dữ liệu phòng: {{error}}",
+        "errorFetchingUserData": "Lỗi khi lấy dữ liệu người dùng: {{error}}"
+    },
+    "navigation": {
+        "dashboard": "Bảng điều khiển",
+        "gameRoomManager": "Quản lý phòng trò chơi",
+        "userManagement": "Quản lý người dùng",
+        "userProfile": "Hồ sơ người dùng",
+        "reportManager": "Quản lý báo cáo",
+        "logout": "Đăng xuất"
+    },
+    "adminLogin": {
+        "adminPanel": "BẢNG ĐIỀU KHIỂN QUẢN TRỊ",
+        "username": "Tên đăng nhập",
+        "password": "Mật khẩu",
+        "loginButton": "Đăng nhập",
+        "forgotPassword": "Quên mật khẩu?"
+    },
+    "profileForm": {
+        "passwordUpdate": "CẬP NHẬT MẬT KHẨU",
+        "currentPassword": "Mật khẩu hiện tại",
+        "newPassword": "Mật khẩu mới",
+        "confirmPassword": "Xác nhận mật khẩu",
+        "changePasswordButton": "Đổi mật khẩu",
+        "passwordMismatch": "Mật khẩu không khớp",
+        "passwordUpdateSuccess": "Mật khẩu đã được cập nhật thành công. Vui lòng đăng nhập lại.",
+        "currentPasswordIncorrect": "Mật khẩu hiện tại không đúng",
+        "errorUpdatingPassword": "Lỗi khi cập nhật mật khẩu"
+    },
+    "gameRoomManager": {
+        "title": "Quản lý phòng trò chơi",
+        "roomList": "Danh sách phòng",
+        "searchPlaceholder": "Tìm kiếm theo ID hoặc Tên chủ phòng",
+        "roomID": "ID Phòng",
+        "roomTitle": "Tên phòng",
+        "roomOwner": "Chủ phòng",
+        "roomMembers": "Thành viên phòng",
+        "roomStatus": "Trạng thái",
+        "roomActions": "Hành động",
+        "deleting": "Đang xóa...",
+        "delete": "Xóa",
+        "roomFilters": "Bộ lọc phòng",
+        "allRooms": "Tất cả phòng",
+        "emptyRooms": "Phòng trống",
+        "overMaxRooms": "Phòng có hơn",
+        "members": "thành viên",
+        "previous": "Trước",
+        "next": "Tiếp"
+    },
+    "userManager": {
+        "title": "Quản lý người dùng",
+        "userList": "Danh sách người dùng",
+        "searchPlaceholder": "Tìm kiếm theo Tên hoặc Tên đăng nhập",
+        "fullName": "Họ và tên",
+        "username": "Tên đăng nhập",
+        "joinedRooms": "Số phòng đã tham gia",
+        "createdRooms": "Số phòng đã tạo",
+        "actions": "Hành động",
+        "delete": "Xóa",
+        "userFilters": "Bộ lọc người dùng",
+        "allUsers": "Tất cả người dùng",
+        "overMinUsers": "Người dùng có ít nhất",
+        "createdRoomsSuffix": "phòng đã tạo",
+        "inactiveUsers": "Người dùng không hoạt động (Không có phòng đã tạo hoặc tham gia)",
+        "previous": "Trước",
+        "next": "Tiếp",
+        "banning": "Đang cấm...",
+        "ban": "Cấm"
+    },
+    "setupVoucher": {
+        "rewardTypeLabel": "Loại phần thưởng:",
+        "selectRewardType": "-- Chọn loại phần thưởng --",
+        "ticket": "Vé",
+        "voucher": "Phiếu giảm giá",
+        "ticketNameLabel": "Tên vé:",
+        "ticketNamePlaceholder": "Tên vé",
+        "ticketInfoLabel": "Thông tin vé:",
+        "ticketInfoPlaceholder": "Mô tả vé",
+        "ticketImageLabel": "Hình ảnh vé:",
+        "expirationDateLabel": "Ngày hết hạn:",
+        "voucherNameLabel": "Tên phiếu giảm giá:",
+        "voucherNamePlaceholder": "Tên phiếu giảm giá",
+        "voucherValueLabel": "Giá trị phiếu giảm giá:",
+        "voucherValuePlaceholder": "Giá trị phiếu giảm giá",
+        "voucherInfoLabel": "Thông tin phiếu giảm giá:",
+        "voucherInfoPlaceholder": "Mô tả phiếu giảm giá",
+        "saveButton": "Lưu",
+        "closeButton": "Đóng",
+        "setupSuccess": "Thiết lập phần thưởng thành công!",
+        "setupFailure": "Thiết lập phần thưởng thất bại."
+    },
+    "navigationBottom": {
+        "vouchers": "Hộp quà",
+        "game": "Phòng game",
+        "myAccount": "Tài khoản",
+        "home": "Trang chủ"
+    },
+    "languagePrompt": {
+        "selectLanguage": "Chọn ngôn ngữ"
+    },
+    "languageSwitcher": {
+        "selectLanguage": "言語を選択",
+        "english": "English",
+        "vietnamese": "Tiếng Việt",
+        "japanese": "日本語"
+    },
+    "confirmDelete": {
+        "title": "Xác nhận xóa",
+        "message": "Bạn có chắc chắn muốn xóa tài khoản của mình không? Hành động này không thể hoàn tác.",
+        "cancel": "Hủy",
+        "delete": "Xóa",
+        "button": "Xóa tài khoản"
+    },
+    "NotFoundPage": {
+        "message": "Trang không tồn tại!",
+        "goback": "Quay lại"
+    },
+    "homepage": {
+        "header": {
+            "logo": "TEKUTOKO",
+            "menu": {
+                "home": "Trang chủ",
+                "introduction": "Giới thiệu",
+                "benefits": "Lợi ích",
+                "features": "Tính năng",
+                "sample": "Mẫu",
+                "faq": "Hỏi đáp",
+                "contact": "Liên hệ"
+            },
+            "languages": {
+                "en": "English",
+                "vi": "Tiếng Việt",
+                "ja": "日本語"
+            }
+        },
+        "hero": {
+            "title": "Nền tảng tương tác, dễ dàng và thú vị cho",
+            "titleHighlight": "Tổ chức & Tham gia sự kiện!",
+            "description": "Tham gia ngay và đừng bỏ lỡ những trải nghiệm tuyệt vời!",
+            "cta": "Tham gia ngay"
+        },
+        "introduction": {
+            "quote": "Tekutoko là nền tảng tối ưu để tăng cường sự tương tác của khách hàng và xây dựng lòng trung thành bền vững. Bằng cách tạo ra những trải nghiệm tương tác, đáng nhớ, nó giúp doanh nghiệp phát triển chiến lược mạnh mẽ hơn, mở rộng phạm vi tiếp cận và thúc đẩy tăng trưởng doanh số."
+        },
+        "features": {
+            "title": "Bạn có thể làm gì với Tekutoko?",
+            "description": "Với Tekutoko, bạn có thể tổ chức và tham gia các trò chơi tương tác thú vị giúp mọi trải nghiệm trở nên hấp dẫn và vui vẻ hơn.",
+            "items": {
+                "photoHunt": {
+                    "title": "Săn ảnh theo nhiệm vụ",
+                    "description": "Chụp & tải lên ảnh để hoàn thành thử thách."
+                },
+                "stampCollection": {
+                    "title": "Trò chơi sưu tập tem",
+                    "description": "Thu thập tem và đạt được mục tiêu."
+                },
+                "riddleChallenge": {
+                    "title": "Thử thách giải đố",
+                    "description": "Giải câu đố và câu hỏi để tiến bộ."
+                },
+                "missionLog": {
+                    "title": "Nhật ký nhiệm vụ",
+                    "description": "Hoàn thành thử thách thú vị và tải lên kết quả."
+                },
+                "workflowSubmission": {
+                    "title": "Nộp báo cáo công việc",
+                    "description": "Nộp báo cáo và theo dõi nhiệm vụ công việc dễ dàng."
+                },
+                "homeworkSubmission": {
+                    "title": "Nộp bài tập",
+                    "description": "Tải lên và theo dõi bài tập một cách dễ dàng!"
+                }
+            }
+        },
+        "detailedFeatures": {
+            "title": "Tính năng nổi bật",
+            "description": "Khám phá những tính năng làm cho Tekutoko trở nên độc đáo và hữu ích cho cả người tổ chức sự kiện và người tham gia.",
+            "items": {
+                "eventOrganization": {
+                    "title": "Tổ chức & Tham gia sự kiện dễ dàng",
+                    "description": "Tạo sự kiện với các nhiệm vụ hấp dẫn, quản lý người tham gia và theo dõi tiến độ một cách dễ dàng.",
+                    "points": [
+                        "Tạo nhiệm vụ đa dạng",
+                        "Quản lý người tham gia",
+                        "Theo dõi thời gian thực"
+                    ]
+                },
+                "exclusiveRewards": {
+                    "title": "Phần thưởng & Lợi ích độc quyền",
+                    "description": "Tham gia sự kiện để nhận quà tặng, mã giảm giá và nhiều ưu đãi hấp dẫn khác.",
+                    "points": [
+                        "Quà tặng sự kiện",
+                        "Mã giảm giá độc quyền",
+                        "Huy hiệu thành tích"
+                    ]
+                },
+                "eventTracking": {
+                    "title": "Theo dõi & Chia sẻ sự kiện dễ dàng",
+                    "description": "Dễ dàng tìm kiếm, theo dõi và chia sẻ các sự kiện yêu thích với bạn bè và cộng đồng.",
+                    "points": [
+                        "Chia sẻ mạng xã hội",
+                        "Tìm kiếm sự kiện dễ dàng",
+                        "Theo dõi người tổ chức"
+                    ]
+                }
+            },
+            "cta": {
+                "title": "Sẵn sàng trải nghiệm Tekutoko?",
+                "description": "Tham gia cùng hàng nghìn người dùng tạo ra những trải nghiệm tương tác tuyệt vời",
+                "button": "Bắt đầu ngay"
+            },
+            "exploreButton": "Khám phá tính năng",
+            "featureLabel": "Tính năng"
+        },
+        "faq": {
+            "title": "Câu hỏi thường gặp",
+            "items": {
+                "createEvent": {
+                    "question": "Làm thế nào để tạo một sự kiện?",
+                    "answer": "Sau khi đăng nhập, bạn có thể nhấp vào nút 'Tạo sự kiện' để bắt đầu quá trình tạo và tùy chỉnh sự kiện của mình."
+                },
+                "getRewards": {
+                    "question": "Làm thế nào để tham gia và nhận phần thưởng?",
+                    "answer": "Tham gia các hoạt động và sự kiện trên website để nhận được những phần thưởng hấp dẫn. Bạn có thể nhận phần thưởng qua mã QR trong phần 'Phần thưởng'."
+                },
+                "forgotPassword": {
+                    "question": "Nếu tôi quên mật khẩu thì sao?",
+                    "answer": "Tại trang đăng nhập, nhấp vào 'Quên mật khẩu', chúng tôi sẽ gửi email cho bạn để đặt lại mật khẩu."
+                }
+            }
+        },
+        "footer": {
+            "contact": {
+                "title": "Liên hệ với chúng tôi",
+                "email": "tekutoko.services@gmail.com",
+                "phone": "865638884"
+            },
+            "copyright": "© 2024-2025 TEKUTOKO. Tất cả quyền được bảo lưu.",
+            "links": {
+                "privacy": "Chính sách bảo mật",
+                "terms": "Điều khoản dịch vụ"
+            }
+        }
+    },
+    "alert": {
+        "timeout": "Yêu cầu đã hết hạn, hãy kiểm tra lại kết nối internet!",
+        "limitUpload": "Bạn chỉ có thể tải lên tối đa {{limit}} hình ảnh.",
+        "login": {
+            "incorrect": "Tên đăng nhập hoặc mật khẩu không đúng!",
+            "banned": "Tài khoản của bạn đã bị cấm!",
+            "loginFailed": "Đăng nhập thất bại!",
+            "notFound": "Tài khoản không tồn tại!"
+        },
+        "signUp": {
+            "emailExists": "Email đã tồn tại!",
+            "signupFailed": "Đăng ký thất bại!",
+            "banned": "Người dùng đã bị cấm và không thể đăng ký!",
+            "signupSuccess": "Đăng ký thành công! Vui lòng đăng nhập lại!"
+        },
+        "room": {
+            "deleteSuccess": "Phòng đã được xóa thành công!",
+            "leaveSuccess": "Bạn đã rời phòng thành công!",
+            "noFilesUploaded": "Không có tệp nào được tải lên!",
+            "databaseError": "Lỗi cơ sở dữ liệu!",
+            "roomNotExist": "Phòng không tồn tại!",
+            "firebaseError": "Lỗi khi tải lên tệp lên máy chủ!",
+            "giftsSentToUserSuccessfully": "Quà đã được gửi đến người dùng thành công!"
+        },
+        "setupVoucher": {
+            "errorCompressingImage": "Lỗi nén hình ảnh!",
+            "errorDeletingVoucher": "Lỗi xóa voucher cũ ra khỏi phòng!",
+            "expirationDateError": "Ngày hết hạn không hợp lệ!"
+        },
+        "report": {
+            "reportSuccess": "Báo cáo đã được gửi thành công!",
+            "reportFailed": "Lỗi khi gửi báo cáo!",
+            "reportExists": "Bạn đã báo cáo người này trước đó!",
+            "notChooseReason": "Chưa chọn lý do báo cáo"
+        }
+    },
+    "reportForm": {
+        "title": "Báo cáo",
+        "reason": "Lý do báo cáo",
+        "additionalInfo": "Thông tin bổ sung (255 ký tự)",
+        "submit": "Gửi báo cáo",
+        "cancel": "Hủy",
+        "inappropriate": "Nội dung không phù hợp",
+        "harassment": "Quấy rối, quyền riêng tư",
+        "spam": "Lừa đảo, gây thù địch",
+        "other": "Khác"
+    },
+    "reportManager": {
+        "title": "Quản lý báo cáo",
+        "reportList": "Danh sách báo cáo",
+        "reportID": "ID báo cáo",
+        "reportedUser": "Người bị báo cáo",
+        "reportReason": "Lý do báo cáo",
+        "actions": "Hành động",
+        "view": "Xem",
+        "ban": "Cấm",
+        "remove": "Xóa phòng",
+        "roomId": "ID phòng",
+        "delete": "Xóa báo cáo"
+    }
+}

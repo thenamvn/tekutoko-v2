@@ -1,0 +1,2651 @@
+// server.js
+const path = require("path");
+const dotenv = require('dotenv');
+const express = require("express");
+const mysql = require("mysql2");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const app = express();
+const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const multer = require("multer");
+const nodeMailer = require("nodemailer");
+// const favicon = require("serve-favicon");
+const { getStorage, ref, uploadBytes, getDownloadURL ,deleteObject} = require("firebase/storage");
+const { initializeApp } = require("firebase/app");
+const { v4: uuidv4 } = require('uuid');
+
+const PORT = 3000;
+// Cấu hình CORS
+app.use(cors({
+  origin: ['https://jptravelz.web.app', 'http://localhost'], // Allow specific domains
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+app.options('*', cors()); // Preflight request handler for all routes
+
+// Load environment variables from .env file
+const envPath = path.resolve(__dirname, '.env');
+dotenv.config({ path: envPath });
+
+app.use(bodyParser.json());
+// app.use(favicon(path.join(__dirname, 'public', 'favicon.webp')));
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+  port: process.env.DB_PORT,
+});
+
+function isFirebasePath(path) {
+  // Firebase paths không được bắt đầu với "http" hoặc "https" và nên là đường dẫn tương đối.
+  return !path.startsWith('http') && path.includes('/');
+}
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+};
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const storage = getStorage(firebaseApp);
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Define the directory path
+const uploadDir = path.join(__dirname, 'public', 'uploads');
+
+// Check if the directory exists
+if (!fs.existsSync(uploadDir)) {
+  // Create the directory
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const transporter = nodeMailer.createTransport({
+  host: 'smtp.gmail.com',
+  // port: 587,
+  port: 465,
+  secure: true,
+  // requireTLS: true,
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
+
+function sendEmail(email, subject, text, html) {
+  const mailOptions = {
+    from: `TEKUTOKO <${process.env.EMAIL}>`,
+    to: email,
+    subject: subject,
+    text: text,
+    html: html, // Add the html property
+  };
+
+  return new Promise((resolve, reject) => {
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log(error);
+        reject(error);
+      } else {
+        console.log("Email sent: " + info.response);
+        resolve(info);
+      }
+    });
+  });
+}
+
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
+
+app.post('/upload', upload.array('file'), async (req, res) => {
+  const files = req.files;
+  const room_id = req.body.room_id;
+  const uploader_username = req.body.uploader_username;
+
+  if (!files || files.length === 0) {
+    return res.status(400).json({ error: 'No files were uploaded.' });
+  }
+
+  // Check if the room exists
+  pool.query('SELECT * FROM room WHERE room_id = ?', [room_id], async (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (results.length === 0) {
+      return res.status(400).json({ error: 'Room does not exist.' });
+    }
+
+    // Upload files to Firebase Storage and store URLs in the database
+    try {
+      const fileUrls = [];
+
+      for (const file of files) {
+        const uniqueFilename = `${uuidv4()}-${file.originalname}`;
+        const storageRef = ref(storage, `uploads/${room_id}/${uploader_username}/${uniqueFilename}`);
+        await uploadBytes(storageRef, file.buffer);
+        const downloadURL = await getDownloadURL(storageRef);
+        fileUrls.push(downloadURL);
+      }
+
+      const values = fileUrls.map(url => [room_id, uploader_username, url]);
+
+      const query = 'INSERT INTO images (room_id, uploader_username, image_path) VALUES ?';
+
+      pool.query(query, [values], (err, result) => {
+        if (err) {
+          console.error('Error inserting into images table:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+
+        const selectQuery = 'SELECT * FROM images WHERE room_id = ? AND uploader_username = ?';
+        pool.query(selectQuery, [room_id, uploader_username], (err, results) => {
+          if (err) {
+            console.error('Error fetching images:', err);
+            return res.status(500).json({ error: 'Database error' });
+          }
+          res.status(200).json({ images: results });
+        });
+      });
+    } catch (error) {
+      console.error('Error uploading to Firebase:', error);
+      return res.status(500).json({ error: 'Failed to upload files to Firebase' });
+    }
+  });
+});
+
+
+app.post("/sendemail", async (req, res) => {
+  const { email, subject, text, html } = req.body; // Accept html in the request body
+  try {
+    await sendEmail(email, subject, text, html);
+    res.json({ message: "Email sent successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to send email", error: error.message });
+  }
+});
+
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(403).json({
+      message: 'Access denied',
+    });
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    req.user = decoded;
+  } catch (err) {
+    const decoded = jwt.decode(token);
+    return res.status(401).json({
+      message: 'Invalid Token',
+    });
+  }
+  return next();
+};
+
+
+app.post('/createroom', (req, res) => {
+  const { id, admin_username } = req.body;
+
+  if (!id || !admin_username) {
+    return res.status(400).json({ error: 'Room ID and admin username are required.' });
+  }
+
+  const query = 'INSERT INTO room (room_id, admin_username) VALUES (?, ?)';
+
+  pool.query(query, [id, admin_username], (err, result) => {
+    if (err) {
+      console.error('Error inserting into room table:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    res.status(201).json({ message: 'Room created successfully.' });
+  });
+});
+
+app.post('/joinroom', (req, res) => {
+  const { id, username } = req.body;
+  if (!id || !username) {
+    return res.status(400).json({ error: 'Room ID and username are required.' });
+  }
+  const query = 'INSERT INTO room_users (room_id, username) VALUES (?, ?)';
+  pool.query(query, [id, username], (err, result) => {
+    if (err) {
+      console.error('Error inserting into room_users table:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.status(201).json({ message: 'Joined room successfully.' });
+  });
+});
+
+app.get('/room/:username', (req, res) => {
+  const username = req.params.username;
+
+  if (!username) {
+    res.status(400).send('Username not provided');
+    return;
+  }
+
+  // Lấy danh sách các room mà user đã tạo và các room mà user đã tham gia
+  const query = `
+    SELECT r.room_id, r.room_title, 'hostedroom' as role
+    FROM room r
+    WHERE r.admin_username = ?
+
+    UNION
+
+    SELECT ru.room_id, r.room_title, 'joinedroom' as role
+    FROM room_users ru
+    JOIN room r ON ru.room_id = r.room_id
+    WHERE ru.username = ?
+  `;
+
+  pool.query(query, [username, username], (err, results) => {
+    if (err) {
+      console.error('Error fetching rooms:', err);
+      res.status(500).send('Server error');
+      return;
+    }
+
+    res.json({ rooms: results });
+  });
+});
+
+
+
+// Get room details by ID
+app.get('/room/:id/info', (req, res) => {
+  const roomId = req.params.id;
+
+  const query = `
+    SELECT r.room_id, r.room_title, r.admin_username, u.fullname,(u.id + 1093046400) AS id
+    FROM room r
+    JOIN users u ON r.admin_username = u.username
+    WHERE r.room_id = ?
+  `;
+
+  pool.query(query, [roomId], (err, results) => {
+    if (err) {
+      console.error('Error fetching room details:', err);
+      res.status(500).json({ error: 'Internal server error' });
+      return;
+    }
+
+    if (results.length === 0) {
+      res.status(404).json({ error: 'Room not found' });
+      return;
+    }
+
+    res.json(results[0]);
+  });
+});
+
+app.get('/room/:id/submited', (req, res) => {
+  const roomId = req.params.id;
+
+  const query = `
+    SELECT su.username, u.fullname
+    FROM submitedusers su
+    JOIN users u ON su.username = u.username
+    WHERE su.room_id = ?
+  `;
+
+  pool.query(query, [roomId], (err, results) => {
+    if (err) {
+      console.error('Error fetching submitted users:', err);
+      res.status(500).json({ error: 'Internal server error' });
+      return;
+    }
+
+    if (results.length === 0) {
+      // res.status(404).json({ error: 'No submitted users found for this room' });
+      res.json({}); // Return an empty JSON object
+      return;
+    }
+
+    res.json(results);
+  });
+});
+
+app.post('/submit', (req, res) => {
+  const { id, username } = req.body;
+  if (!id || !username) {
+    return res.status(400).json({ error: 'Room ID and username are required.' });
+  }
+  const query = 'INSERT INTO submitedusers (room_id, username) VALUES (?, ?)';
+  pool.query(query, [id, username], (err, result) => {
+    if (err) {
+      console.error('Error inserting into room table:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.status(201).json({ message: 'Submited.' });
+  });
+}
+);
+
+// Get images for a room uploaded by the admin
+app.get('/room/:id/images', (req, res) => {
+  const roomId = req.params.id;
+
+  const query = `
+    SELECT i.image_id, i.room_id, i.uploader_username, i.image_path, i.uploaded_at
+    FROM images i
+    JOIN room r ON i.room_id = r.room_id
+    WHERE i.room_id = ? AND i.uploader_username = r.admin_username
+  `;
+
+  pool.query(query, [roomId], (err, results) => {
+    if (err) {
+      console.error('Error fetching images:', err);
+      res.status(500).send('Server error');
+      return;
+    }
+    res.json(results);
+  });
+});
+
+// Get images for a room uploaded by user
+app.get('/room/:id/userimages', (req, res) => {
+  const roomId = req.params.id;
+  const username = req.query.username;
+  pool.query('SELECT * FROM images WHERE room_id = ? AND uploader_username = ?', [roomId, username], (err, results) => {
+    if (err) {
+      console.error('Error fetching images:', err);
+      res.status(500).send('Server error');
+      return;
+    }
+    res.json(results);
+  }
+  );
+});
+
+app.get('/room/:id/jobs', (req, res) => {
+  const roomId = req.params.id;
+  pool.query('SELECT * FROM job WHERE room_id = ?', [roomId], (err, results) => {
+    if (err) {
+      console.error('Error fetching jobs:', err);
+      res.status(500).send('Server error');
+      return;
+    }
+    res.json(results);
+  });
+});
+
+
+app.post("/upload_job",verifyToken,(req,res)=>{
+  const room_id = req.body.room_id;
+  const job_description = req.body.job;
+  const job_owner = req.body.job_owner;
+  // Check if the authenticated user matches the username from the body
+  if (req.user.username !== job_owner) {
+    return res.status(403).send('You are not authorized to perform this action');
+  }
+  const query = 'INSERT INTO job (room_id, job_description, job_owner) VALUES (?, ?, ?)';
+  pool.query(query, [room_id, job_description, job_owner], (err, result) => {
+    if (err) {
+      console.error('Error inserting into job table:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.status(200).json({ message: 'Job created successfully.' });
+  });
+});
+
+app.post("/signup", (req, res) => {
+  const fullname = req.body.fullname;
+  const username = req.body.username;
+  const password = req.body.password;
+
+  pool.query(
+    "INSERT INTO users (fullname, username, password) VALUES (?, ?, ?)",
+    [fullname, username, password],
+    function (error, results, fields) {
+      if (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+          res.json({ success: false, message: "Username already exists!" });
+        } else {
+          res.json({
+            success: false,
+            message: "An error occurred during registration.",
+          });
+        }
+      } else {
+        res.json({ success: true, message: "User registered successfully! Please login again!" });
+      }
+    }
+  );
+});
+
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+
+  pool.query(
+    "SELECT * FROM users WHERE username = ?",
+    [username],
+    function (error, results, fields) {
+      if (error) throw error;
+
+      if (results.length > 0) {
+        if (password === results[0].password) {
+          // Create a token
+          const token = jwt.sign(
+            { username: username },
+            process.env.SECRET_KEY,
+            { expiresIn: "1d" }
+          );
+          res.json({
+            success: true,
+            message: "Logged in successfully",
+            token: token,
+            fullname: results[0].fullname,
+            username: results[0].username,
+            id: results[0].id + 1093046400,
+          });
+        } else {
+          res.json({
+            success: false,
+            message: "Incorrect Username and/or Password!",
+          });
+        }
+      } else {
+        res.json({
+          success: false,
+          message: "Username not found! Please register!",
+        });
+      }
+    }
+  );
+});
+
+app.post("/google-login", (req, res) => {
+  const { username, fullname, picture } = req.body; // Nhận thông tin từ request body
+
+  // Kiểm tra xem người dùng đã tồn tại trong bảng users chưa
+  pool.query(
+    "SELECT * FROM users WHERE username = ?",
+    [username],
+    function (error, results) {
+      if (error) {
+        console.error("Database query error:", error);
+        return res.status(500).json({ success: false, message: "Database query error." });
+      }
+
+      if (results.length > 0) {
+        // Username đã tồn tại, trả về JWT token
+        const token = jwt.sign(
+          { username: username },
+          process.env.SECRET_KEY,
+          { expiresIn: "1d" }
+        );
+
+        res.json({
+          success: true,
+          message: "Logged in successfully with Google",
+          token: token,
+          fullname: results[0].fullname,
+          username: results[0].username,
+          id: results[0].id + 1093046400,
+        });
+      } else {
+        // Username chưa tồn tại, thực hiện đăng ký
+        const randomPassword = uuidv4(); // Tạo mật khẩu ngẫu nhiên
+        pool.query(
+          "INSERT INTO users (fullname, username, password) VALUES (?, ?, ?)",
+          [fullname, username, randomPassword], // Thêm vào bảng users
+          function (error, results) {
+            if (error) {
+              console.error("Database insert error:", error);
+              return res.status(500).json({ success: false, message: "An error occurred during registration." });
+            }
+
+            // Sau khi thêm vào bảng users, thêm vào bảng UserProfile
+            pool.query(
+              "INSERT INTO UserProfile (username, avatarImage) VALUES (?, ?)",
+              [username, picture], // Thêm vào bảng UserProfile
+              function (error) {
+                if (error) {
+                  console.error("Database insert error for UserProfile:", error);
+                  return res.status(500).json({ success: false, message: "An error occurred while creating user profile." });
+                }
+
+                // Tạo JWT token cho người dùng mới
+                const token = jwt.sign(
+                  { username: username },
+                  process.env.SECRET_KEY,
+                  { expiresIn: "1d" }
+                );
+                res.json({
+                  success: true,
+                  message: "Registered and logged in successfully with Google",
+                  token: token,
+                  fullname: fullname,
+                  username: username,
+                  id: results.insertId + 1093046400,
+                });
+              }
+            );
+          }
+        );
+      }
+    }
+  );
+});
+
+
+app.post("/adminlogin", (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+
+  pool.query(
+    "SELECT * FROM admin_account WHERE username = ?",
+    [username],
+    function (error, results, fields) {
+      if (error) throw error;
+
+      if (results.length > 0) {
+        if (password === results[0].password) {
+          // Create a token
+          const token = jwt.sign(
+            { username: username },
+            process.env.SECRET_KEY,
+            { expiresIn: "7d" }
+          );
+
+          // Send success message along with the token
+          res.json({
+            success: true,
+            message: "Logged in successfully",
+            token: token,
+            fullname: results[0].fullname,
+            username: results[0].username,
+          });
+        } else {
+          res.json({
+            success: false,
+            message: "Incorrect Username and/or Password!",
+          });
+        }
+      } else {
+        res.json({
+          success: false,
+          message: "Username not found! Please register!",
+        });
+      }
+    }
+  );
+});
+
+app.post("/verify-token", (req, res) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (token == null) {
+    return res.sendStatus(401); // If there's no token, return 401 (Unauthorized)
+  }
+
+  jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
+    if (err) {
+      return res.json({ success: false, message: "Token not valid" }); // If the token is not valid, return an error message
+    }
+
+    return res.json({ success: true, message: "Token is valid",user }); // If the token is valid, return a success message
+  });
+});
+
+//update room title
+app.put('/host/room/update-title/:id', verifyToken, (req, res) => {
+  const roomId = req.params.id;
+  const { room_title, username } = req.body;
+
+  // Check if the user is authorized to update the fullname
+  if (req.user.username !== username) {
+    return res.status(403).send('You are not authorized to update this fullname');
+  }
+  // Check if the room title is provided
+  if (!room_title) {
+    return res.status(400).send('Room title is required');
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting connection:', err);
+      return res.status(500).send('Server error');
+    }
+
+    // Verify that the user is the admin of the room
+    const verifyAdminQuery = 'SELECT admin_username FROM room WHERE room_id = ?';
+    connection.query(verifyAdminQuery, [roomId], (err, results) => {
+      if (err) {
+        connection.release();
+        console.error('Error verifying admin:', err);
+        return res.status(500).json({ error: 'Server error' });
+      }
+
+      if (results.length === 0) {
+        connection.release();
+        return res.status(404).json({ message: 'Room not found' });
+      }
+
+      const adminUsername = results[0].admin_username;
+      if (adminUsername !== username) {
+        connection.release();
+        return res.status(403).send('You are not authorized to update this room title');
+      }
+
+      // Proceed with updating the room title
+      const updateQuery = 'UPDATE room SET room_title = ? WHERE room_id = ?';
+      connection.query(updateQuery, [room_title, roomId], (err, results) => {
+        connection.release();
+
+        if (err) {
+          console.error('Error updating room title:', err);
+          return res.status(500).json({ error: 'Server error' });
+        }
+
+        if (results.affectedRows === 0) {
+          return res.status(404).json({ message: 'Room not found' });
+        }
+
+        res.json({ message: 'Room title updated successfully' });
+      });
+    });
+  });
+});
+
+//update password for user
+app.put('/user/update/password/:username', verifyToken, (req, res) => {
+  const username = req.params.username;
+  const password = req.body.password;
+
+  // Check if the user is authorized to update the password
+  if (req.user.username !== username) {
+    return res.status(403).send('You are not authorized to update this password');
+  }
+
+  pool.query('UPDATE users SET password = ? WHERE username = ?', [password, username], (err, results) => {
+    if (err) {
+      console.error('Error updating user:', err);
+      res.status(500).send('Server error');
+      return;
+    }
+    res.send('Password updated successfully.Please login again!');
+  });
+});
+
+//update fullname for user
+app.put('/user/update/fullname/:username', verifyToken, (req, res) => {
+  const username = req.params.username;
+  const fullname = req.body.fullname;
+
+  // Check if the user is authorized to update the fullname
+  if (req.user.username !== username) {
+    return res.status(403).send('You are not authorized to update this fullname');
+  }
+
+  pool.query('UPDATE users SET fullname = ? WHERE username = ?', [fullname, username], (err, results) => {
+    if (err) {
+      console.error('Error updating user:', err);
+      res.status(500).send('Server error');
+      return;
+    }
+    res.send('Fullname updated successfully');
+  });
+});
+
+//reward
+// Add a new reward
+app.post('/reward', (req, res) => {
+  const { room_id, username, gift, used, gift_expiration } = req.body;
+
+  pool.query('INSERT INTO reward (room_id, username, gift, used, gift_expiration) VALUES (?, ?, ?, ?, ?)', 
+    [room_id, username, gift, used, gift_expiration], (err, results) => {
+    if (err) {
+      console.error('Error adding reward:', err);
+      return res.status(500).json({ error: 'Server error' });
+    }
+    res.status(201).json({ message: 'Reward added successfully' });
+  });
+});
+
+
+// Check if a record exists in denyjob by room_id and username
+app.get('/denycheck/:room_id/:username', (req, res) => {
+  const room_id = req.params.room_id;
+  const username = req.params.username;
+
+  pool.query('SELECT * FROM denyjob WHERE room_id = ? AND username = ?', [room_id, username], (err, results) => {
+    if (err) {
+      console.error('Error checking denyjob record:', err);
+      return res.status(500).send('Server error');
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send('Record not found');
+    }
+
+    res.status(200).json({ message: 'Denied' });
+  });
+});
+
+// Add denyjob record
+app.post('/denyjob', (req, res) => {
+  const { room_id, username } = req.body;
+
+  if (!room_id || !username) {
+    console.error('Missing room_id or username in request body');
+    return res.status(400).send('Bad Request: Missing room_id or username');
+  }
+
+  pool.query('INSERT INTO denyjob (room_id, username) VALUES (?, ?)', [room_id, username], (err, results) => {
+    if (err) {
+      console.error('Error adding denyjob record:', err);
+      return res.status(500).send('Server error');
+    }
+
+    res.status(201).send('Denied');
+  });
+});
+
+app.delete('/deletedeny/:room_id/:username', (req, res) => {
+  const room_id = req.params.room_id;
+  const username = req.params.username;
+
+  pool.query('DELETE FROM denyjob WHERE room_id = ? AND username = ?', [room_id, username], (err, results) => {
+    if (err) {
+      console.error('Error deleting denyjob record:', err);
+      return res.status(500).send('Server error');
+    }
+
+    res.status(200).send('Record deleted successfully');
+  });
+});
+
+//admin
+
+// Get sum of rooms and empty rooms
+app.get('/admin/room/dashboard', (req, res) => {
+  // Query 1: Total number of rooms
+  pool.query('SELECT COUNT(*) AS total_rooms FROM room', (err, totalRoomsResult) => {
+    if (err) {
+      console.error('Error fetching total rooms:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    const totalRooms = totalRoomsResult[0]?.total_rooms || 0;
+
+    // Query 2: Total number of empty rooms
+    pool.query(`
+      SELECT COUNT(*) AS empty_rooms 
+      FROM room r 
+      LEFT JOIN room_users ru ON r.room_id = ru.room_id 
+      WHERE ru.room_id IS NULL
+    `, (err, emptyRoomsResult) => {
+      if (err) {
+        console.error('Error fetching empty rooms:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+      const emptyRooms = emptyRoomsResult[0]?.empty_rooms || 0;
+
+      // Return the result
+      res.json({ total_rooms: totalRooms, empty_rooms: emptyRooms });
+    });
+  });
+});
+
+//api to delete a user from submitedusers table
+app.delete('/host/delete/submiteduser/:room_id/:username', (req, res) => {
+  const room_id = req.params.room_id;
+  const username = req.params.username;
+
+  pool.query('DELETE FROM submitedusers WHERE room_id = ? AND username = ?', [room_id, username], (err, results) => {
+    if (err) {
+      console.error('Error deleting submitted user:', err);
+      return res.status(500).send('Server error');
+    }
+
+    res.status(200).send('User deleted successfully');
+  });
+});
+
+// API to get total number of users and active users
+app.get('/admin/user/dashboard', (req, res) => {
+  // Query 1: Total number of users
+  pool.query('SELECT COUNT(*) AS total_users FROM users', (err, totalUsersResult) => {
+    if (err) {
+      console.error('Error fetching total users:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    const totalUsers = totalUsersResult[0]?.total_users || 0;
+
+    // Query 2: Total number of active users
+    pool.query(`
+      SELECT COUNT(DISTINCT u.username) AS active_users
+      FROM users u
+      LEFT JOIN room r ON u.username = r.admin_username
+      LEFT JOIN room_users ru ON u.username = ru.username
+      WHERE r.admin_username IS NOT NULL OR ru.username IS NOT NULL
+    `, (err, activeUsersResult) => {
+      if (err) {
+        console.error('Error fetching active users:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+      const activeUsers = activeUsersResult[0]?.active_users || 0;
+
+      // Return the result
+      res.json({ total_users: totalUsers, active_users: activeUsers });
+    });
+  });
+});
+
+
+// Tạo endpoint để lấy danh sách các phòng với phân trang
+app.get('/admin/roommanager', (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
+  const search = req.query.search || '';
+  const filter = req.query.filter || 'all';
+  const maxPlayers = parseInt(req.query.maxPlayers) || 10;
+
+  let baseQuery = `
+    FROM room 
+    LEFT JOIN room_users ON room.room_id = room_users.room_id 
+    LEFT JOIN users ON room.admin_username = users.username
+  `;
+
+  let whereClauses = [];
+  if (search) {
+    whereClauses.push(`(room.room_id LIKE ? OR users.fullname LIKE ? OR room.admin_username LIKE ?)`);
+  }
+  if (filter === 'empty') {
+    whereClauses.push(`room.room_id NOT IN (SELECT room_id FROM room_users)`);
+  } else if (filter === 'over_max') {
+    whereClauses.push(`(SELECT COUNT(*) FROM room_users WHERE room_users.room_id = room.room_id) > ?`);
+  }
+
+  let whereClause = '';
+  if (whereClauses.length > 0) {
+    whereClause = ' WHERE ' + whereClauses.join(' AND ');
+  }
+
+  let query = `
+    SELECT 
+      room.room_id, 
+      room.admin_username AS room_owner, 
+      users.fullname AS admin_fullname,
+      COUNT(room_users.username) AS room_members 
+    ${baseQuery}
+    ${whereClause}
+    GROUP BY room.room_id, room.admin_username, users.fullname
+    LIMIT ?, ?;
+  `;
+
+  let countQuery = `
+    SELECT COUNT(DISTINCT room.room_id) AS total
+    ${baseQuery}
+    ${whereClause};
+  `;
+
+  const queryParams = [];
+  if (search) {
+    queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+  if (filter === 'over_max') {
+    queryParams.push(maxPlayers);
+  }
+  const countQueryParams = [...queryParams];
+  queryParams.push(offset, limit);
+
+  pool.query(countQuery, countQueryParams, (err, countResults) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    const total = countResults[0].total;
+
+    pool.query(query, queryParams, (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ rooms: results, total });
+    });
+  });
+});
+
+// lấy thông tin room có bao nhiêu member từ room_users
+app.get('/room/:id/members', (req, res) => {
+  const roomId = req.params.id;
+  const query = 'SELECT COUNT(*) AS members FROM room_users WHERE room_id = ?';
+  pool.query(query, [roomId], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    res.json(results[0]);
+  });
+});
+
+// lấy thông tin các users
+app.get('/admin/users', (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
+  const searchTerm = req.query.searchTerm || '';
+  const filterOption = req.query.filterOption || 'all';
+  const minCreatedRooms = parseInt(req.query.minCreatedRooms) || 1;
+
+  let baseQuery = `
+    SELECT 
+      u.fullname, 
+      u.username, 
+      (SELECT COUNT(*) FROM room_users ru WHERE ru.username = u.username) AS joined_rooms,
+      (SELECT COUNT(*) FROM room r WHERE r.admin_username = u.username) AS created_rooms
+    FROM users u
+  `;
+
+  let countQuery = `SELECT COUNT(*) AS total FROM users u`;
+  let whereConditions = [];
+  let queryParams = [];
+
+  // Add searchTerm filter
+  if (searchTerm) {
+    whereConditions.push(`u.fullname LIKE ? OR u.username LIKE ?`);
+    queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`);
+  }
+
+  // Add filterOption filter
+  if (filterOption === 'over_min') {
+    whereConditions.push(`(SELECT COUNT(*) FROM room r WHERE r.admin_username = u.username) >= ?`);
+    queryParams.push(minCreatedRooms);
+  } else if (filterOption === 'inactive') {
+    whereConditions.push(`(SELECT COUNT(*) FROM room r WHERE r.admin_username = u.username) = 0 AND (SELECT COUNT(*) FROM room_users ru WHERE ru.username = u.username) = 0`);
+  }
+
+  // Add WHERE clause if there are any conditions
+  if (whereConditions.length > 0) {
+    baseQuery += ` WHERE ${whereConditions.join(' AND ')}`;
+    countQuery += ` WHERE ${whereConditions.join(' AND ')}`;
+  }
+
+  // Add pagination to the query
+  baseQuery += ` LIMIT ?, ?`;
+  queryParams.push(offset, limit);
+
+  // Execute count query to get total number of users
+  pool.query(countQuery, queryParams.slice(0, queryParams.length - 2), (err, countResults) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    const total = countResults[0]?.total || 0;
+
+    // Execute main query to get list of users
+    pool.query(baseQuery, queryParams, (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ users: results, total });
+    });
+  });
+});
+
+
+// POST endpoint to add a rewarded user
+app.post('/rewarded_users', (req, res) => {
+  const { room_id, username } = req.body;
+
+  if (!room_id || !username) {
+    return res.status(400).send('room_id and username are required');
+  }
+
+  const query = 'INSERT INTO rewarded_users (room_id, username) VALUES (?, ?)';
+  pool.query(query, [room_id, username], (error, results) => {
+    if (error) {
+      console.error('Error inserting into rewarded_users table:', error);
+      return res.status(500).send('Internal Server Error');
+    }
+    res.status(201).send('User rewarded successfully');
+  });
+});
+
+// Route to check if user is rewarded
+app.get('/rewarded_users/check', (req, res) => {
+  const { room_id, username } = req.query;
+
+  if (!room_id || !username) {
+    return res.status(400).send('room_id and username are required');
+  }
+
+  const query = `
+    SELECT COUNT(*) AS count FROM (
+      SELECT room_id, username FROM rewarded_users WHERE room_id = ? AND username = ?
+      UNION
+      SELECT room_id, username FROM submitedusers WHERE room_id = ? AND username = ?
+    ) AS combined_results
+  `;
+
+  pool.query(query, [room_id, username, room_id, username], (error, results) => {
+    if (error) {
+      console.error('Error checking reward status:', error);
+      return res.status(500).send('Internal Server Error');
+    }
+    const isRewarded = results[0].count > 0;
+    res.status(200).json({ isRewarded });
+  });
+});
+
+// Delete a room and all related data
+// Delete a room and all related data
+app.delete('/delete/room/:id', async (req, res) => {
+  const roomId = req.params.id;
+
+  // Start a transaction
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting connection:', err);
+      res.status(500).send('Server error');
+      return;
+    }
+
+    connection.beginTransaction(async (err) => {
+      if (err) {
+        console.error('Error starting transaction:', err);
+        res.status(500).send('Server error');
+        return;
+      }
+
+      try {
+        // Get image paths from images table
+        connection.query('SELECT image_path FROM images WHERE room_id = ?', [roomId], async (err, results) => {
+          if (err) {
+            return connection.rollback(() => {
+              console.error('Error fetching images:', err);
+              res.status(500).send('Server error');
+            });
+          }
+
+          // Delete image files from file system
+          const deletePromises = results.map(async (row) => {
+            const imagePath = row.image_path;
+            const fileRef = ref(storage, imagePath);
+            try {
+              await deleteObject(fileRef);
+            } catch (error) {
+              if (error.code === 'storage/object-not-found') {
+                console.warn(`Image not found in Firebase Storage: ${imagePath}`);
+              } else {
+                throw error;
+              }
+            }
+          });
+
+          try {
+            await Promise.all(deletePromises);
+          } catch (error) {
+            return connection.rollback(() => {
+              console.error('Error deleting images:', error);
+              res.status(500).send('Server error');
+            });
+          }
+
+          // Delete from images table
+          connection.query('DELETE FROM images WHERE room_id = ?', [roomId], (err, results) => {
+            if (err) {
+              return connection.rollback(() => {
+                console.error('Error deleting images:', err);
+                res.status(500).send('Server error');
+              });
+            }
+
+            // Fetch voucher IDs related to roomId
+            connection.query('SELECT id FROM vouchers WHERE room_id = ?', [roomId], (err, voucherResults) => {
+              if (err) {
+                return connection.rollback(() => {
+                  console.error('Error fetching vouchers:', err);
+                  res.status(500).send('Server error');
+                });
+              }
+
+              const deletedVoucherIds = voucherResults.map(voucher => voucher.id); // Get voucher IDs before deleting
+
+              // Delete user_vouchers related to the vouchers
+              if (deletedVoucherIds.length > 0) {
+                connection.query('DELETE FROM user_vouchers WHERE voucher_id IN (?)', [deletedVoucherIds], (err, results) => {
+                  if (err) {
+                    return connection.rollback(() => {
+                      console.error('Error deleting user_vouchers:', err);
+                      res.status(500).send('Server error');
+                    });
+                  }
+
+                  // Delete vouchers
+                  connection.query('DELETE FROM vouchers WHERE room_id = ?', [roomId], (err, results) => {
+                    if (err) {
+                      return connection.rollback(() => {
+                        console.error('Error deleting vouchers:', err);
+                        res.status(500).send('Server error');
+                      });
+                    }
+
+                    // Continue deleting other related data
+                    connection.query('DELETE FROM rewarded_users WHERE room_id = ?', [roomId], (err, results) => {
+                      if (err) {
+                        return connection.rollback(() => {
+                          console.error('Error deleting rewarded_users:', err);
+                          res.status(500).send('Server error');
+                        });
+                      }
+
+                      // Delete from denyjob table
+                      connection.query('DELETE FROM denyjob WHERE room_id = ?', [roomId], (err, results) => {
+                        if (err) {
+                          return connection.rollback(() => {
+                            console.error('Error deleting denyjob:', err);
+                            res.status(500).send('Server error');
+                          });
+                        }
+
+                        // Delete from job table
+                        connection.query('DELETE FROM job WHERE room_id = ?', [roomId], (err, results) => {
+                          if (err) {
+                            return connection.rollback(() => {
+                              console.error('Error deleting jobs:', err);
+                              res.status(500).send('Server error');
+                            });
+                          }
+
+                          // Delete from room_users table
+                          connection.query('DELETE FROM room_users WHERE room_id = ?', [roomId], (err, results) => {
+                            if (err) {
+                              return connection.rollback(() => {
+                                console.error('Error deleting room_users:', err);
+                                res.status(500).send('Server error');
+                              });
+                            }
+
+                            // Delete from submitted_users table
+                            connection.query('DELETE FROM submitedusers WHERE room_id = ?', [roomId], (err, results) => {
+                              if (err) {
+                                return connection.rollback(() => {
+                                  console.error('Error deleting submitted_users:', err);
+                                  res.status(500).send('Server error');
+                                });
+                              }
+
+                              // Delete from room table
+                              connection.query('DELETE FROM room WHERE room_id = ?', [roomId], (err, results) => {
+                                if (err) {
+                                  return connection.rollback(() => {
+                                    console.error('Error deleting room:', err);
+                                    res.status(500).send('Server error');
+                                  });
+                                }
+
+                                // Commit the transaction
+                                connection.commit(err => {
+                                  if (err) {
+                                    return connection.rollback(() => {
+                                      console.error('Error committing transaction:', err);
+                                      res.status(500).send('Server error');
+                                    });
+                                  }
+
+                                  res.send('Room and related data deleted successfully');
+                                });
+                              });
+                            });
+                          });
+                        });
+                      });
+                    });
+                  });
+                });
+              } else {
+                // If no vouchers to delete, continue deleting other related data
+                connection.query('DELETE FROM rewarded_users WHERE room_id = ?', [roomId], (err, results) => {
+                  if (err) {
+                    return connection.rollback(() => {
+                      console.error('Error deleting rewarded_users:', err);
+                      res.status(500).send('Server error');
+                    });
+                  }
+
+                  // Delete from denyjob table
+                  connection.query('DELETE FROM denyjob WHERE room_id = ?', [roomId], (err, results) => {
+                    if (err) {
+                      return connection.rollback(() => {
+                        console.error('Error deleting denyjob:', err);
+                        res.status(500).send('Server error');
+                      });
+                    }
+
+                    // Delete from job table
+                    connection.query('DELETE FROM job WHERE room_id = ?', [roomId], (err, results) => {
+                      if (err) {
+                        return connection.rollback(() => {
+                          console.error('Error deleting jobs:', err);
+                          res.status(500).send('Server error');
+                        });
+                      }
+
+                      // Delete from room_users table
+                      connection.query('DELETE FROM room_users WHERE room_id = ?', [roomId], (err, results) => {
+                        if (err) {
+                          return connection.rollback(() => {
+                            console.error('Error deleting room_users:', err);
+                            res.status(500).send('Server error');
+                          });
+                        }
+
+                        // Delete from submitted_users table
+                        connection.query('DELETE FROM submitedusers WHERE room_id = ?', [roomId], (err, results) => {
+                          if (err) {
+                            return connection.rollback(() => {
+                              console.error('Error deleting submitted_users:', err);
+                              res.status(500).send('Server error');
+                            });
+                          }
+
+                          // Delete from room table
+                          connection.query('DELETE FROM room WHERE room_id = ?', [roomId], (err, results) => {
+                            if (err) {
+                              return connection.rollback(() => {
+                                console.error('Error deleting room:', err);
+                                res.status(500).send('Server error');
+                              });
+                            }
+
+                            // Commit the transaction
+                            connection.commit(err => {
+                              if (err) {
+                                return connection.rollback(() => {
+                                  console.error('Error committing transaction:', err);
+                                  res.status(500).send('Server error');
+                                });
+                              }
+
+                              res.send('Room and related data deleted successfully');
+                            });
+                          });
+                        });
+                      });
+                    });
+                  });
+                });
+              }
+            });
+          });
+        });
+      } catch (error) {
+        connection.rollback(() => {
+          console.error('Error during transaction:', error);
+          res.status(500).send('Server error');
+        });
+      }
+    });
+  });
+});
+
+
+// Delete a user and all related data
+app.delete('/user/delete/room/:id/:username', verifyToken, async (req, res) => {
+  const roomId = req.params.id;
+  const username = req.params.username;
+
+  // Check if the user is authorized to delete the room
+  if (req.user.username !== username) {
+    return res.status(403).json({ error: 'You are not authorized to delete this room' });
+  }
+
+  // Start a transaction
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting connection:', err);
+      return res.status(500).send('Server error');
+    }
+
+    connection.beginTransaction(async (err) => {
+      if (err) {
+        console.error('Error starting transaction:', err);
+        return res.status(500).send('Server error');
+      }
+
+      try {
+        // Get image paths from images table
+        connection.query('SELECT image_path FROM images WHERE room_id = ?', [roomId], async (err, results) => {
+          if (err) {
+            return connection.rollback(() => {
+              console.error('Error fetching images:', err);
+              res.status(500).send('Server error');
+            });
+          }
+
+          // Delete image files from file system
+          for (const row of results) {
+            const imagePath = row.image_path;
+            const fileRef = ref(storage, imagePath);
+            try {
+              await deleteObject(fileRef);
+            } catch (error) {
+              if (error.code === 'storage/object-not-found') {
+                console.warn(`File not found in Firebase Storage: ${imagePath}`);
+              } else {
+                throw error;
+              }
+            }
+          }
+
+          // Delete from images table
+          connection.query('DELETE FROM images WHERE room_id = ?', [roomId], (err, results) => {
+            if (err) {
+              return connection.rollback(() => {
+                console.error('Error deleting images:', err);
+                res.status(500).send('Server error');
+              });
+            }
+
+            // Delete from rewarded_users table
+            connection.query('DELETE FROM rewarded_users WHERE room_id = ?', [roomId], (err, results) => {
+              if (err) {
+                return connection.rollback(() => {
+                  console.error('Error deleting rewarded_users:', err);
+                  res.status(500).send('Server error');
+                });
+              }
+
+              // Delete from denyjob table
+              connection.query('DELETE FROM denyjob WHERE room_id = ?', [roomId], (err, results) => {
+                if (err) {
+                  return connection.rollback(() => {
+                    console.error('Error deleting denyjob:', err);
+                    res.status(500).send('Server error');
+                  });
+                }
+
+                // Delete from job table
+                connection.query('DELETE FROM job WHERE room_id = ?', [roomId], (err, results) => {
+                  if (err) {
+                    return connection.rollback(() => {
+                      console.error('Error deleting jobs:', err);
+                      res.status(500).send('Server error');
+                    });
+                  }
+
+                  // Delete from room_users table
+                  connection.query('DELETE FROM room_users WHERE room_id = ?', [roomId], (err, results) => {
+                    if (err) {
+                      return connection.rollback(() => {
+                        console.error('Error deleting room_users:', err);
+                        res.status(500).send('Server error');
+                      });
+                    }
+
+                    // Delete from submitted_users table
+                    connection.query('DELETE FROM submitedusers WHERE room_id = ?', [roomId], (err, results) => {
+                      if (err) {
+                        return connection.rollback(() => {
+                          console.error('Error deleting submitted_users:', err);
+                          res.status(500).send('Server error');
+                        });
+                      }
+
+                      // Delete from room table
+                      connection.query('DELETE FROM room WHERE room_id = ?', [roomId], (err, results) => {
+                        if (err) {
+                          return connection.rollback(() => {
+                            console.error('Error deleting room:', err);
+                            res.status(500).send('Server error');
+                          });
+                        }
+
+                        // Commit the transaction
+                        connection.commit(err => {
+                          if (err) {
+                            return connection.rollback(() => {
+                              console.error('Error committing transaction:', err);
+                              res.status(500).send('Server error');
+                            });
+                          }
+
+                          res.send('Room and related data deleted successfully');
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      } catch (error) {
+        connection.rollback(() => {
+          console.error('Error during transaction:', error);
+          res.status(500).send('Server error');
+        });
+      }
+    });
+  });
+});
+
+// Delete a user and all related data
+app.delete('/delete/user/:username', async (req, res) => {
+  const username = req.params.username;
+
+  // Start a transaction
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting connection:', err);
+      res.status(500).send('Server error');
+      return;
+    }
+
+    connection.beginTransaction(async (err) => {
+      if (err) {
+        console.error('Error starting transaction:', err);
+        res.status(500).send('Server error');
+        return;
+      }
+
+      try {
+        // Get image paths from UserProfile and images tables
+        connection.query('SELECT avatarImage, backgroundImage FROM UserProfile WHERE username = ?', [username], async (err, profileResults) => {
+          if (err) {
+            return connection.rollback(() => {
+              console.error('Error fetching profile images:', err);
+              res.status(500).send('Server error');
+            });
+          }
+
+          // Delete profile images from Firebase Storage
+          for (const row of profileResults) {
+            const avatarPath = row.avatarImage;
+            const backgroundPath = row.backgroundImage;
+
+            if (avatarPath && isFirebasePath(avatarPath)) {
+              const avatarFileRef = ref(storage, avatarPath);
+              await deleteObject(avatarFileRef);
+            }
+
+            if (backgroundPath && isFirebasePath(backgroundPath)) {
+              const backgroundFileRef = ref(storage, backgroundPath);
+              await deleteObject(backgroundFileRef);
+            }
+          }
+
+          // Get image paths from images table
+          connection.query('SELECT image_path FROM images WHERE uploader_username = ?', [username], async (err, imageResults) => {
+            if (err) {
+              return connection.rollback(() => {
+                console.error('Error fetching images:', err);
+                res.status(500).send('Server error');
+              });
+            }
+
+            // Delete image files from Firebase Storage for all images uploaded by the user
+            for (const row of imageResults) {
+              const imagePath = row.image_path;
+              if (imagePath) {
+                const fileRef = ref(storage, imagePath);
+                await deleteObject(fileRef);
+              }
+            }
+
+            // Delete from images table
+            connection.query('DELETE FROM images WHERE uploader_username = ?', [username], (err, results) => {
+              if (err) {
+                return connection.rollback(() => {
+                  console.error('Error deleting images:', err);
+                  res.status(500).send('Server error');
+                });
+              }
+
+              // Delete from UserProfile table
+              connection.query('DELETE FROM UserProfile WHERE username = ?', [username], (err, results) => {
+                if (err) {
+                  return connection.rollback(() => {
+                    console.error('Error deleting UserProfile:', err);
+                    res.status(500).send('Server error');
+                  });
+                }
+
+                // Delete from user_vouchers table
+                connection.query('DELETE FROM user_vouchers WHERE username = ?', [username], (err, results) => {
+                  if (err) {
+                    return connection.rollback(() => {
+                      console.error('Error deleting user_vouchers:', err);
+                      res.status(500).send('Server error');
+                    });
+                  }
+
+                  // Delete from job table
+                  connection.query('DELETE FROM job WHERE job_owner = ?', [username], (err, results) => {
+                    if (err) {
+                      return connection.rollback(() => {
+                        console.error('Error deleting jobs:', err);
+                        res.status(500).send('Server error');
+                      });
+                    }
+
+                    // Delete from room_users table
+                    connection.query('DELETE FROM room_users WHERE username = ?', [username], (err, results) => {
+                      if (err) {
+                        return connection.rollback(() => {
+                          console.error('Error deleting room_users:', err);
+                          res.status(500).send('Server error');
+                        });
+                      }
+
+                      // Delete from room table where the user is an admin
+                      connection.query('DELETE FROM room WHERE admin_username = ?', [username], (err, results) => {
+                        if (err) {
+                          return connection.rollback(() => {
+                            console.error('Error deleting rooms:', err);
+                            res.status(500).send('Server error');
+                          });
+                        }
+
+                        // Finally, delete the user from users table
+                        connection.query('DELETE FROM users WHERE username = ?', [username], (err, results) => {
+                          if (err) {
+                            return connection.rollback(() => {
+                              console.error('Error deleting user:', err);
+                              res.status(500).send('Server error');
+                            });
+                          }
+
+                          // Commit the transaction
+                          connection.commit(err => {
+                            if (err) {
+                              return connection.rollback(() => {
+                                console.error('Error committing transaction:', err);
+                                res.status(500).send('Server error');
+                              });
+                            }
+
+                            res.send('User and all related data deleted successfully');
+                          });
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      } catch (error) {
+        connection.rollback(() => {
+          console.error('Error during transaction:', error);
+          res.status(500).send('Server error');
+        });
+      }
+    });
+  });
+});
+
+
+
+
+app.get('/admin/getinfo/:username', (req, res) => {
+  const username = req.params.username;
+  pool.query('SELECT * FROM admin_account WHERE username = ?', [username], (err, results) => {
+    if (err) {
+      console.error('Error fetching user:', err);
+      res.status(500).send('Server error');
+      return;
+    }
+
+    if (results.length === 0) {
+      res.status(404).send('User not found');
+      return;
+    }
+
+    res.json(results[0]);
+  });
+});
+
+app.put('/admin/update/:username', verifyToken, (req, res) => {
+  const username = req.params.username;
+  const password = req.body.password;
+  // Check if the user is authorized to update the password
+  if (req.user.username !== username) {
+    return res.status(403).json({ error: 'You are not authorized' });
+  }
+
+  pool.query('UPDATE admin_account SET password = ? WHERE username = ?', [password, username], (err, results) => {
+    if (err) {
+      console.error('Error updating user:', err);
+      res.status(500).send('Server error');
+      return;
+    }
+    res.send('Password updated successfully');
+  });
+});
+
+//user leave room
+app.delete('/user/leave/room/:room_id/:username', async (req, res) => {
+  const username = req.params.username;
+  const room_id = req.params.room_id;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting connection:', err);
+      res.status(500).json({ message: 'Server error' });
+      return;
+    }
+
+    connection.beginTransaction(async (err) => {
+      if (err) {
+        console.error('Error starting transaction:', err);
+        res.status(500).json({ message: 'Server error' });
+        return;
+      }
+
+      try {
+        connection.query('SELECT image_path FROM images WHERE uploader_username = ? AND room_id = ?', [username, room_id], async (err, results) => {
+          if (err) {
+            return connection.rollback(() => {
+              console.error('Error fetching images:', err);
+              res.status(500).json({ message: 'Server error' });
+            });
+          }
+
+          for (const row of results) {
+            const imagePath = row.image_path;
+            const fileRef = ref(storage, imagePath);
+            try {
+              await deleteObject(fileRef);
+            } catch (error) {
+              if (error.code === 'storage/object-not-found') {
+                console.warn(`Image does not exist: ${imagePath}`);
+              } else {
+                return connection.rollback(() => {
+                  console.error('Error deleting image from Firebase Storage:', error);
+                  res.status(500).json({ message: 'Server error' });
+                });
+              }
+            }
+          }
+
+          connection.query('DELETE FROM images WHERE uploader_username = ? AND room_id = ?', [username, room_id], (err, results) => {
+            if (err) {
+              return connection.rollback(() => {
+                console.error('Error deleting images:', err);
+                res.status(500).json({ message: 'Server error' });
+              });
+            }
+
+            connection.query('DELETE FROM submitedusers WHERE username = ? AND room_id = ?', [username, room_id], (err, results) => {
+              if (err) {
+                return connection.rollback(() => {
+                  console.error('Error deleting submitedusers:', err);
+                  res.status(500).json({ message: 'Server error' });
+                });
+              }
+
+              connection.query('DELETE FROM room_users WHERE username = ? AND room_id = ?', [username, room_id], (err, results) => {
+                if (err) {
+                  return connection.rollback(() => {
+                    console.error('Error deleting from room_users:', err);
+                    res.status(500).json({ message: 'Server error' });
+                  });
+                }
+
+                connection.commit(err => {
+                  if (err) {
+                    return connection.rollback(() => {
+                      console.error('Error committing transaction:', err);
+                      res.status(500).json({ message: 'Server error' });
+                    });
+                  }
+
+                  res.json({ message: 'User-related data in the specified room deleted successfully' });
+                });
+              });
+            });
+          });
+        });
+      } catch (error) {
+        connection.rollback(() => {
+          console.error('Error during transaction:', error);
+          res.status(500).json({ message: 'Server error' });
+        });
+      }
+    });
+  });
+});
+
+//deny user submit
+app.delete('/deny/user/:username/room/:room_id', (req, res) => {
+  const username = req.params.username;
+  const room_id = req.params.room_id;
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting connection:', err);
+      res.status(500).json({ message: 'Server error' });
+      return;
+    }
+
+    connection.beginTransaction(err => {
+      if (err) {
+        console.error('Error starting transaction:', err);
+        res.status(500).json({ message: 'Server error' });
+        return;
+      }
+
+      // Fetch image paths from the database
+      connection.query('SELECT image_path FROM images WHERE uploader_username = ? AND room_id = ?', [username, room_id], async (err, results) => {
+        if (err) {
+          return connection.rollback(() => {
+            console.error('Error fetching images:', err);
+            res.status(500).json({ message: 'Server error' });
+          });
+        }
+
+        try {
+          // Xóa các tệp từ Firebase Storage
+          for (const row of results) {
+            const imagePath = row.image_path; // URL của ảnh từ Firebase Storage
+            const fileRef = ref(storage, imagePath); // Tạo tham chiếu đến tệp
+
+            await deleteObject(fileRef); // Xóa tệp từ Firebase Storage
+          }
+
+          // Xóa dữ liệu từ bảng `images`
+          connection.query('DELETE FROM images WHERE uploader_username = ? AND room_id = ?', [username, room_id], (err, results) => {
+            if (err) {
+              return connection.rollback(() => {
+                console.error('Error deleting images:', err);
+                res.status(500).json({ message: 'Server error' });
+              });
+            }
+
+            // Xóa dữ liệu từ bảng `submitedusers`
+            connection.query('DELETE FROM submitedusers WHERE username = ? AND room_id = ?', [username, room_id], (err, results) => {
+              if (err) {
+                return connection.rollback(() => {
+                  console.error('Error deleting submitedusers:', err);
+                  res.status(500).json({ message: 'Server error' });
+                });
+              }
+
+              // Commit the transaction
+              connection.commit(err => {
+                if (err) {
+                  return connection.rollback(() => {
+                    console.error('Error committing transaction:', err);
+                    res.status(500).json({ message: 'Server error' });
+                  });
+                }
+                // Send response to the client if everything is successful
+                res.json({ message: 'User-related data in the specified room deleted successfully' });
+              });
+            });
+          });
+        } catch (error) {
+          console.error('Error deleting files from Firebase Storage:', error);
+          return connection.rollback(() => {
+            res.status(500).json({ message: 'Failed to delete files from Firebase Storage' });
+          });
+        }
+      });
+    });
+  });
+});
+
+//api forgot password
+app.post('/forgot-password', (req, res) => {
+  const { email } = req.body;
+
+  pool.query(
+    'SELECT users.username, otp.otp_expiry FROM users LEFT JOIN otp ON users.username = otp.username WHERE users.username = ?',
+    [email],
+    (err, results) => {
+      if (err) {
+        console.error('Error fetching user:', err);
+        return res.status(500).json({ error: 'Server error' });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const username = results[0].username;
+      const otpExpiry = results[0].otp_expiry;
+
+      if (otpExpiry && Date.now() < otpExpiry) {
+        const waitTime = Math.ceil((otpExpiry - Date.now()) / 60000); // Calculate wait time in minutes
+        return res.status(400).json({ 
+          error: `OTP already sent. Please wait ${waitTime} minute(s) before requesting a new one.` 
+        });
+      }
+
+      // Generate a random 4-digit OTP
+      const otp = Math.floor(1000 + Math.random() * 9000).toString();
+      const otpExpiryNew = Date.now() + 900000; // Expiry time is 15 minutes later
+
+      // Save the new OTP in the otp table, replacing the old one if it exists
+      pool.query(
+        'REPLACE INTO otp (username, otp, otp_expiry) VALUES (?, ?, ?)',
+        [username, otp, otpExpiryNew],
+        (err, results) => {
+          if (err) {
+            console.error('Error saving OTP:', err);
+            return res.status(500).json({ error: 'Server error' });
+          }
+
+          const mailOptions = {
+            from: `Tekutoko <${process.env.EMAIL}>`,
+            to: email,
+            subject: 'Password Reset OTP',
+            html: `
+              <p>You requested a password reset</p>
+              <p>Your OTP code is: <strong>${otp}</strong></p>
+              <p>This code will expire in 15 minutes. Please do not share this code with anyone.</p>
+            `,
+          };
+
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              console.error('Error sending email:', error);
+              return res.status(500).json({ error: 'Server error' });
+            }
+
+            res.json({ message: 'Email sent successfully' });
+          });
+        }
+      );
+    }
+  );
+});
+
+//api verify OTP
+app.post('/verify-otp', (req, res) => {
+  const { username, otp } = req.body;
+
+  pool.query('SELECT otp_expiry FROM otp WHERE username = ? AND otp = ?', [username, otp], (err, results) => {
+    if (err) {
+      console.error('Error verifying OTP:', err);
+      return res.status(500).json({ error: 'Server error' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Invalid OTP' });
+    }
+
+    const otpExpiry = results[0].otp_expiry;
+
+    if (Date.now() > otpExpiry) {
+      return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
+    }
+
+    res.json({ message: 'OTP verified successfully' });
+  });
+});
+//api change password after OTP verified
+app.put('/change-password-forgot', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  pool.query('UPDATE users SET password = ? WHERE username = ?', [password, username], (err, results) => {
+    if (err) {
+      console.error('Error updating password:', err);
+      return res.status(500).json({ error: 'Server error' });
+    }
+
+    res.json({ message: 'Password updated successfully' });
+  });
+});
+
+// add info profile
+app.post('/info/userprofile',verifyToken, (req, res) => {
+  const { username, avatarImage, backgroundImage, job, description, address, instagram, twitter, linkedin, facebook, homepage } = req.body;
+  if (req.user.username !== username) {
+    return res.status(403).json({ error: 'You are not authorized' });
+  }
+  // Kiểm tra sự tồn tại của username và xóa nếu đã tồn tại
+  const deleteSql = 'DELETE FROM UserProfile WHERE username = ?';
+  pool.query(deleteSql, [username], (deleteErr) => {
+      if (deleteErr) {
+          return res.status(500).send(deleteErr);
+      }
+
+      // Tiếp tục thêm profile mới
+      const sql = 'INSERT INTO UserProfile (username, avatarImage, backgroundImage, job, description, address, instagram, twitter, linkedin, facebook, homepage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      pool.query(sql, [username, avatarImage, backgroundImage, job, description, address, instagram, twitter, linkedin, facebook, homepage], (err, result) => {
+          if (err) {y
+              return res.status(500).send(err);
+          }
+          res.send('User profile added');
+      });
+  });
+});
+
+// get info profile
+app.get('/info/userprofile/:username', (req, res) => {
+  const encodedId = req.params.username;
+  const username = parseInt(encodedId, 10) - 1093046400;
+
+  // Kiểm tra nếu `username` không phải là số hợp lệ
+  if (isNaN(username)) {
+    return res.status(400).json({ message: 'Invalid username parameter' });
+  }
+
+  const sql = `
+    SELECT UserProfile.avatarImage, UserProfile.backgroundImage, UserProfile.job, 
+       UserProfile.description, UserProfile.address, 
+       UserProfile.instagram, UserProfile.twitter, 
+       UserProfile.linkedin, UserProfile.facebook, 
+       UserProfile.homepage, users.fullname 
+    FROM UserProfile 
+    JOIN users ON UserProfile.username = users.username 
+    WHERE users.id = ?;
+  `;
+  pool.query(sql, [username], (err, result) => {
+      if (err) {
+          return res.status(500).send(err);
+      }
+      if (result.length === 0) {
+          return res.status(404).send({ message: 'User profile not found' });
+      }
+      res.json(result[0]);
+  });
+});
+
+
+app.post('/avatar/upload', upload.array('files'), async (req, res) => {
+  const files = req.files;
+  const username = req.body.username;
+
+  if (!files || files.length === 0) {
+    return res.status(400).json({ error: 'No files were uploaded.' });
+  }
+
+  try {
+    const fileUrls = [];
+
+    for (const file of files) {
+      const uniqueFilename = `${uuidv4()}-${file.originalname}`;
+      const storageRef = ref(storage, `uploads/${username}/${uniqueFilename}`);
+      await uploadBytes(storageRef, file.buffer);
+      const downloadURL = await getDownloadURL(storageRef);
+      fileUrls.push(downloadURL);
+    }
+
+    res.status(200).json({ fileUrls });
+  } catch (error) {
+    console.error('Error uploading to Firebase:', error);
+    return res.status(500).json({ error: 'Failed to upload files to Firebase' });
+  }
+});
+//api upload background
+app.post('/background/upload', upload.array('files'), async (req, res) => {
+  const files = req.files;
+  const username = req.body.username;
+
+  if (!files || files.length === 0) {
+    return res.status(400).json({ error: 'No files were uploaded.' });
+  }
+
+  try {
+    const fileUrls = [];
+
+    for (const file of files) {
+      const uniqueFilename = `${uuidv4()}-${file.originalname}`;
+      const storageRef = ref(storage, `uploads/${username}/${uniqueFilename}`);
+      await uploadBytes(storageRef, file.buffer);
+      const downloadURL = await getDownloadURL(storageRef); 
+      fileUrls.push(downloadURL);
+    }
+
+    res.status(200).json({ fileUrls });
+  } catch (error) {
+    console.error('Error uploading to Firebase:', error);
+    return res.status(500).json({ error: 'Failed to upload files to Firebase' });
+  }
+});
+
+
+// check profile exists
+app.get('/check-profile/:username', (req, res) => {
+  const username = req.params.username;
+  const query = 'SELECT * FROM UserProfile WHERE username = ?';
+
+  pool.query(query, [username], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (results.length > 0) {
+      return res.status(200).json({ exists: true });
+    } else {
+      return res.status(200).json({ exists: false });
+    }
+  });
+});
+
+// delete profile
+app.delete('/delete-profile/:username', (req, res) => {
+  const username = req.params.username;
+  const query = 'DELETE FROM UserProfile WHERE username = ?';
+
+  pool.query(query, [username], (err, results) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    if (results.affectedRows > 0) {
+      return res.status(200).json({ message: 'Profile deleted successfully' });
+    } else {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+  });
+});
+
+// modify profile
+app.put('/modify-profile/:username',verifyToken,(req, res) => {
+  const { avatarImage, backgroundImage, job, description, address, instagram, twitter, linkedin, facebook, homepage } = req.body;
+  const username = req.params.username;
+  if (req.user.username !== username) {
+    return res.status(403).send('You are not authorized');
+  }
+  const sql = `
+    UPDATE UserProfile 
+    SET avatarImage = ?, backgroundImage = ?, job = ?, description = ?, address = ?, instagram = ?, twitter = ?, linkedin = ?, facebook = ?, homepage = ?
+    WHERE username = ?
+  `;
+  
+  pool.query(sql, [avatarImage, backgroundImage, job, description, address, instagram, twitter, linkedin, facebook, homepage, username], (err, result) => {
+    if (err) {
+      console.error('Error updating profile:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    if (result.affectedRows > 0) {
+      return res.status(200).json({ message: 'Profile updated successfully' });
+    } else {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+  });
+});
+
+// API endpoint to add a voucher or ticket
+app.post('/api/vouchers',verifyToken, upload.single('ticketImage'), async (req, res) => {
+  const { rewardType, roomId, hostId, ticketName, ticketDescription, discountName, discountValue, discountDescription, expirationDate, username} = req.body;
+  const file = req.file;
+
+  if (req.user.username !== username) {
+    return res.status(403).send('You are not authorized to update this fullname');
+  }
+  try {
+      let fileUrl = null;
+      if (file) {
+          const uniqueFilename = `${uuidv4()}-${file.originalname}`;
+          const storageRef = ref(storage, `uploads/${uniqueFilename}`);
+          await uploadBytes(storageRef, file.buffer);
+          fileUrl = await getDownloadURL(storageRef);
+      }
+
+      const sql = `
+          INSERT INTO vouchers (room_id, host_room, reward_type, ticket_name, ticket_description, ticket_image_url, discount_name, discount_value, discount_description, expiration_date)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+      `;
+      const values = [
+          roomId,
+          hostId,
+          rewardType,
+          rewardType === 'ticket' ? ticketName : null,
+          rewardType === 'ticket' ? ticketDescription : null,
+          rewardType === 'ticket' ? fileUrl : null,
+          rewardType === 'discount' ? discountName : null,
+          rewardType === 'discount' ? discountValue : null,
+          rewardType === 'discount' ? discountDescription : null,
+          expirationDate
+      ];
+
+      pool.query(sql, values, (err, result) => {
+          if (err) {
+              return res.status(500).send(err);
+          }
+          res.status(201).send({ message: 'Voucher or ticket added successfully', id: result.insertId });
+      });
+  } catch (error) {
+      console.error('Error adding voucher or ticket:', error);
+      res.status(500).send({ message: 'Internal server error' });
+  }
+});
+//api add voucher to user user_vouchers
+// app.post('/api/user-vouchers', (req, res) => {
+//   const { username, voucherId } = req.body;
+//   const sql = 'INSERT INTO user_vouchers (username, voucher_id) VALUES (?, ?)';
+//   pool.query(sql, [username, voucherId], (err, result) => {
+//       if (err) {
+//           return res.status(500).send(err);
+//       }
+//       res.json({ message: 'Gift  sent to user successfully' });
+//   });
+// });
+
+//api add voucher to user user_vouchers
+app.post('/api/user-vouchers', (req, res) => {
+  const { username, voucherIds } = req.body; // Expecting voucherIds to be an array
+  if (!Array.isArray(voucherIds) || voucherIds.length === 0) {
+    return res.status(400).send('Invalid voucherIds');
+  }
+
+  const sql = 'INSERT INTO user_vouchers (username, voucher_id) VALUES ?';
+  const values = voucherIds.map(voucherId => [username, voucherId]);
+
+  pool.query(sql, [values], (err, result) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    res.json({ message: 'Gifts sent to user successfully' });
+  });
+});
+
+//api get voucher by username and room_id
+app.get('/api/vouchers/:username/:room_id', (req, res) => {
+  const username = req.params.username;
+  const room_id = req.params.room_id;
+  const sql = `
+    SELECT 
+        v.id AS voucher_id,
+        v.room_id,
+        v.host_room,
+        v.reward_type,
+        v.ticket_name,
+        v.ticket_description,
+        v.ticket_image_url,
+        v.discount_name,
+        v.discount_value,
+        v.discount_description,
+        v.expiration_date,
+        COALESCE(up.avatarImage, 'https://icons.veryicon.com/png/o/commerce-shopping/o2o-business-platform/coupon-59.png') AS host_avatar_url
+    FROM 
+        user_vouchers uv
+    JOIN 
+        vouchers v ON uv.voucher_id = v.id
+    LEFT JOIN
+        UserProfile up ON v.host_room = up.username
+    WHERE 
+        uv.username = ? AND v.room_id = ?
+  `;
+  pool.query(sql, [username, room_id], (err, result) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'Voucher not found' });
+    }
+    res.json(result);
+  });
+});
+
+//api get voucher by username
+app.get('/api/vouchers/:username', (req, res) => {
+  const username = req.params.username;
+  const sql = `
+    SELECT 
+        v.id AS voucher_id,
+        v.room_id,
+        v.host_room,
+        v.reward_type,
+        v.ticket_name,
+        v.ticket_description,
+        v.ticket_image_url,
+        v.discount_name,
+        v.discount_value,
+        v.discount_description,
+        v.expiration_date,
+        COALESCE(up.avatarImage, 'https://icons.veryicon.com/png/o/commerce-shopping/o2o-business-platform/coupon-59.png') AS host_avatar_url,
+        u.fullname AS host_fullname,
+        (u.id + 1093046400) AS user_id
+    FROM 
+        user_vouchers uv
+    JOIN 
+        vouchers v ON uv.voucher_id = v.id
+    LEFT JOIN
+        UserProfile up ON v.host_room = up.username
+    JOIN
+        users u ON v.host_room = u.username
+    WHERE 
+        uv.username = ?
+  `;
+  pool.query(sql, [username], (err, result) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'No vouchers found for this user' });
+    }
+    res.json(result);
+  });
+});
+//checkUserVoucher 
+app.post('/api/checkUserVoucher', (req, res) => {
+  const { username, voucher_id } = req.body;
+  const query = 'SELECT * FROM user_vouchers WHERE username = ? AND voucher_id = ?';
+  pool.query(query, [username, voucher_id], (err, results) => {
+      if (err) throw err;
+      if (results.length > 0) {
+          res.json({ exists: true });
+      } else {
+          res.json({ exists: false });
+      }
+  });
+});
+
+//api get info voucher by id
+app.get('/api/voucher/:id', (req, res) => {
+  const id = req.params.id;
+  const sql = `
+    SELECT 
+        v.id AS voucher_id,
+        v.room_id,
+        v.host_room,
+        v.reward_type,
+        v.ticket_name,
+        v.ticket_description,
+        v.ticket_image_url,
+        v.discount_name,
+        v.discount_value,
+        v.discount_description,
+        v.expiration_date,
+        COALESCE(up.avatarImage, 'https://icons.veryicon.com/png/o/commerce-shopping/o2o-business-platform/coupon-59.png') AS host_avatar_url
+    FROM 
+        vouchers v
+    JOIN
+        UserProfile up ON v.host_room = up.username
+    WHERE 
+        v.id = ?
+  `;
+  pool.query(sql, [id], (err, result) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'Voucher not found' });
+    }
+    res.json(result[0]);
+  });
+});
+//api get info voucher by room_id
+app.get('/get/vouchers/room/:room_id', (req, res) => {
+  const room_id = req.params.room_id;
+  const sql = `
+    SELECT 
+        v.id AS voucher_id,
+        v.room_id,
+        v.host_room,
+        v.reward_type,
+        v.ticket_name,
+        v.ticket_description,
+        v.ticket_image_url,
+        v.discount_name,
+        v.discount_value,
+        v.discount_description,
+        v.expiration_date,
+        COALESCE(up.avatarImage, 'https://icons.veryicon.com/png/o/commerce-shopping/o2o-business-platform/coupon-59.png') AS host_avatar_url
+    FROM 
+        vouchers v
+    LEFT JOIN
+        UserProfile up ON v.host_room = up.username
+    WHERE 
+        v.room_id = ?
+  `;
+  pool.query(sql, [room_id], (err, result) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    if (result.length === 0) {
+      return res.status(404).json({ message: 'Voucher not found' });
+    }
+    res.json(result);
+  });
+});
+
+
+app.delete('/user/delete/:username',verifyToken, (req, res) => {
+  const username = req.params.username;
+  // Check if the user is authorized to delete the room
+  if (req.user.username !== username) {
+    return res.status(403).send('You are not authorized to delete this room');
+  }
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Database connection error:', err);
+      return res.status(500).json({ error: 'Database connection error' });
+    }
+
+    connection.beginTransaction((err) => {
+      if (err) {
+        console.error('Transaction start error:', err);
+        connection.release();
+        return res.status(500).send('Server error');
+      }
+
+      connection.query('SELECT image_path FROM images WHERE uploader_username = ?', [username], (err, results) => {
+        if (err) {
+          console.error('Error fetching images:', err);
+          connection.rollback(() => {
+            connection.release();
+            return res.status(500).json({ error: 'Error fetching images' });
+          });
+        }
+
+        const images = results;
+
+        const queries = [
+          'DELETE FROM room_users WHERE room_id IN (SELECT room_id FROM room WHERE admin_username = ?)',
+          'DELETE FROM room_users WHERE username = ?',
+          'DELETE FROM user_vouchers WHERE username = ?',
+          'DELETE FROM submitedusers WHERE username = ?',
+          'DELETE FROM images WHERE uploader_username = ?',
+          'DELETE FROM UserProfile WHERE username = ?',
+          'DELETE FROM room WHERE admin_username = ?',
+          'DELETE FROM users WHERE username = ?'
+        ];
+
+        let completedQueries = 0;
+        let hasErrorOccurred = false;
+
+        queries.forEach((query, index) => {
+          const queryParams = [username];
+          connection.query(query, queryParams, (err) => {
+            if (err && !hasErrorOccurred) {
+              hasErrorOccurred = true;
+              console.error('Error deleting user-related data:', err);
+              connection.rollback(() => {
+                connection.release();
+                return res.status(500).json({ error: 'Error deleting user-related data' });
+              });
+            }
+
+            completedQueries++;
+            if (completedQueries === queries.length && !hasErrorOccurred) {
+              const deletePromises = images.map(row => {
+                const imagePath = row.image_path;
+                const fileRef = ref(storage, imagePath);
+
+                return deleteObject(fileRef);
+              });
+
+              Promise.all(deletePromises)
+                .then(() => {
+                  connection.commit((err) => {
+                    if (err) {
+                      console.error('Transaction commit error:', err);
+                      connection.rollback(() => {
+                        connection.release();
+                        return res.status(500).send('Server error');
+                      });
+                    }
+                    connection.release();
+                    res.json({ message: 'User and all related data deleted successfully' });
+                  });
+                })
+                .catch((error) => {
+                  console.error('Error deleting files from Firebase Storage:', error);
+                  connection.rollback(() => {
+                    connection.release();
+                    return res.status(500).json({ message: 'Failed to delete files from Firebase Storage' });
+                  });
+                });
+            }
+          });
+        });
+      });
+    });
+  });
+});
+
+// api /api/deleteUserVoucher
+app.delete('/api/deleteUserVoucher', (req, res) => {
+  const { username, voucher_id } = req.body;
+  const query = 'DELETE FROM user_vouchers WHERE username = ? AND voucher_id = ?';
+  pool.query(query, [username, voucher_id], (err, results) => {
+      if (err) throw err;
+      res.json({ message: 'User voucher deleted successfully' });
+  });
+});
+
+//api delete voucher
+app.delete('/api/deleteVoucher/:id', (req, res) => {
+  const id = req.params.id;
+  const query = 'DELETE FROM vouchers WHERE id = ?';
+  pool.query(query, [id], (err, results) => {
+      if (err) throw err;
+      res.json({ message: 'Voucher deleted successfully' });
+  });
+});
+
+// API discover room
+app.get('/discovery/rooms', (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
+  const searchQuery = req.query.query || '';
+
+  const query = `
+  SELECT room.room_id, room.room_title, users.username, users.fullname, 
+         COALESCE(UserProfile.avatarImage, 'https://www.svgrepo.com/show/341256/user-avatar-filled.svg') AS avatarImage,
+         COUNT(room_users.username) AS memberCount
+  FROM room
+  JOIN users ON room.admin_username = users.username
+  LEFT JOIN UserProfile ON users.username = UserProfile.username
+  LEFT JOIN room_users ON room.room_id = room_users.room_id
+  WHERE room.room_title LIKE ? 
+     OR users.username LIKE ? 
+     OR users.fullname LIKE ? 
+     OR room.room_id LIKE ?  -- Added search by room_id
+  GROUP BY room.room_id, room.room_title, users.username, users.fullname, UserProfile.avatarImage
+  LIMIT ? OFFSET ?;
+`;
+
+  pool.query(query, [`%${searchQuery}%`, `%${searchQuery}%`, `%${searchQuery}%`, `%${searchQuery}%`, limit, offset], (err, results) => {
+    if (err) throw err;
+    res.json({ rooms: results });
+  });
+});
+
+app.get('/check_job/:room_id/:username', (req, res) => {
+  const { room_id, username } = req.params;
+  pool.query(
+    'SELECT COUNT(*) AS hasJob FROM job WHERE room_id = ? AND job_owner = ?',
+    [room_id, username],
+    (error, results) => {
+      if (error) {
+        console.error('Error checking job:', error);
+        return res.status(500).json({ message: 'Server error' });
+      }
+      res.json({ hasJob: results[0].hasJob > 0 });
+    }
+  );
+});
+
+
+// Delete the old job description
+app.delete('/delete_job/:room_id',verifyToken, (req, res) => {
+  const { room_id } = req.params;
+  const username = req.body.username;
+
+    // Check if the authenticated user matches the username from the body
+  if (req.user.username !== username) {
+    return res.status(403).send('You are not authorized to perform this action');
+  }
+
+  pool.query(
+    'DELETE FROM job WHERE room_id = ?',
+    [room_id],
+    (error, results) => {
+      if (error) {
+        console.error('Error deleting job:', error);
+        return res.status(500).json({ message: 'Server error' });
+      }
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: 'No job found with the specified room_id.' });
+      }
+      console.log(`Job deleted for room_id: ${room_id}`); // Debug log
+      res.json({ message: 'Job deleted successfully' });
+    }
+  );
+});
+
+
+// Delete old images
+app.delete('/delete_images/:room_id/:username',verifyToken, (req, res) => {
+  const { room_id, username } = req.params;
+
+  if (req.user.username !== username) {
+    return res.status(403).send('You are not authorized to perform this action');
+  }
+
+  pool.query(
+    'SELECT image_path FROM images WHERE room_id = ? AND uploader_username = ?',
+    [room_id, username],
+    (error, results) => {
+      if (error) {
+        console.error('Error fetching images:', error);
+        return res.status(500).json({ message: 'Server error' });
+      }
+      if (results.length === 0) {
+        console.log('No images found for this user in the specified room.');
+        return res.status(404).json({ message: 'No images found for this user in the specified room.' });
+      }
+
+      // Assuming deleteObject and ref are Firebase functions
+      const deletePromises = results.map((image) => {
+        const fileRef = ref(storage, image.image_path);
+        return deleteObject(fileRef)
+          .then(() => {
+            console.log(`Deleted image from storage: ${image.image_path}`);
+          })
+          .catch((error) => {
+            console.warn(`Error deleting image from storage: ${image.image_path}`, error);
+          });
+      });
+
+      Promise.all(deletePromises).then(() => {
+        pool.query(
+          'DELETE FROM images WHERE room_id = ? AND uploader_username = ?',
+          [room_id, username],
+          (error, deleteResult) => {
+            if (error) {
+              console.error('Error deleting images:', error);
+              return res.status(500).json({ message: 'Server error' });
+            }
+            res.json({ message: 'Images deleted successfully' });
+          }
+        );
+      });
+    }
+  );
+});
+
+//xoá vouhcer và ảnh liên quan cũ trong bảng vouchers
+app.delete('/api/delete/vouchers/:roomId/:hostId', verifyToken, (req, res) => {
+  const roomId = req.params.roomId;
+  const hostId = req.params.hostId;
+
+  // Kiểm tra quyền truy cập
+  if (req.user.username !== hostId) {
+    return res.status(403).send('You are not authorized to perform this action');
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Database connection error:', err);
+      return res.status(500).json({ error: 'Database connection error' });
+    }
+
+    connection.beginTransaction((err) => {
+      if (err) {
+        console.error('Error starting transaction:', err);
+        connection.release();
+        return res.status(500).send('Server error');
+      }
+
+      // Lấy URL của các ảnh cần xóa từ bảng vouchers
+      connection.query(
+        'SELECT ticket_image_url FROM vouchers WHERE room_id = ? AND ticket_image_url IS NOT NULL',
+        [roomId],
+        async (err, results) => {
+          if (err) {
+            return connection.rollback(() => {
+              console.error('Error fetching images:', err);
+              res.status(500).send('Server error');
+              connection.release(); // Release connection
+            });
+          }
+
+          // Xóa file từ Firebase Storage nếu tồn tại URL ảnh
+          for (const row of results) {
+            const imagePath = row.ticket_image_url; // Đảm bảo rằng bạn đang lấy đúng đường dẫn ảnh
+            const fileRef = ref(storage, imagePath); // Tạo tham chiếu không phải là gốc
+            try {
+              await deleteObject(fileRef); // Xóa đối tượng từ Firebase Storage
+            } catch (error) {
+              if (error.code === 'storage/object-not-found') {
+                console.warn(`File not found in Firebase Storage: ${imagePath}`);
+              } else {
+                throw error;
+              }
+            }
+          }
+
+          // Xóa các dòng dữ liệu `user_vouchers` liên quan
+          connection.query('DELETE FROM user_vouchers WHERE voucher_id IN (SELECT id FROM vouchers WHERE room_id = ?)', [roomId], (err, result) => {
+            if (err) {
+              return connection.rollback(() => {
+                console.error('Error deleting user_vouchers:', err);
+                res.status(500).send('Server error');
+                connection.release(); // Release connection
+              });
+            }
+
+            // Sau khi xóa ảnh thành công, xóa các dòng dữ liệu `vouchers`
+            connection.query('DELETE FROM vouchers WHERE room_id = ?', [roomId], (err, result) => {
+              if (err) {
+                return connection.rollback(() => {
+                  console.error('Error deleting vouchers:', err);
+                  res.status(500).send('Server error');
+                  connection.release(); // Release connection
+                });
+              }
+
+              // Commit transaction
+              connection.commit((err) => {
+                if (err) {
+                  return connection.rollback(() => {
+                    console.error('Error committing transaction:', err);
+                    res.status(500).send('Server error');
+                    connection.release(); // Release connection
+                  });
+                }
+                res.send('Vouchers and associated images deleted successfully');
+                connection.release(); // Release connection sau khi commit
+              });
+            });
+          });
+        }
+      );
+    });
+  });
+});
+
+
+app.listen(PORT, () => {
+  console.log("Server is running on port 3000");
+});

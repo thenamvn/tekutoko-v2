@@ -1,0 +1,633 @@
+{
+    "accountPage": {
+        "accountInformation": "Account Information",
+        "email": "Email",
+        "fullName": "Full Name",
+        "update": "Update",
+        "changePassword": "Change Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm Password",
+        "passwordsDoNotMatch": "Passwords do not match!",
+        "accountProfile": "Account Profile",
+        "linkProfile": "Link Profile",
+        "createProfile": "Create Profile",
+        "modifyProfile": "Modify Profile",
+        "changeLanguage": "Change Language",
+        "termsAndConditions": "Terms and Conditions",
+        "logout": "Logout",
+        "accountDeleted": "Account deleted successfully!"
+    },
+    "room": {
+        "Completed": "completed",
+        "howToPlay": "How to Play (Rules)",
+        "howToPlayDefault": "To play, simply click on the question you want to answer. You can answer them in any order. Good luck!",
+        "rewards": "Available Rewards",
+        "rewardDescription": "Complete all questions correctly to claim your rewards!",
+        "viewRewards": "View Rewards",
+        "questions": "Question List",
+        "userSubmissions": "User Submissions",
+        "scanQRCode": "Scan QR Code to join the room",
+        "shareThisQuiz": "Share This Quiz",
+        "copyLink": "Copy Link",
+        "copiedToClipboard": "Copied to Clipboard!",
+        "qrCode": "QR Code",
+        "deleteRoom": "Delete Room"
+    },
+    "setupRoom": {
+        "title": "Create New Quiz Room",
+        "roomInformation": "Room Information",
+        "roomTitle": "Room Title",
+        "roomTitlePlaceholder": "e.g., Japanese Kanji Challenge",
+        "description": "Description",
+        "descriptionPlaceholder": "Describe the gameplay",
+        "rules": "Rules",
+        "rulesPlaceholder": "Describe the rules",
+        "roomThumbnail": "Room Thumbnail",
+        "thumbnailUpload": "Upload a file",
+        "thumbnailRemove": "Remove",
+        "thumbnailRecommendation": "Recommended: JPG, PNG, GIF, WEBP. Max 2MB.",
+        "noPreview": "No preview",
+        "roomReward": "Room Reward (Optional)",
+        "rewardType": "Reward Type",
+        "expirationDate": "Expiration Date",
+        "discountVoucher": "Discount Voucher",
+        "ticketPrize": "Ticket/Prize",
+        "voucherName": "Voucher Name",
+        "voucherNamePlaceholder": "e.g., 20% Off Next Purchase",
+        "discountValue": "Discount Value",
+        "discountValuePlaceholder": "e.g., 20% or $10",
+        "rewardDescription": "Description",
+        "rewardDescriptionPlaceholder": "Terms and conditions",
+        "ticketName": "Ticket Name",
+        "ticketNamePlaceholder": "e.g., Concert Ticket",
+        "ticketDescription": "Description",
+        "ticketDescriptionPlaceholder": "Ticket details",
+        "ticketImage": "Ticket Image",
+        "uploadImage": "Upload Image",
+        "addedQuestions": "Added Questions",
+        "addNewQuestion": "Add New Question",
+        "questionText": "Question Text",
+        "questionTextPlaceholder": "Enter the question",
+        "questionType": "Question Type",
+        "textInput": "Text Input",
+        "multipleChoice": "Multiple Choice",
+        "fileUpload": "File Upload",
+        "hint": "Hint (Optional)",
+        "hintPlaceholder": "Provide a hint if needed",
+        "primaryAnswer": "Primary Correct Answer",
+        "primaryAnswerPlaceholder": "Enter the main correct answer",
+        "japaneseHint": "For Japanese: You can use Hiragana, Katakana, or Kanji",
+        "alternativeAnswers": "Alternative Correct Answers (Optional)",
+        "addAlternative": "+ Add Alternative",
+        "removeAlternative": "✕",
+        "alternativeAnswerPlaceholder": "Alternative answer",
+        "alternativeHelp": "Alternative answers help with:",
+        "alternativeHelpItems": [
+            "Different Japanese writing systems (ひらがな, カタカナ, 漢字)",
+            "Common variations or synonyms",
+            "Different acceptable formats"
+        ],
+        "options": "Options (Mark correct one)",
+        "optionPlaceholder": "Option",
+        "addOption": "+ Add Option",
+        "removeOption": "✕",
+        "uploadInfo": "No answer needed here. Users will upload a file during the quiz.",
+        "explanation": "Explanation (Optional)",
+        "explanationPlaceholder": "Explain the correct answer or provide additional information",
+        "addThisQuestion": "Add This Question to List",
+        "saveRoom": "Save Entire Room Configuration",
+        "saving": "Saving...",
+        "addAtLeastOne": "Add at least one question before saving.",
+        "correctAnswers": "Correct answers:",
+        "remove": "Remove",
+        "selected": "Selected:",
+        "processing": "Processing image...",
+        "savingRoom": "Saving room...",
+        "validation": {
+            "questionTextRequired": "Question text cannot be empty.",
+            "correctAnswerRequired": "Please provide at least one correct answer for the text question.",
+            "fillAdditionalAnswers": "Please fill in all additional correct answers or remove empty ones.",
+            "multipleChoiceMinOptions": "Multiple choice questions need at least 2 options.",
+            "fillAllOptions": "Please fill in all option texts.",
+            "markCorrectOption": "Please mark one option as correct for multiple choice.",
+            "roomTitleRequired": "Room Title cannot be empty.",
+            "addAtLeastOneQuestion": "Please add at least one question to the room.",
+            "setExpirationDate": "Please set an expiration date for the reward.",
+            "expirationDatePast": "Expiration date cannot be in the past.",
+            "enterDiscountName": "Please enter a discount name.",
+            "enterDiscountValue": "Please enter a discount value.",
+            "enterTicketName": "Please enter a ticket name.",
+            "uploadTicketImage": "Please upload a ticket image."
+        },
+        "success": {
+            "roomCreated": "Room created successfully!",
+            "roomAndRewardCreated": "Room and reward created successfully!",
+            "roomCreatedRewardFailed": "Room created successfully, but reward creation failed. You can add reward later.",
+            "roomCreatedImageFailed": "Room created but failed to upload ticket image. You can add reward later."
+        },
+        "errors": {
+            "loginRequired": "You must be logged in to create a room",
+            "failedToCreate": "Failed to create room",
+            "savingError": "An unknown error occurred during saving.",
+            "uploadError": "Failed to upload thumbnail. Please try again.",
+            "compressionError": "Error compressing image. Please try again."
+        }
+    },
+    "questionPage": {
+        "title": "Quiz Question",
+        "hint": "Hint",
+        "yourAnswer": "Your Answer",
+        "inputPlaceholder": "Enter your answer here",
+        "submitAnswer": "Submit Answer",
+        "alreadyAnswered": "Already Answered",
+        "alreadyAnsweredMessage": "You have already answered this question.",
+        "previousSubmissionIncorrect": "Your previous submission was incorrect.",
+        "submitting": "Submitting...",
+        "correctAnswer": "✓ Correct!",
+        "incorrectAnswer": "✗ Try again",
+        "explanation": "Explanation",
+        "continue": "Continue"
+    },
+    "forgotPassword": {
+        "title": "Forgot Password?",
+        "rememberPassword": "Remember Password?",
+        "loginHere": "Login here",
+        "emailLabel": "Email Address",
+        "emailPlaceholder": "Enter your email",
+        "resetPasswordButton": "Reset Password",
+        "error": "An error occurred: {{error}}"
+    },
+    "changePassword": {
+        "title": "Update Password",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "passwordsDoNotMatch": "Passwords do not match",
+        "updateSuccess": "Password updated successfully. Please log in again",
+        "updateButton": "Update Password",
+        "error": "An error occurred: {{error}}"
+    },
+    "otpVerify": {
+        "title": "Verify Email",
+        "description": "Enter the 4-digit verification code sent to your email.",
+        "verifyButton": "Verify Account",
+        "resend": "Resend",
+        "error": "An error occurred: {{error}}"
+    },
+    "couponCard": {
+        "scanReward": "Scan Reward",
+        "scanQRCode": "Scan QR Code",
+        "vouchers": "Vouchers",
+        "tickets": "Tickets",
+        "validTill": "Valid Till",
+        "use": "Use",
+        "qrCode": "QR Code",
+        "close": "Close",
+        "invalidQRCode": "Invalid QR Code",
+        "noVouchersFound": "No vouchers found for this user",
+        "noTicketsFound": "No tickets found for this user",
+        "fetchError": "Error fetching vouchers",
+        "permissionDenied": "Camera access denied",
+        "noCameraFound": "No camera device found",
+        "showQrCode": "Show this QR code to redeem your reward"
+    },
+    "discovery": {
+        "title": "TEKUTOKO",
+        "searchPlaceholder": "Enter room code, title...",
+        "noMoreGames": "No more games"
+    },
+    "dashboard": {
+        "title": "My Rooms",
+        "createGameButton": "Create New Game",
+        "createRoom": "Create New",
+        "joinWithCode": "Join with Code",
+        "joinCodePlaceholder": "Enter room code",
+        "joinButton": "Join",
+        "host": "Host",
+        "hostedByYou": "Hosted by you",
+        "noRooms": "No rooms available",
+        "joined": "Joined",
+        "joinedByYou": "Joined room",
+        "noRoomsYet": "You haven't created or joined any rooms yet."
+    },
+    "userProfileCard": {
+        "introduction": "Introduction",
+        "links": "Links",
+        "createdRooms": "Created Rooms",
+        "follow": "Follow",
+        "unfollow": "Unfollow",
+        "followers": "Followers",
+        "following": "Following",
+        "noCreatedRooms": "This user hasn't created any rooms yet."
+    },
+    "userProfileCardCreator": {
+        "uploadAvatar": "Upload Avatar",
+        "uploadBackground": "Upload Background",
+        "job": "Job",
+        "jobPlaceholder": "Enter job (e.g., Business, Company)",
+        "address": "Address",
+        "addressPlaceholder": "Enter your address",
+        "description": "Description",
+        "descriptionPlaceholder": "Enter a description about you",
+        "socialLinks": "Social Links",
+        "instagramPlaceholder": "Instagram URL",
+        "twitterPlaceholder": "Twitter URL",
+        "linkedinPlaceholder": "LinkedIn URL",
+        "facebookPlaceholder": "Facebook URL",
+        "homepagePlaceholder": "Homepage URL",
+        "submit": "Submit"
+    },
+    "userProfileCardModify": {
+        "uploadAvatar": "Upload Avatar",
+        "uploadBackground": "Upload Background",
+        "job": "Job",
+        "jobPlaceholder": "Enter job (e.g., Business, Company)",
+        "address": "Address",
+        "addressPlaceholder": "Enter your address",
+        "description": "Description",
+        "descriptionPlaceholder": "Enter a description about you",
+        "socialLinks": "Social Links",
+        "instagramPlaceholder": "Instagram URL",
+        "twitterPlaceholder": "Twitter URL",
+        "linkedinPlaceholder": "LinkedIn URL",
+        "facebookPlaceholder": "Facebook URL",
+        "homepagePlaceholder": "Homepage URL",
+        "submit": "Update",
+        "noProfile": "User profile does not exist. Please create a profile first.",
+        "createProfile": "Create Profile",
+        "errorUploadingImages": "Error uploading images",
+        "errorUpdatingProfile": "Error updating profile",
+        "profileUpdatedSuccessfully": "Profile updated successfully"
+    },
+    "loginForm": {
+        "emailPlaceholder": "Email",
+        "passwordPlaceholder": "Password",
+        "forgotPassword": "Forgot Password?",
+        "rememberMe": "Remember Me",
+        "showPassword": "Show Password",
+        "signIn": "Sign In",
+        "or": "Or",
+        "loginWithGoogle": "Sign in with Google",
+        "loginWithLine": "Sign in with Line",
+        "processingLogin": "Processing login...",
+        "googleLoginFailure": "Google login failed",
+        "noAccount": "Don't have an account?",
+        "signUp": "Sign Up"
+    },
+    "signupForm": {
+        "fullNamePlaceholder": "Full Name",
+        "emailPlaceholder": "Email",
+        "passwordPlaceholder": "New Password",
+        "confirmPasswordPlaceholder": "Confirm Password",
+        "signUpButton": "Sign Up",
+        "alreadyHaveAccount": "Already have an account?",
+        "signIn": "Sign In",
+        "fullNameRequired": "*Full name is required",
+        "emailRequired": "*Email is required",
+        "passwordRequired": "*Password is required",
+        "confirmPasswordRequired": "*Confirm password is required",
+        "passwordsDoNotMatch": "*Passwords do not match",
+        "termsTitle": "Terms and conditions",
+        "termsDescription": "<ol><li><strong> Acceptance of Terms</strong></li></ol><ul><li><strong>TEKUTOKO</strong> (referred to as \"we\" or \"us\") requires users to agree to our terms when creating an account and to acknowledge that we may update or modify these terms over time.</li></ul><p>&nbsp;</p><ol start=\"2\"><li><strong> User Responsibilities</strong></li></ol><ul><li>Users are responsible for the photos and content they upload, ensuring that it does not infringe on the rights of others (e.g., copyright, privacy).</li><li>Users must avoid uploading harmful, offensive, or illegal content.</li><li>Users are responsible for maintaining the security of their accounts and should not share login credentials with others.</li></ul><p>&nbsp;</p><ol start=\"3\"><li><strong> Prohibited Activities</strong></li></ol><ul><li>We prohibit users from:<ul><li>Sharing explicit, violent, or otherwise inappropriate images.</li><li>Violating the privacy of others by uploading photos without their consent.</li><li>Engaging in harassment, abuse, or any illegal activities through our platform.</li><li>Using our platform to distribute malicious software, spam, or engage in other harmful activities.</li></ul></li></ul><p>&nbsp;</p><ol start=\"4\"><li><strong> Privacy and Data Usage</strong></li></ol><ul><li>We may collect users&rsquo; personal data, such as name, email address, geolocation, metadata from photos, and user behavior, to improve our services.</li><li>Third-Party Sharing: We may share personal data with third parties for promotional purposes or under specific conditions.</li><li>We provide a clear explanation of how user data is collected, used, and potentially shared with third parties, including advertisers and analytics companies.</li><li>We may disclose personal information if required by law or in response to a valid request from public authorities (e.g., law enforcement or government agencies).</li></ul><p>&nbsp;</p><ol start=\"5\"><li><strong> Content Removal and Account Termination</strong></li></ol><ul><li>We reserve the right to remove or restrict access to any content that violates our terms without prior notice.</li><li>If users repeatedly violate our guidelines or engage in inappropriate conduct, we may suspend or terminate their accounts without prior notice.</li><li>We reserve the right to terminate all services without prior notice.</li><li>Users may request the deletion of their content and account, and we will comply by removing their data and uploaded content.</li></ul><p>&nbsp;</p><ol start=\"6\"><li><strong> Limitation of Liability</strong></li></ol><ul><li>We limit our liability for any harm or loss that may result from the use of our services, including, but not limited to, the exposure of private photos, service disruptions, or data breaches.</li></ul><p>&nbsp;</p><ol start=\"7\"><li><strong> Content Retention and Deletion</strong></li></ol><ul><li>Users may request the deletion of their data; however, we may retain certain information (e.g., for legal or business purposes) even after deletion.</li><li>We retain the right to decide how long account data may remain in our system or backups after a deletion request.</li><li>Users expressly permit us to delete content they upload as necessary to maintain the functionality of our system.</li></ul><p>&nbsp;</p><ol start=\"8\"><li><strong> Jurisdiction and Governing Law</strong></li></ol><ul><li>We specify the legal jurisdiction under which any disputes will be resolved, and the governing law that applies to the use of our platform.</li></ul>",
+        "agreeButton": "I agree",
+        "cancelButton": "Cancel"
+    },
+    "denyForm": {
+        "title": "Sorry!",
+        "message": "Unfortunately, your submission does not meet the organizer's requirements.",
+        "closeButton": "Close",
+        "errorDeletingReward": "Error deleting reward: {{error}}",
+        "errorFetchingDenyCheck": "Error fetching deny check: {{error}}",
+        "rewardDeletedSuccessfully": "Reward deleted successfully"
+    },
+    "reward": {
+        "title": "Available Rewards",
+        "alreadyReceived": "You have already received this reward.",
+        "yourProgress": "Your Progress",
+        "taskCompleted": "Task Completed",
+        "allCorrect": "All Correct ✓",
+        "someIncorrect": "Some Incorrect ✗",
+        "rewardDescription": "Complete all questions correctly to claim your rewards!",
+        "noRewardsAvailable": "No rewards available for this room",
+        "notAllCorrect": "Answer all questions correctly to claim rewards!",
+        "needToComplete": "You need to complete the room to receive rewards.",
+        "requirementsNotMet": "Requirements not met"
+    },
+    "dashboardAdmin": {
+        "roomsStatistics": "Room Statistics",
+        "usersStatistics": "User Statistics",
+        "totalRooms": "Total Rooms: {{totalRooms}}",
+        "totalUsers": "Total Users: {{totalUsers}}",
+        "activeRooms": "Active Rooms",
+        "emptyRooms": "Empty Rooms",
+        "activeUsers": "Active Users",
+        "inactiveUsers": "Inactive Users",
+        "roomStatus": "Room Status",
+        "userStatus": "User Status",
+        "numberOfRooms": "Number of Rooms",
+        "numberOfUsers": "Number of Users",
+        "privateRooms": "Private Rooms",
+        "errorFetchingRoomData": "Error fetching room data: {{error}}",
+        "errorFetchingUserData": "Error fetching user data: {{error}}"
+    },
+    "navigation": {
+        "dashboard": "Dashboard",
+        "gameRoomManager": "Game Room Manager",
+        "userManagement": "User Management",
+        "userProfile": "User Profile",
+        "reportManager": "Report Manager",
+        "logout": "Logout"
+    },
+    "adminLogin": {
+        "adminPanel": "ADMIN DASHBOARD",
+        "username": "Username",
+        "password": "Password",
+        "loginButton": "Login",
+        "forgotPassword": "Forgot Password?"
+    },
+    "profileForm": {
+        "passwordUpdate": "UPDATE PASSWORD",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm Password",
+        "changePasswordButton": "Change Password",
+        "passwordMismatch": "Passwords do not match",
+        "passwordUpdateSuccess": "Password updated successfully. Please log in again.",
+        "currentPasswordIncorrect": "Current password is incorrect",
+        "errorUpdatingPassword": "Error updating password"
+    },
+    "gameRoomManager": {
+        "title": "Game Room Manager",
+        "roomList": "Room List",
+        "searchPlaceholder": "Search by ID or Host Name",
+        "roomID": "Room ID",
+        "roomTitle": "Room Title",
+        "roomOwner": "Room Owner",
+        "roomMembers": "Room Members",
+        "roomStatus": "Room Status",
+        "roomActions": "Actions",
+        "deleting": "Deleting...",
+        "delete": "Delete",
+        "roomFilters": "Room Filters",
+        "allRooms": "All Rooms",
+        "emptyRooms": "Empty Rooms",
+        "overMaxRooms": "Rooms with over",
+        "members": "members",
+        "previous": "Previous",
+        "next": "Next"
+    },
+    "userManager": {
+        "title": "User Management",
+        "userList": "User List",
+        "searchPlaceholder": "Search by Name or Username",
+        "fullName": "Full Name",
+        "username": "Username",
+        "joinedRooms": "Joined Rooms",
+        "createdRooms": "Created Rooms",
+        "actions": "Actions",
+        "delete": "Delete",
+        "userFilters": "User Filters",
+        "allUsers": "All Users",
+        "overMinUsers": "Users with at least",
+        "createdRoomsSuffix": "created rooms",
+        "inactiveUsers": "Inactive Users (No created or joined rooms)",
+        "previous": "Previous",
+        "next": "Next",
+        "ban": "Ban",
+        "banning": "Banning..."
+    },
+    "setupVoucher": {
+        "rewardTypeLabel": "Reward Type:",
+        "selectRewardType": "-- Select Reward Type --",
+        "ticket": "Ticket",
+        "voucher": "Discount Voucher",
+        "ticketNameLabel": "Ticket Name:",
+        "ticketNamePlaceholder": "Ticket Name",
+        "ticketInfoLabel": "Ticket Information:",
+        "ticketInfoPlaceholder": "Ticket Description",
+        "ticketImageLabel": "Ticket Image:",
+        "expirationDateLabel": "Expiration Date:",
+        "voucherNameLabel": "Discount Voucher Name:",
+        "voucherNamePlaceholder": "Discount Voucher Name",
+        "voucherValueLabel": "Discount Voucher Value:",
+        "voucherValuePlaceholder": "Discount Voucher Value",
+        "voucherInfoLabel": "Discount Voucher Information:",
+        "voucherInfoPlaceholder": "Discount Voucher Description",
+        "saveButton": "Save",
+        "closeButton": "Close",
+        "setupSuccess": "Reward setup successful!",
+        "setupFailure": "Reward setup failed."
+    },
+    "navigationBottom": {
+        "vouchers": "Rewards",
+        "game": "Rooms",
+        "myAccount": "My Account",
+        "home": "Home"
+    },
+    "languagePrompt": {
+        "selectLanguage": "Select Language"
+    },
+    "languageSwitcher": {
+        "selectLanguage": "言語を選択",
+        "english": "English",
+        "vietnamese": "Tiếng Việt",
+        "japanese": "日本語"
+    },
+    "confirmDelete": {
+        "title": "Confirm Deletion",
+        "message": "Are you sure you want to delete your account? This action cannot be undone.",
+        "cancel": "Cancel",
+        "delete": "Yes, Delete",
+        "button": "Delete my account"
+    },
+    "NotFoundPage": {
+        "message": "Whoops! That page doesn't exist.",
+        "goback": "Go Back"
+    },
+    "homepage": {
+        "header": {
+            "logo": "TEKUTOKO",
+            "menu": {
+                "home": "Home",
+                "introduction": "Introduction",
+                "benefits": "Benefits",
+                "features": "Features",
+                "sample": "Sample",
+                "faq": "FAQ",
+                "contact": "Contact"
+            },
+            "languages": {
+                "en": "English",
+                "vi": "Tiếng Việt",
+                "ja": "日本語"
+            }
+        },
+        "hero": {
+            "title": "The Interactive, Easy, and Fun Platform for",
+            "titleHighlight": "Hosting & Joining Events!",
+            "description": "Join now and don't miss out on amazing experiences!",
+            "cta": "Join Now"
+        },
+        "introduction": {
+            "quote": "Tekutoko is the ultimate platform to boost customer engagement and foster lasting loyalty. By enabling interactive, memorable experiences, it helps businesses develop stronger strategies, expand their reach, and drive sales growth."
+        },
+        "features": {
+            "title": "What Can You Do with Tekutoko?",
+            "description": "With Tekutoko, you can host and join exciting interactive games that make every experience more engaging and fun.",
+            "items": {
+                "photoHunt": {
+                    "title": "Photo Scavenger Hunt",
+                    "description": "Snap & upload photos to complete challenges."
+                },
+                "stampCollection": {
+                    "title": "Stamp Collection Game",
+                    "description": "Collect stamps and reach the goal."
+                },
+                "riddleChallenge": {
+                    "title": "Riddle Challenge",
+                    "description": "Solve quizzes and riddles to progress."
+                },
+                "missionLog": {
+                    "title": "Mission Log",
+                    "description": "Complete fun challenges and upload your results."
+                },
+                "workflowSubmission": {
+                    "title": "Workflow Submission",
+                    "description": "Submit reports and track work tasks easily."
+                },
+                "homeworkSubmission": {
+                    "title": "Homework Submission",
+                    "description": "Upload and track homework effortlessly!"
+                }
+            }
+        },
+        "detailedFeatures": {
+            "title": "Outstanding Features",
+            "description": "Discover the features that make Tekutoko unique and useful for both event organizers and participants.",
+            "items": {
+                "eventOrganization": {
+                    "title": "Easy Event Organization & Participation",
+                    "description": "Create events with engaging tasks, manage participants, and track progress effortlessly.",
+                    "points": [
+                        "Create diverse tasks",
+                        "Manage participants",
+                        "Real-time tracking"
+                    ]
+                },
+                "exclusiveRewards": {
+                    "title": "Exclusive Rewards & Benefits",
+                    "description": "Participate in events to receive gifts, discount codes, and many other attractive offers.",
+                    "points": [
+                        "Event gifts",
+                        "Exclusive discount codes",
+                        "Achievement badges"
+                    ]
+                },
+                "eventTracking": {
+                    "title": "Easy Event Tracking & Sharing",
+                    "description": "Easily search, follow, and share your favorite events with friends and community.",
+                    "points": [
+                        "Social media sharing",
+                        "Easy event search",
+                        "Follow organizers"
+                    ]
+                }
+            },
+            "cta": {
+                "title": "Ready to Experience Tekutoko?",
+                "description": "Join thousands of users creating amazing interactive experiences",
+                "button": "Get Started Now"
+            },
+            "exploreButton": "Explore Feature",
+            "featureLabel": "Feature"
+        },
+        "faq": {
+            "title": "Frequently Asked Questions",
+            "items": {
+                "createEvent": {
+                    "question": "How do I create an event?",
+                    "answer": "After logging in, you can click the 'Create Event' button to start the process of creating and customizing your event."
+                },
+                "getRewards": {
+                    "question": "How to participate and get rewards?",
+                    "answer": "Participate in activities and events on the website to receive attractive rewards. You can receive rewards via QR code in the 'Rewards' section."
+                },
+                "forgotPassword": {
+                    "question": "What if I forgot my password?",
+                    "answer": "On the login page, click 'Forgot password', we will send an email to you to reset your password."
+                }
+            }
+        },
+        "footer": {
+            "contact": {
+                "title": "Contact Us",
+                "email": "tekutoko.services@gmail.com",
+                "phone": "865638884"
+            },
+            "copyright": "© 2024-2025 TEKUTOKO. All Rights Reserved.",
+            "links": {
+                "privacy": "Privacy Policy",
+                "terms": "Terms of Service"
+            }
+        }
+    },
+    "alert": {
+        "timeout": "Request timed out. Please check your internet connection!",
+        "limitUpload": "You can only upload a maximum of {{limit}} images.",
+        "login": {
+            "incorrect": "Incorrect Username and/or Password!",
+            "banned": "Your account has been banned!",
+            "loginFailed": "Login failed!",
+            "notFound": "Account does not exist!"
+        },
+        "signUp": {
+            "emailExists": "Email already exists!",
+            "signupFailed": "Signup failed!",
+            "banned": "User has been banned!",
+            "signupSuccess": "Signup successfully! Please login again!"
+        },
+        "room": {
+            "deleteSuccess": "Room deleted successfully!",
+            "leaveSuccess": "You have left the room successfully!",
+            "noFilesUploaded": "No files were uploaded!",
+            "databaseError": "Database error!",
+            "roomNotExist": "Room does not exist!",
+            "firebaseError": "Failed to upload files to server!",
+            "giftsSentToUserSuccessfully": "Gifts sent to user successfully!"
+        },
+        "setupVoucher": {
+            "errorCompressingImage": "Error compressing image!",
+            "errorDeletingVoucher": "Error deleting old voucher!",
+            "expirationDateError": "Expiration date must be in the future"
+        },
+        "report": {
+            "reportSuccess": "Report sent successfully!",
+            "reportFailed": "Failed to send report!",
+            "reportExists": "You have reported this user before!",
+            "notChooseReason": "Please choose a reason!"
+        }
+    },
+    "reportForm": {
+        "title": "Report",
+        "reason": "Report Reason",
+        "additionalInfo": "Additional Information (255 characters)",
+        "submit": "Submit Report",
+        "cancel": "Cancel",
+        "inappropriate": "Inappropriate Content",
+        "harassment": "Harassment, Privacy Violation",
+        "spam": "Scam, Hostile Behavior",
+        "other": "Other"
+    },
+    "reportManager": {
+        "title": "Report Manager",
+        "reportList": "Report List",
+        "reportID": "Report ID",
+        "reportedUser": "Reported User",
+        "reportReason": "Report Reason",
+        "actions": "Actions",
+        "view": "View",
+        "ban": "Ban",
+        "remove": "Remove Room",
+        "roomId": "Room ID",
+        "delete": "Delete Report"
+    }
+}

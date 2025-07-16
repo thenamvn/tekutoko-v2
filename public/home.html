@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="canonical" href="https://tekutoko.org/" />
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tekutoko - The Interactive, Easy, and Fun Platform for Hosting & Joining Events</title>
+    <!-- Meta SEO -->
+    <meta name="title" content="Tekutoko - The Interactive, Easy, and Fun Platform for Hosting & Joining Events!">
+    <meta name="description"
+        content="Tekutoko is a web app designed for hosting and joining events, ensuring an interactive, effortless, and fun experience for everyone involved to boost businesses." />
+    <meta name="robots" content="index, follow">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="language" content="English">
+    <meta name="author" content="Nguyễn Thế Nam">
+
+    <!-- Social media share -->
+    <meta property="og:title"
+        content="Tekutoko - The Interactive, Easy, and Fun Platform for Hosting & Joining Events!">
+    <meta property="og:site_name" content="Tekutoko">
+    <meta property="og:url" content="https://tekutoko.org">
+    <meta property="og:description"
+        content="Tekutoko is the ultimate sales promotion tool for increasing customer engagement and building lasting loyalty. With Tekutoko, you can host and join interactive games that make every experience more engaging and fun.">
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://tekutoko.org/images/tekutoko.webp" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="TEKUTOKO" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Lấy đường dẫn ngôn ngữ hiện tại
+        function getLanguage() {
+            const path = window.location.pathname;
+            const langMatch = path.match(/^\/(en|vi|ja)\/?/);
+            return (langMatch && langMatch[1]) || 'en';
+        }
+        
+        // Tạo các thẻ canonical và hreflang
+        const currentLang = getLanguage();
+        const baseUrl = 'https://tekutoko.org';
+        
+        // Tạo canonical
+        const canonicalLink = document.createElement('link');
+        canonicalLink.rel = 'canonical';
+        canonicalLink.href = `${baseUrl}/${currentLang}/`;
+        document.head.appendChild(canonicalLink);
+        
+        // Tạo các thẻ hreflang
+        const langs = ['en', 'vi', 'ja'];
+        langs.forEach(lang => {
+            const link = document.createElement('link');
+            link.rel = 'alternate';
+            link.hreflang = lang;
+            link.href = `${baseUrl}/${lang}/`;
+            document.head.appendChild(link);
+        });
+        
+        // Thêm x-default
+        const defaultLink = document.createElement('link');
+        defaultLink.rel = 'alternate';
+        defaultLink.hreflang = 'x-default';
+        defaultLink.href = `${baseUrl}/en/`;
+        document.head.appendChild(defaultLink);
+        
+        // Cập nhật thẻ language
+        const langMeta = document.querySelector('meta[name="language"]');
+        if (langMeta) {
+            const langNames = { 'en': 'English', 'vi': 'Vietnamese', 'ja': 'Japanese' };
+            langMeta.content = langNames[currentLang] || 'English';
+        }
+        
+        // Cập nhật thuộc tính lang của html
+        document.documentElement.lang = currentLang;
+    </script>
+    <script src="./utils.js"></script>
+</head>
+
+<body>
+    <header class="fixed w-full z-20">
+        <nav class="bg-white border-gray-200 py-2.5 dark:bg-gray-900">
+            <div class="container flex flex-wrap items-center justify-between max-w-screen-xl px-4 mx-auto">
+                <a href="#" class="flex items-center">
+                    <div class="relative mr-2">
+                        <div class="w-10 h-8 border-2 border-blue-500 rounded-md transform skew-x-6"></div>
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-black font-bold">
+                        </div>
+                    </div>
+                    <span id="logo-text" class="text-2xl font-bold text-gray-700 dark:text-white">TEKUTOKO</span>
+                </a>
+                <div class="flex items-center lg:order-2">
+                    <!-- Dropdown ngôn ngữ -->
+                    <div class="relative">
+                        <!-- Nút chọn ngôn ngữ -->
+                        <button id="language-btn"
+                            class="flex items-center bg-transparent text-gray-700 border border-gray-300 rounded-md px-3 py-1 text-sm hover:bg-gray-100 transition-colors duration-200 focus:outline-none dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
+                            <img id="selected-flag" src="https://flagcdn.com/24x18/gb.png" alt="Selected Language"
+                                class="w-5 mr-2" loading="lazy" />
+                            <span id="selected-text">English</span>
+                        </button>
+
+                        <!-- Danh sách ngôn ngữ -->
+                        <div id="language-dropdown"
+                            class="absolute right-0 mt-2 w-36 bg-white rounded-md shadow-md border border-gray-300 hidden z-30">
+                            <div class="py-1">
+                                <a href="/vi/"
+                                    class="flex items-center px-4 py-2 text-sm hover:bg-gray-200 cursor-pointer text-gray-700"
+                                    data-lang="vi" data-flag="https://flagcdn.com/24x18/vn.png" data-text="Tiếng Việt">
+                                    <img src="https://flagcdn.com/24x18/vn.png" alt="Tiếng Việt" class="w-5 mr-2" />
+                                    Tiếng Việt
+                                </a>
+                                <a href="/en/"
+                                    class="flex items-center px-4 py-2 text-sm hover:bg-gray-200 cursor-pointer text-gray-700"
+                                    data-lang="en" data-flag="https://flagcdn.com/24x18/gb.png" data-text="English">
+                                    <img src="https://flagcdn.com/24x18/gb.png" alt="English" class="w-5 mr-2" />
+                                    English
+                                </a>
+                                <a href="/ja/"
+                                    class="flex items-center px-4 py-2 text-sm hover:bg-gray-200 cursor-pointer text-gray-700"
+                                    data-lang="ja" data-flag="https://flagcdn.com/24x18/jp.png" data-text="日本語">
+                                    <img src="https://flagcdn.com/24x18/jp.png" alt="日本語" class="w-5 mr-2" />
+                                    日本語
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <a href="#" class="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 sm:mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">Log in</a> -->
+                    <button data-collapse-toggle="mobile-menu-2" type="button"
+                        class="inline-flex items-center p-2 ml-1 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                        aria-controls="mobile-menu-2" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                        <svg class="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd"
+                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="items-center justify-between hidden w-full lg:flex lg:w-auto lg:order-1" id="mobile-menu-2">
+                    <ul class="flex flex-col mt-4 font-medium lg:flex-row lg:space-x-8 lg:mt-0">
+                        <li>
+                            <a href="#"
+                                class="block py-2 pl-3 pr-4 text-white bg-purple-700 rounded lg:bg-transparent lg:text-purple-700 lg:p-0 dark:text-white"
+                                data-translate="header.home" aria-current="page">Home</a>
+                        </li>
+                        <li>
+                            <a href="#introduction" data-translate="header.introduction"
+                                class="block py-2 pl-3 pr-4 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-purple-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700">Introduction</a>
+                        </li>
+                        <li>
+                            <a href="#benefits" data-translate="header.benefits"
+                                class="block py-2 pl-3 pr-4 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-purple-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700">Benefits</a>
+                        </li>
+                        <li>
+                            <a href="#features" data-translate="header.features"
+                                class="block py-2 pl-3 pr-4 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-purple-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700">Features</a>
+                        </li>
+                        <li>
+                            <a href="#sample" data-translate="header.sample"
+                                class="block py-2 pl-3 pr-4 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-purple-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700">Features</a>
+                        </li>
+                        <li>
+                            <a href="#questions" data-translate="header.qa"
+                                class="block py-2 pl-3 pr-4 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-purple-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700">Q&A</a>
+                        </li>
+                        <li>
+                            <a href="#footer" data-translate="header.contact"
+                                class="block py-2 pl-3 pr-4 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-purple-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700">Contact</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-white dark:bg-gray-900 py-24 min-h-screen flex justify-center items-center">
+        <!-- Removed grid and h-screen, added py-24 for padding -->
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+                <div class="lg:col-span-6 flex justify-center lg:justify-end">
+                    <div
+                        class="relative w-64 h-128 bg-black rounded-3xl border-8 border-black overflow-hidden flex-shrink-0">
+                        <img src="./images/screen-frame-notch.png"
+                            class="absolute top-[-3px] left-1/2 transform -translate-x-1/2 w-10 h-3 z-10" alt="Notch"
+                            loading="lazy">
+                        <div id="carousel" class="flex transition-transform duration-500 ease-in-out w-full h-full">
+                            <img src="./images/1.webp" class="w-full h-full object-cover" alt="Ảnh 1">
+                            <img src="./images/2.webp" class="w-full h-full object-cover" alt="Ảnh 2" loading="lazy">
+                            <img src="./images/3.webp" class="w-full h-full object-cover" alt="Ảnh 3" loading="lazy">
+                            <img src="./images/4.webp" class="w-full h-full object-cover" alt="Ảnh 4" loading="lazy">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-6 flex flex-col justify-center items-center text-center mt-8 lg:mt-0">
+                    <h1 data-translate="hero.title"
+                        class="max-w-2xl mb-4 text-4xl font-extrabold leading-tight tracking-tight md:text-5xl xl:text-6xl dark:text-white text-center">
+                        The Interactive, Easy, and Fun Platform for Hosting & Joining Events!
+                    </h1>
+                    <p data-translate="hero.description"
+                        class="max-w-2xl mb-6 font-light text-gray-500 lg:mb-8 md:text-lg lg:text-xl dark:text-gray-400 text-center">
+                        Join now and don't miss out on amazing experiences!
+                    </p>
+                    <div class="space-y-4 sm:flex sm:space-y-0 sm:space-x-4 justify-center">
+                        <a href="/home" data-translate="hero.joinNow"
+                            class="inline-flex items-center justify-center px-5 py-3 text-sm font-medium text-center text-white bg-purple-600 border border-transparent rounded-lg hover:bg-purple-700 focus:ring-4 focus:ring-purple-300 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 dark:focus:ring-gray-800">
+                            Join Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Introduce Section -->
+    <section id="introduction" class="bg-gray-50 dark:bg-gray-800">
+        <div class="max-w-screen-xl px-4 py-8 mx-auto text-center lg:py-24 lg:px-6">
+            <figure class="max-w-screen-md mx-auto">
+                <svg class="h-12 mx-auto mb-3 text-gray-400 dark:text-gray-600" viewBox="0 0 24 27" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M14.017 18L14.017 10.609C14.017 4.905 17.748 1.039 23 0L23.995 2.151C21.563 3.068 20 5.789 20 8H24V18H14.017ZM0 18V10.609C0 4.905 3.748 1.038 9 0L9.996 2.151C7.563 3.068 6 5.789 6 8H9.983L9.983 18L0 18Z"
+                        fill="currentColor" />
+                </svg>
+                <blockquote>
+                    <p data-translate="introduction.content"
+                        class="text-xl font-medium text-gray-900 md:text-2xl dark:text-white">"Tekutoko is the ultimate
+                        platform to boost customer engagement and foster lasting loyalty. By enabling interactive,
+                        memorable experiences, it helps businesses develop stronger strategies, expand their reach, and
+                        drive sales growth."</p>
+                </blockquote>
+            </figure>
+        </div>
+    </section>
+
+    <!-- Features Showcase Section -->
+    <section id="showcase" class="bg-white dark:bg-gray-900 py-16">
+        <div class="max-w-screen-xl px-4 mx-auto">
+            <div class="text-center mb-8">
+                <h2 data-translate="showcase.title" class="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">
+                    What Can You Do with Tekutoko?
+                </h2>
+                <p data-translate="showcase.description" class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                    With Tekutoko, you can host and join exciting interactive games that make every experience more
+                    engaging and fun.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Photo Scavenger Hunt -->
+                <div
+                    class="bg-purple-50 dark:bg-gray-800 rounded-lg p-6 transform transition duration-300 hover:scale-105">
+                    <div class="flex items-center mb-4">
+                        <span class="text-3xl mr-3">📸</span>
+                        <h3 data-translate="showcase.item1" class="text-xl font-semibold text-gray-900 dark:text-white">Photo Scavenger Hunt</h3>
+                    </div>
+                    <p data-translate="showcase.item1_1" class="text-gray-600 dark:text-gray-400">Snap & upload photos to complete challenges.</p>
+                </div>
+
+                <!-- Stamp Collection -->
+                <div
+                    class="bg-blue-50 dark:bg-gray-800 rounded-lg p-6 transform transition duration-300 hover:scale-105">
+                    <div class="flex items-center mb-4">
+                        <span class="text-3xl mr-3">📝</span>
+                        <h3 data-translate="showcase.item2" class="text-xl font-semibold text-gray-900 dark:text-white">Stamp Collection Game</h3>
+                    </div>
+                    <p data-translate="showcase.item2_2" class="text-gray-600 dark:text-gray-400">Collect stamps and reach the goal.</p>
+                </div>
+
+                <!-- Riddle Challenge -->
+                <div
+                    class="bg-green-50 dark:bg-gray-800 rounded-lg p-6 transform transition duration-300 hover:scale-105">
+                    <div class="flex items-center mb-4">
+                        <span class="text-3xl mr-3">🧩</span>
+                        <h3 data-translate="showcase.item3" class="text-xl font-semibold text-gray-900 dark:text-white">Riddle Challenge</h3>
+                    </div>
+                    <p data-translate="showcase.item3_3" class="text-gray-600 dark:text-gray-400">Solve quizzes and riddles to progress.</p>
+                </div>
+
+                <!-- Mission Log -->
+                <div
+                    class="bg-yellow-50 dark:bg-gray-800 rounded-lg p-6 transform transition duration-300 hover:scale-105">
+                    <div class="flex items-center mb-4">
+                        <span class="text-3xl mr-3">📜</span>
+                        <h3 data-translate="showcase.item4" class="text-xl font-semibold text-gray-900 dark:text-white">Mission Log</h3>
+                    </div>
+                    <p data-translate="showcase.item4_4" class="text-gray-600 dark:text-gray-400">Complete fun challenges and upload your results.</p>
+                </div>
+
+                <!-- Workflow Submission -->
+                <div
+                    class="bg-red-50 dark:bg-gray-800 rounded-lg p-6 transform transition duration-300 hover:scale-105">
+                    <div class="flex items-center mb-4">
+                        <span class="text-3xl mr-3">📂</span>
+                        <h3 data-translate="showcase.item5" class="text-xl font-semibold text-gray-900 dark:text-white">Workflow Submission</h3>
+                    </div>
+                    <p data-translate="showcase.item5_5" class="text-gray-600 dark:text-gray-400">Submit reports and track work tasks easily.</p>
+                </div>
+
+                <!-- Homework Submission -->
+                <div
+                    class="bg-indigo-50 dark:bg-gray-800 rounded-lg p-6 transform transition duration-300 hover:scale-105">
+                    <div class="flex items-center mb-4">
+                        <span class="text-3xl mr-3">📚</span>
+                        <h3 data-translate="showcase.item6" class="text-xl font-semibold text-gray-900 dark:text-white">Homework Submission</h3>
+                    </div>
+                    <p data-translate="showcase.item6_6" class="text-gray-600 dark:text-gray-400">Upload and track homework effortlessly!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section id="benefits" class="bg-gray-50 dark:bg-gray-800 py-16">
+        <h2 data-translate="benefits.title"
+            class="mb-4 text-3xl text-center font-extrabold tracking-tight text-gray-900 dark:text-white">Benefits of
+            Tekutoko</h2>
+        <div class="max-w-screen-xl px-4 py-8 mx-auto space-y-12 lg:space-y-20 lg:py-24 lg:px-6">
+            <!-- Row -->
+            <div class="items-center gap-8 lg:grid lg:grid-cols-2 xl:gap-16">
+                <div class="text-gray-500 sm:text-lg dark:text-gray-400">
+                    <h2 data-translate="benefits.type1"
+                        class="mb-4 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">For Businesses
+                        (Event Organizers)</h2>
+                    <p data-translate="benefits.description1" class="mb-8 font-light lg:text-xl">Connect with your
+                        audience in a fun and interactive way.
+                        Tekutoko helps you create memorable
+                        experiences that build lasting relationships.</p>
+                    <!-- List -->
+                    <ul role="list" class="pt-8 space-y-5 border-t border-gray-200 my-7 dark:border-gray-700">
+                        <li class="flex space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-purple-500 dark:text-purple-400" fill="currentColor"
+                                viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M480 32c0-12.9-7.8-24.6-19.8-29.6s-25.7-2.2-34.9 6.9L381.7 53c-48 48-113.1 75-181 75l-8.7 0-32 0-96 0c-35.3 0-64 28.7-64 64l0 96c0 35.3 28.7 64 64 64l0 128c0 17.7 14.3 32 32 32l64 0c17.7 0 32-14.3 32-32l0-128 8.7 0c67.9 0 133 27 181 75l43.6 43.6c9.2 9.2 22.9 11.9 34.9 6.9s19.8-16.6 19.8-29.6l0-147.6c18.6-8.8 32-32.5 32-60.4s-13.4-51.6-32-60.4L480 32zm-64 76.7L416 240l0 131.3C357.2 317.8 280.5 288 200.7 288l-8.7 0 0-96 8.7 0c79.8 0 156.5-29.8 215.3-83.3z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <div>
+                                <h3 data-translate="benefits.item1"
+                                    class="text-lg font-medium leading-tight text-gray-900 dark:text-white">
+                                    Introduce Your Services
+                                </h3>
+                                <p data-translate="benefits.item1_1" class="text-base text-gray-700 dark:text-gray-300">
+                                    Highlight your attractions, products, or services in an engaging and memorable way.
+                                </p>
+                            </div>
+                        </li>
+                        <li class="flex space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-purple-500 dark:text-purple-400" fill="currentColor"
+                                viewBox="0 0 384 512" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M272 384c9.6-31.9 29.5-59.1 49.2-86.2c0 0 0 0 0 0c5.2-7.1 10.4-14.2 15.4-21.4c19.8-28.5 31.4-63 31.4-100.3C368 78.8 289.2 0 192 0S16 78.8 16 176c0 37.3 11.6 71.9 31.4 100.3c5 7.2 10.2 14.3 15.4 21.4c0 0 0 0 0 0c19.8 27.1 39.7 54.4 49.2 86.2l160 0zM192 512c44.2 0 80-35.8 80-80l0-16-160 0 0 16c0 44.2 35.8 80 80 80zM112 176c0 8.8-7.2 16-16 16s-16-7.2-16-16c0-61.9 50.1-112 112-112c8.8 0 16 7.2 16 16s-7.2 16-16 16c-44.2 0-80 35.8-80 80z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <div>
+                                <h3 data-translate="benefits.item2"
+                                    class="text-lg font-medium leading-tight text-gray-900 dark:text-white">
+                                    Share Knowledge Entertainingly
+                                </h3>
+                                <p data-translate="benefits.item2_2" class="text-base text-gray-700 dark:text-gray-300">
+                                    Help participants learn about your services through fun and engaging experiences.
+                                </p>
+                            </div>
+                        </li>
+                        <li class="flex space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-purple-500 dark:text-purple-400" fill="currentColor"
+                                viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M144 0a80 80 0 1 1 0 160A80 80 0 1 1 144 0zM512 0a80 80 0 1 1 0 160A80 80 0 1 1 512 0zM0 298.7C0 239.8 47.8 192 106.7 192l42.7 0c15.9 0 31 3.5 44.6 9.7c-1.3 7.2-1.9 14.7-1.9 22.3c0 38.2 16.8 72.5 43.3 96c-.2 0-.4 0-.7 0L21.3 320C9.6 320 0 310.4 0 298.7zM405.3 320c-.2 0-.4 0-.7 0c26.6-23.5 43.3-57.8 43.3-96c0-7.6-.7-15-1.9-22.3c13.6-6.3 28.7-9.7 44.6-9.7l42.7 0C592.2 192 640 239.8 640 298.7c0 11.8-9.6 21.3-21.3 21.3l-213.3 0zM224 224a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zM128 485.3C128 411.7 187.7 352 261.3 352l117.3 0C452.3 352 512 411.7 512 485.3c0 14.7-11.9 26.7-26.7 26.7l-330.7 0c-14.7 0-26.7-11.9-26.7-26.7z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <div>
+                                <h3 data-translate="benefits.item3"
+                                    class="text-lg font-medium leading-tight text-gray-900 dark:text-white">
+                                    Build a Sustainable Community
+                                </h3>
+                                <p data-translate="benefits.item3_3" class="text-base text-gray-700 dark:text-gray-300">
+                                    Strengthen connections with participants by creating a sense of belonging through
+                                    events.
+                                </p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="w-full">
+                    <img class="w-full max-w-md mx-auto rounded-lg" src="./images/whatis.webp"
+                        alt="dashboard feature image" loading="lazy">
+                </div> <!-- Removed hidden and lg:flex -->
+            </div>
+            <!-- Row -->
+            <div class="items-center gap-8 lg:grid lg:grid-cols-2 xl:gap-16">
+                <div class="w-full">
+                    <img class="w-full max-w-md mx-auto rounded-lg" src="./images/whychoose.webp"
+                        alt="dashboard feature image" loading="lazy">
+                </div> <!-- Removed hidden and lg:flex -->
+                <div class="text-gray-500 sm:text-lg dark:text-gray-400">
+                    <h2 data-translate="benefits.type2"
+                        class="mb-4 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">For
+                        Participants</h2>
+                    <p data-translate="benefits.description2" class="mb-8 font-light lg:text-xl">Discover exciting
+                        events, connect with others, and create
+                        lasting memories with Tekutoko.</p>
+                    <!-- List -->
+                    <ul role="list" class="pt-8 space-y-5 border-t border-gray-200 my-7 dark:border-gray-700">
+                        <li class="flex space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-purple-500 dark:text-purple-400" fill="currentColor"
+                                viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M192 64C86 64 0 150 0 256S86 448 192 448l256 0c106 0 192-86 192-192s-86-192-192-192L192 64zM496 168a40 40 0 1 1 0 80 40 40 0 1 1 0-80zM392 304a40 40 0 1 1 80 0 40 40 0 1 1 -80 0zM168 200c0-13.3 10.7-24 24-24s24 10.7 24 24l0 32 32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0 0 32c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-32-32 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l32 0 0-32z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <div>
+                                <h3 data-translate="benefits.item4"
+                                    class="text-lg font-medium leading-tight text-gray-900 dark:text-white">
+                                    Fun Interactive Experience
+                                </h3>
+                                <p data-translate="benefits.item4_4" class="text-base text-gray-700 dark:text-gray-300">
+                                    Participate in unique tasks, receive attractive rewards, and enjoy extended trips at
+                                    event locations.
+                                </p>
+                            </div>
+                        </li>
+                        <li class="flex space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-purple-500 dark:text-purple-400" fill="currentColor"
+                                viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm50.7-186.9L162.4 380.6c-19.4 7.5-38.5-11.6-31-31l55.5-144.3c3.3-8.5 9.9-15.1 18.4-18.4l144.3-55.5c19.4-7.5 38.5 11.6 31 31L325.1 306.7c-3.2 8.5-9.9 15.1-18.4 18.4zM288 256a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <div>
+                                <h3 data-translate="benefits.item5"
+                                    class="text-lg font-medium leading-tight text-gray-900 dark:text-white">
+                                    Explore and Connect
+                                </h3>
+                                <p data-translate="benefits.item5_5" class="text-base text-gray-700 dark:text-gray-300">
+                                    Follow your favorite organizers and easily join upcoming events to stay engaged.
+                                </p>
+                            </div>
+                        </li>
+                        <li class="flex space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-purple-500 dark:text-purple-400" fill="currentColor"
+                                viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M220.6 121.2L271.1 96 448 96l0 96-114.8 0c-21.9-15.1-48.5-24-77.2-24s-55.2 8.9-77.2 24L64 192l0-64 128 0c9.9 0 19.7-2.3 28.6-6.8zM0 128L0 416c0 35.3 28.7 64 64 64l384 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L271.1 32c-9.9 0-19.7 2.3-28.6 6.8L192 64l-32 0 0-16c0-8.8-7.2-16-16-16L80 32c-8.8 0-16 7.2-16 16l0 16C28.7 64 0 92.7 0 128zM168 304a88 88 0 1 1 176 0 88 88 0 1 1 -176 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <div>
+                                <h3 data-translate="benefits.item6"
+                                    class="text-lg font-medium leading-tight text-gray-900 dark:text-white">
+                                    Preserve Memories
+                                </h3>
+                                <p data-translate="benefits.item6_6" class="text-base text-gray-700 dark:text-gray-300">
+                                    Record moments, complete challenges, and share your experiences.
+                                </p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="bg-white dark:bg-gray-900">
+        <div class="max-w-screen-xl px-4 py-8 mx-auto lg:py-24 lg:px-6">
+            <div class="max-w-screen-md mx-auto mb-8 text-center lg:mb-12">
+                <h2 data-translate="features.title"
+                    class="mb-4 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+                    Tính năng nổi bật
+                </h2>
+                <p data-translate="features.description"
+                    class="mb-5 font-light text-gray-500 sm:text-xl dark:text-gray-400">
+                    Khám phá những tính năng giúp Tekutoko trở nên độc đáo và hữu ích cho cả người tổ chức và người tham
+                    gia sự kiện.
+                </p>
+            </div>
+            <div class="space-y-8 lg:grid lg:grid-cols-3 sm:gap-6 xl:gap-10 lg:space-y-0">
+                <!-- Feature Card 1 -->
+                <div
+                    class="flex flex-col max-w-lg p-6 mx-auto text-center text-gray-900 bg-white border border-gray-100 rounded-lg shadow dark:border-gray-600 xl:p-8 dark:bg-gray-800 dark:text-white">
+                    <h3 data-translate="features.item1" class="mb-4 text-2xl font-semibold">Dễ dàng tổ chức và tham gia
+                        sự kiện</h3>
+                    <p data-translate="features.item1_1" class="font-light text-gray-500 sm:text-lg dark:text-gray-400">
+                        Tạo sự kiện với các nhiệm vụ hấp dẫn, quản lý người tham gia, và theo dõi tiến trình một cách dễ
+                        dàng.
+                    </p>
+                    <div class="flex justify-center items-baseline my-8">
+                        <img src="./images/feature1.webp" alt="Dễ dàng tổ chức và tham gia sự kiện"
+                            class="w-full h-60 object-cover rounded-lg" loading="lazy">
+                    </div>
+                    <!-- List (Optional, if you want to add more details) -->
+                    <ul role="list" class="space-y-4 text-left">
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor"
+                                viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span data-translate="features.item1_2">Tạo nhiệm vụ đa dạng</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor"
+                                viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span data-translate="features.item1_3">Quản lý người tham gia</span>
+                        </li>
+                    </ul>
+
+                </div>
+
+                <!-- Feature Card 2 -->
+                <div
+                    class="flex flex-col max-w-lg p-6 mx-auto text-center text-gray-900 bg-white border border-gray-100 rounded-lg shadow dark:border-gray-600 xl:p-8 dark:bg-gray-800 dark:text-white">
+                    <h3 data-translate="features.item2" class="mb-4 text-2xl font-semibold">Phần thưởng và ưu đãi độc
+                        quyền</h3>
+                    <p data-translate="features.item2_1" class="font-light text-gray-500 sm:text-lg dark:text-gray-400">
+                        Tham gia sự kiện để nhận quà tặng, mã giảm giá và nhiều ưu đãi hấp dẫn khác.
+                    </p>
+                    <div class="flex justify-center items-baseline my-8">
+                        <img src="./images/feature2.webp" alt="Phần thưởng và ưu đãi độc quyền"
+                            class="w-full h-60 object-cover rounded-lg" loading="lazy">
+                    </div>
+
+                    <!-- List (Optional) -->
+                    <ul role="list" class="space-y-4 text-left">
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor"
+                                viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span data-translate="features.item2_2">Quà tặng sự kiện</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor"
+                                viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span data-translate="features.item2_3">Mã giảm giá độc quyền</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Feature Card 3 -->
+                <div
+                    class="flex flex-col max-w-lg p-6 mx-auto text-center text-gray-900 bg-white border border-gray-100 rounded-lg shadow dark:border-gray-600 xl:p-8 dark:bg-gray-800 dark:text-white">
+                    <h3 data-translate="features.item3" class="mb-4 text-2xl font-semibold">Theo dõi và chia sẻ sự kiện
+                        dễ dàng</h3>
+                    <p data-translate="features.item3_1" class="font-light text-gray-500 sm:text-lg dark:text-gray-400">
+                        Dễ dàng tìm kiếm, theo dõi và chia sẻ các sự kiện yêu thích với bạn bè và cộng đồng.
+                    </p>
+                    <div class="flex justify-center items-baseline my-8">
+                        <img src="./images/feature3.webp" alt="Theo dõi và chia sẻ sự kiện dễ dàng"
+                            class="w-full h-60 object-cover rounded-lg" loading="lazy">
+                    </div>
+
+                    <!-- List (Optional) -->
+                    <ul role="list" class="space-y-4 text-left">
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor"
+                                viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span data-translate="features.item3_2">Chia sẻ qua mạng xã hội</span>
+                        </li>
+                        <li class="flex items-center space-x-3">
+                            <!-- Icon -->
+                            <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor"
+                                viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            <span data-translate="features.item3_3">Tìm kiếm sự kiện dễ dàng</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Room Examples -->
+    <section id="sample" class="bg-white dark:bg-gray-900">
+        <div class="max-w-screen-xl px-4 py-8 mx-auto lg:py-16 lg:px-6">
+            <h2 data-translate="room.title"
+                class="text-3xl font-extrabold tracking-tight text-gray-900 md:text-4xl dark:text-white text-center mb-8">
+                Example Rooms
+            </h2>
+            <div class="relative w-full overflow-hidden">
+                <!-- Nút Previous -->
+                <button
+                    class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors duration-300"
+                    onclick="moveSlide(-1)">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                        stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+                <!-- Nút Next -->
+                <button
+                    class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-gray-800 bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-colors duration-300"
+                    onclick="moveSlide(1)">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                        stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
+
+                <!-- Container for the Room Cards -->
+                <div class="flex transition-transform duration-500 ease-in-out" id="rooms-container">
+                    <!-- Room cards will be inserted here by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Q&A Section -->
+    <section id="questions" class="bg-white dark:bg-gray-900">
+        <div class="max-w-screen-xl px-4 pb-8 mx-auto lg:pb-24 lg:px-6 ">
+            <h2 data-translate="qa.title"
+                class="mb-6 text-3xl font-extrabold tracking-tight text-center text-gray-900 lg:mb-8 lg:text-3xl dark:text-white">
+                Frequently asked questions</h2>
+            <div class="max-w-screen-md mx-auto">
+                <div id="accordion-flush" data-accordion="collapse"
+                    data-active-classes="bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                    data-inactive-classes="text-gray-500 dark:text-gray-400">
+                    <h3 id="accordion-flush-heading-1">
+                        <button type="button"
+                            class="flex items-center justify-between w-full py-5 font-medium text-left border-b border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400"
+                            data-accordion-target="#accordion-flush-body-1" aria-expanded="false"
+                            aria-controls="accordion-flush-body-1">
+                            <span data-translate="qa.question1">How do I create an event?</span>
+                            <svg data-accordion-icon="" class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </h3>
+                    <div id="accordion-flush-body-1" class="hidden" aria-labelledby="accordion-flush-heading-1">
+                        <div class="py-5 border-b border-gray-200 dark:border-gray-700">
+                            <p data-translate="qa.answer1" class="mb-2 text-gray-500 dark:text-gray-400">After logging
+                                in, you can click the 'Create
+                                Event' button to start the process of creating and customizing your event.</p>
+                            <img src="./images/pic1.webp" alt="Cách tạo sự kiện"
+                                class="w-full rounded-lg mt-2 object-cover" loading="lazy">
+                        </div>
+                    </div>
+                    <h3 id="accordion-flush-heading-2">
+                        <button type="button"
+                            class="flex items-center justify-between w-full py-5 font-medium text-left text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400"
+                            data-accordion-target="#accordion-flush-body-2" aria-expanded="false"
+                            aria-controls="accordion-flush-body-2">
+                            <span data-translate="qa.question2">How to participate and get rewards?</span>
+                            <svg data-accordion-icon="" class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </h3>
+                    <div id="accordion-flush-body-2" class="hidden" aria-labelledby="accordion-flush-heading-2">
+                        <div class="py-5 border-b border-gray-200 dark:border-gray-700">
+                            <p data-translate="qa.answer2" class="mb-2 text-gray-500 dark:text-gray-400">Participate in
+                                activities and events on the
+                                website to receive attractive rewards, You can receive rewards via QR code in the
+                                'Rewards' section.</p>
+                            <img src="./images/pic2.webp" alt="Cách nhận thưởng"
+                                class="w-full rounded-lg mt-2 object-cover" loading="lazy">
+                        </div>
+                    </div>
+                    <h3 id="accordion-flush-heading-3">
+                        <button type="button"
+                            class="flex items-center justify-between w-full py-5 font-medium text-left text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400"
+                            data-accordion-target="#accordion-flush-body-3" aria-expanded="false"
+                            aria-controls="accordion-flush-body-3">
+                            <span data-translate="qa.question3">What if I forgot my password?</span>
+                            <svg data-accordion-icon="" class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </h3>
+                    <div id="accordion-flush-body-3" class="hidden" aria-labelledby="accordion-flush-heading-3">
+                        <div class="py-5 border-b border-gray-200 dark:border-gray-700">
+                            <p data-translate="qa.answer3" class="mb-2 text-gray-500 dark:text-gray-400">On the login
+                                page, click 'Forgot password',
+                                we will send an email to you to reset your password.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Contact + Footer -->
+    <footer id="footer" class="bg-white dark:bg-gray-800">
+        <div class="max-w-screen-xl p-4 py-6 mx-auto lg:py-16 md:p-8 lg:p-10">
+            <div class="flex flex-col items-center">
+                <!-- Hàng 2: Contact Us và Copyright (Grid for responsiveness) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                    <!-- Cột 1: Contact Us -->
+                    <div class="text-center md:text-left">
+                        <h2 data-translate="footer.contact"
+                            class="text-xl text-gray-700 font-semibold mb-2 dark:text-gray-400">Contact Us
+                        </h2>
+                        <p class="text-gray-500 text-sm flex items-center justify-center md:justify-start">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 512 512">
+                                <path
+                                    d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0L492.8 150.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48H48zM0 176V384c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V176L294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176z" />
+                            </svg>
+                            <a href="mailto:tekutoko.services@gmail.com">tekutoko.services@gmail.com</a>
+                        </p>
+                        <p class="text-gray-500 text-sm flex items-center justify-center md:justify-start">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 512 512">
+                                <path
+                                    d="M164.9 24.6c-7.7-18.6-28-28.5-47.4-23.2l-88 24C12.1 30.2 0 46 0 64C0 311.4 200.6 512 448 512c18 0 33.8-12.1 38.6-29.5l24-88c5.3-19.4-4.6-39.7-23.2-47.4l-96-40c-16.3-6.8-35.2-2.1-46.3 11.6L304.7 368C234.3 334.7 177.3 277.7 144 207.3L193.3 167c13.7-11.2 18.4-30 11.6-46.3l-40-96z" />
+                            </svg>
+                            Phone: 865638884
+                        </p>
+                        <ul class="flex justify-center md:justify-start space-x-5 mt-5">
+                            <!-- Social Icons (No changes needed)-->
+                            <li>
+                                <a href="https://www.facebook.com/profile.php?id=61568240777698"
+                                    class="text-gray-500 hover:text-gray-900 dark:hover:text-white dark:text-gray-400">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path fill-rule="evenodd"
+                                            d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://www.instagram.com/tekutoko2219"
+                                    class="text-gray-500 hover:text-gray-900 dark:hover:text-white dark:text-gray-400">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 448 512" aria-hidden="true">
+                                        <path fill-rule="evenodd"
+                                            d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://x.com/TEKUTOKOINFO"
+                                    class="text-gray-500 hover:text-gray-900 dark:hover:text-white dark:text-gray-400">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 512 512" aria-hidden="true">
+                                        <path
+                                            d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z" />
+                                    </svg>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://www.youtube.com/@TEKUTOKO"
+                                    class="text-gray-500 hover:text-gray-900 dark:hover:text-white dark:text-gray-400">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 576 512" aria-hidden="true">
+                                        <path fill-rule="evenodd"
+                                            d="M549.7 124.1c-6.3-23.7-24.8-42.3-48.3-48.6C458.8 64 288 64 288 64S117.2 64 74.6 75.5c-23.5 6.3-42 24.9-48.3 48.6-11.4 42.9-11.4 132.3-11.4 132.3s0 89.4 11.4 132.3c6.3 23.7 24.8 41.5 48.3 47.8C117.2 448 288 448 288 448s170.8 0 213.4-11.5c23.5-6.3 42-24.2 48.3-47.8 11.4-42.9 11.4-132.3 11.4-132.3s0-89.4-11.4-132.3zm-317.5 213.5V175.2l142.7 81.2-142.7 81.2z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Cột 2: Copyright và Links -->
+                    <div class="text-center md:text-right">
+                        <span data-translate="footer.copyright" class="block text-sm text-gray-500 dark:text-gray-400">
+                            © 2024-2025 TEKUTOKO. All Rights Reserved.
+                        </span>
+                        <ul class="flex flex-wrap justify-center md:justify-end mt-4 text-sm">
+                            <li class="text-gray-500">
+                                <a data-translate="footer.privacy" href="https://tekutoko.org/terms-and-conditions"
+                                    class="mr-4 hover:underline">
+                                    Chính sách bảo mật
+                                </a>
+                            </li>
+                            <li class="text-gray-500">
+                                <a data-translate="footer.terms" href="https://tekutoko.org/terms-and-conditions"
+                                    class="hover:underline">
+                                    Điều khoản sử dụng
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="./carousel.js"></script>
+    <script src="./q&a.js"></script>
+    <script src="./click.js"></script>
+    <script src="./i18n.js"></script>
+</body>
+
+</html>

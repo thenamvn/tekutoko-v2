@@ -1,0 +1,128 @@
+/* Modal.module.css */
+.modal {
+    width: 30rem;
+    height: 100%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.modalContainer {
+    max-height: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #fff;
+    border-radius: 1rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 15px 30px 0 rgba(0, 0, 0, 0.25);
+}
+
+
+.modalContainerHeader {
+    padding: 16px 32px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modalContainerTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1;
+    font-weight: 700;
+    font-size: 1.125rem;
+    /* Đã sửa lại để có đơn vị */
+}
+
+.modalContainerTitle svg {
+    width: 32px;
+    height: 32px;
+    color: #007bff;
+}
+
+.modalContainerBody {
+    font-family: 'Arial', sans-serif;
+    padding: 24px 32px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: black;
+}
+.modalContainerBody ul {
+    margin-left: 20px; /* Lùi đầu dòng cho danh sách */
+}
+.modalContainerBody ul li {
+    margin-left: 20px; /* Lùi đầu dòng cho danh sách */
+    list-style-type: disc; /* Đổi kiểu chấm */
+}
+.modalContainerBody ol {
+    margin-left: 20px; /* Lùi đầu dòng cho danh sách */
+}
+
+.modalContainerBody ol li {
+    margin-left: 20px; /* Lùi đầu dòng cho danh sách */
+    list-style-type: decimal;
+}
+.modalContainerFooter {
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    border-top: 1px solid #ddd;
+    gap: 12px;
+    position: relative;
+}
+
+.button {
+    padding: 12px 20px;
+    border-radius: 8px;
+    background-color: transparent;
+    border: 0;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.button.isGhost:hover,
+.button.isGhost:focus {
+    background-color: #dfdad7;
+}
+
+.button.isPrimary {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.button.isPrimary:hover,
+.button.isPrimary:focus {
+    background-color: #0056b3;
+}
+
+.button:disabled {
+    background-color: #dfdad7; /* Màu nền cho nút khi disabled */
+    color: #aaa; /* Màu chữ cho nút khi disabled */
+    cursor: not-allowed; /* Thay đổi con trỏ khi hover */
+}
+.iconButton {
+    border: none;
+    background-color: transparent;
+    width: 40px;
+    height: 40px;
+    line-height: 1;
+    cursor: pointer;
+    transition: 0.15s ease;
+    top: 1rem;
+    right: 1rem;
+    position: absolute;
+    border-radius: 10px;
+}
+
+.iconButton:hover,
+.iconButton:focus {
+    background-color: #dfdad7;
+}
