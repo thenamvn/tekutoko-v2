@@ -3939,6 +3939,287 @@ app.get('/api/room/:roomId/user-submissions-upload', async (req, res) => {
   }
 });
 
+
+app.post('/api/room/:roomId/location', verifyToken, (req, res) => {
+  const { roomId } = req.params;
+  const { lat, lng, address, admin_username, city, country } = req.body;
+
+  // Validate input
+  if (!lat || !lng || !address || !admin_username) {
+    return res.status(400).json({ 
+      error: 'Thiếu thông tin: lat, lng, address, admin_username' 
+    });
+  }
+
+  // Check if user is authorized
+  if (req.user.username !== admin_username) {
+    return res.status(403).json({ 
+      message: 'You are not authorized to perform this action' 
+    });
+  }
+
+  // Validate coordinates
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return res.status(400).json({ 
+      error: 'Tọa độ không hợp lệ' 
+    });
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting database connection:', err);
+      return res.status(500).send('Database connection error');
+    }
+
+    try {
+      // Check if room exists and user is admin
+      const checkRoomQuery = 'SELECT id, admin_username FROM room WHERE room_id = ?';
+      
+      connection.query(checkRoomQuery, [roomId], (err, roomResult) => {
+        if (err) {
+          console.error('Error checking room:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (roomResult.length === 0) {
+          return res.status(404).json({ error: 'Không tìm thấy phòng' });
+        }
+
+        const room = roomResult[0];
+        
+        // Check if user is admin of this room
+        if (room.admin_username !== admin_username) {
+          return res.status(403).json({ 
+            error: 'Chỉ admin của phòng mới có thể đặt vị trí' 
+          });
+        }
+
+        const finalCity = city || '';
+        const finalCountry = country || '';
+
+        // ✅ VỚI MYSQL CŨ: Dùng POINT(X, Y) trong đó X=longitude, Y=latitude
+        // Nhưng theo WKT standard thì POINT(longitude latitude) là đúng
+        // Thử cách này: POINT(longitude latitude) - đây là chuẩn WKT
+        const pointWKT = `POINT(${lng} ${lat})`;
+        
+        console.log('WKT format:', pointWKT);
+        console.log('lng (longitude):', lng, 'lat (latitude):', lat);
+
+        const updateQuery = `
+          UPDATE room
+          SET 
+            location = ST_GeomFromText(?, 4326),
+            city = ?,
+            country = ?
+          WHERE room_id = ?
+        `;
+
+        const params = [pointWKT, finalCity, finalCountry, roomId];
+
+        console.log('Query params:', params);
+
+        connection.query(updateQuery, params, (err, result) => {
+          if (err) {
+            console.error('Error updating room location:', err);
+            console.error('WKT used:', pointWKT);
+            
+            // ✅ NẾU VẪN LỖI, THỬ ĐẢO NGƯỢC TỌA ĐỘ (có thể MySQL cần lat lng thay vì lng lat)
+            const reversedWKT = `POINT(${lat} ${lng})`;
+            console.log('Trying reversed coordinates:', reversedWKT);
+            
+            const retryQuery = `
+              UPDATE room
+              SET 
+                location = ST_GeomFromText(?, 4326),
+                city = ?,
+                country = ?
+              WHERE room_id = ?
+            `;
+            
+            connection.query(retryQuery, [reversedWKT, finalCity, finalCountry, roomId], (err2, result2) => {
+              if (err2) {
+                console.error('Both attempts failed:', err2);
+                return res.status(500).json({ error: 'Database error when saving location' });
+              }
+
+              if (result2.affectedRows === 0) {
+                return res.status(404).json({ error: 'Room not found or not updated' });
+              }
+
+              console.log('Success with reversed coordinates!');
+              res.status(200).json({
+                message: 'Đã lưu vị trí thành công (reversed coordinates)',
+                data: {
+                  roomId,
+                  lat: parseFloat(lat),
+                  lng: parseFloat(lng),
+                  address,
+                  city: finalCity,
+                  country: finalCountry,
+                  coordinates: {
+                    type: 'Point',
+                    coordinates: [parseFloat(lng), parseFloat(lat)]
+                  }
+                }
+              });
+            });
+            return;
+          }
+
+          if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Room not found or not updated' });
+          }
+
+          console.log('Success with normal coordinates!');
+          // Return success response
+          res.status(200).json({
+            message: 'Đã lưu vị trí thành công',
+            data: {
+              roomId,
+              lat: parseFloat(lat),
+              lng: parseFloat(lng),
+              address,
+              city: finalCity,
+              country: finalCountry,
+              coordinates: {
+                type: 'Point',
+                coordinates: [parseFloat(lng), parseFloat(lat)]
+              }
+            }
+          });
+        });
+      });
+
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      res.status(500).json({ error: 'Unexpected error' });
+    } finally {
+      connection.release();
+    }
+  });
+});
+
+// API tìm phòng gần đây với city/country filtering
+app.get('/api/room/search/nearby', (req, res) => {
+  const { 
+    lat, 
+    lng, 
+    limit = 20, 
+    last_distance = 0, 
+    last_id = 0,
+    max_distance = 50000,
+    city,           // Thêm city filter
+    country         // Thêm country filter
+  } = req.query;
+
+  // Validate coordinates
+  if (!lat || !lng || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return res.status(400).json({ 
+      error: 'Tọa độ không hợp lệ' 
+    });
+  }
+
+  pool.getConnection((err, connection) => {
+    if (err) {
+      console.error('Error getting database connection:', err);
+      return res.status(500).send('Database connection error');
+    }
+
+    try {
+      const pointWKT = `POINT(${lng} ${lat})`;
+      
+      let query = `
+        SELECT 
+          id,
+          room_id,
+          room_title,
+          room_type,
+          admin_username,
+          description,
+          thumbnail,
+          ST_X(location) as lng,
+          ST_Y(location) as lat,
+          city,
+          country,
+          ST_Distance_Sphere(location, ST_GeomFromText(?, 4326)) AS distance_m
+        FROM room 
+        WHERE location IS NOT NULL
+      `;
+
+      let params = [pointWKT];
+
+      // ✅ FILTER BY CITY/COUNTRY FIRST (rất nhanh với index)
+      if (city) {
+        query += ` AND city = ?`;
+        params.push(city);
+      }
+      
+      if (country) {
+        query += ` AND country = ?`;
+        params.push(country);
+      }
+
+      // ✅ SAU ĐÓ MỚI FILTER BY DISTANCE (chỉ tính trên subset nhỏ)
+      query += ` AND ST_Distance_Sphere(location, ST_GeomFromText(?, 4326)) <= ?`;
+      params.push(pointWKT, max_distance);
+
+      // Cursor pagination logic
+      if (last_distance > 0 || last_id > 0) {
+        query += ` 
+          AND (
+            ST_Distance_Sphere(location, ST_GeomFromText(?, 4326)) > ?
+            OR (
+              ST_Distance_Sphere(location, ST_GeomFromText(?, 4326)) = ?
+              AND id > ?
+            )
+          )
+        `;
+        params.push(pointWKT, last_distance, pointWKT, last_distance, last_id);
+      }
+
+      query += ` ORDER BY distance_m ASC, id ASC LIMIT ?`;
+      params.push(parseInt(limit));
+
+      connection.query(query, params, (err, results) => {
+        if (err) {
+          console.error('Error searching nearby rooms:', err);
+          return res.status(500).json({ error: 'Database error' });
+        }
+
+        const response = {
+          message: `Tìm thấy ${results.length} phòng trong ${city || 'khu vực'}, ${country || 'tất cả quốc gia'}`,
+          data: results,
+          filters: {
+            city: city || null,
+            country: country || null,
+            max_distance_m: max_distance
+          },
+          pagination: {
+            has_more: results.length === parseInt(limit),
+            next_cursor: null
+          }
+        };
+
+        if (results.length > 0) {
+          const lastItem = results[results.length - 1];
+          response.pagination.next_cursor = {
+            last_distance: lastItem.distance_m,
+            last_id: lastItem.id
+          };
+        }
+
+        res.status(200).json(response);
+      });
+
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      res.status(500).json({ error: 'Unexpected error' });
+    } finally {
+      connection.release();
+    }
+  });
+});
+
 // Health check API
 app.get("/health", async (req, res) => {
   try {

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-const LocationModal = ({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  roomId, 
+const LocationModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  roomId,
   username,
-  apiUrl 
+  apiUrl
 }) => {
   const [locationMethod, setLocationMethod] = useState('auto');
   const [currentLocation, setCurrentLocation] = useState(null);
@@ -50,7 +50,7 @@ const LocationModal = ({
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        
+
         try {
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
@@ -60,19 +60,32 @@ const LocationModal = ({
               }
             }
           );
-          
+
           if (!response.ok) {
             throw new Error('Failed to get address');
           }
-          
+
           const data = await response.json();
-          
+
+          // ✅ EXTRACT CITY VÀ COUNTRY NGAY TẠI ĐÂY
+          let city = '';
+          let country = '';
+
+          if (data.address) {
+            const addr = data.address;
+            city = addr.city || addr.city_district || addr.town || addr.village || '';
+            country = addr.country_code ? addr.country_code.toUpperCase() : '';
+          }
+
           const location = {
             lat: latitude,
             lng: longitude,
-            address: data.display_name || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+            address: data.display_name || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+            city: city,        // ✅ EXTRACT RIÊNG
+            country: country,  // ✅ EXTRACT RIÊNG
+            nominatim_data: data // ✅ GIỮ LẠI CHO HIỂN THỊ
           };
-          
+
           console.log('Location found:', location);
           setCurrentLocation(location);
           setLocationError('');
@@ -81,11 +94,14 @@ const LocationModal = ({
           setCurrentLocation({
             lat: latitude,
             lng: longitude,
-            address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+            address: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+            city: '',
+            country: '',
+            nominatim_data: null
           });
           setLocationError('');
         }
-        
+
         setIsGettingLocation(false);
       },
       (error) => {
@@ -119,7 +135,6 @@ const LocationModal = ({
 
   // Hàm tìm kiếm địa chỉ thủ công với Nominatim
   const searchManualLocation = async () => {
-    // console.log('searchManualLocation called with:', manualLocation);
     if (!manualLocation.trim()) {
       setLocationError('Vui lòng nhập địa chỉ');
       return;
@@ -138,22 +153,35 @@ const LocationModal = ({
           }
         }
       );
-      
+
       if (!response.ok) {
         throw new Error('Failed to search location');
       }
-      
+
       const data = await response.json();
 
       if (data && data.length > 0) {
         const result = data[0];
-        
+
+        // ✅ EXTRACT CITY VÀ COUNTRY NGAY TẠI ĐÂY
+        let city = '';
+        let country = '';
+
+        if (result.address) {
+          const addr = result.address;
+          city = addr.city || addr.city_district || addr.town || addr.village || '';
+          country = addr.country_code ? addr.country_code.toUpperCase() : '';
+        }
+
         const location = {
           lat: parseFloat(result.lat),
           lng: parseFloat(result.lon),
-          address: result.display_name
+          address: result.display_name,
+          city: city,        // ✅ EXTRACT RIÊNG  
+          country: country,  // ✅ EXTRACT RIÊNG
+          nominatim_data: result // ✅ GIỮ LẠI CHO HIỂN THỊ
         };
-        
+
         // console.log('Manual location found:', location);
         setCurrentLocation(location);
         setLocationError('');
@@ -166,14 +194,12 @@ const LocationModal = ({
       setLocationError('Lỗi khi tìm kiếm địa chỉ');
       setCurrentLocation(null);
     }
-    
+
     setIsGettingLocation(false);
   };
 
-  // Hàm lưu vị trí
+  // ✅ SỬA HÀM SAVE LOCATION
   const saveLocation = async () => {
-    console.log('🚨 saveLocation called!', { currentLocation, roomId, username, apiUrl });
-    
     if (!currentLocation) {
       setLocationError('Vui lòng chọn vị trí trước khi lưu');
       return;
@@ -205,16 +231,20 @@ const LocationModal = ({
           lat: currentLocation.lat,
           lng: currentLocation.lng,
           address: currentLocation.address,
-          admin_username: username
+          admin_username: username,
+          city: currentLocation.city,       // ✅ GỬI CITY
+          country: currentLocation.country  // ✅ GỬI COUNTRY  
         })
       });
 
-      console.log('Save response status:', response.status);
+      // console.log('Save response status:', response.status);
 
       if (response.ok) {
+        const responseData = await response.json();
         alert('Đã lưu vị trí thành công!');
+        console.log('Saved location data:', responseData.data);
         if (onSave) {
-          onSave(currentLocation);
+          onSave(responseData.data);
         }
         handleClose();
       } else {
@@ -253,7 +283,7 @@ const LocationModal = ({
 
   // Hàm xử lý click button save với log
   const handleSaveClick = (e) => {
-    console.log('🔥 Save button clicked!', e);
+    // console.log('🔥 Save button clicked!', e);
     e.preventDefault();
     e.stopPropagation();
     saveLocation();
@@ -287,22 +317,20 @@ const LocationModal = ({
               <button
                 type="button"
                 onClick={() => handleMethodChange('auto')}
-                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                  locationMethod === 'auto'
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${locationMethod === 'auto'
+                  ? 'bg-violet-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 GPS tự động
               </button>
               <button
                 type="button"
                 onClick={() => handleMethodChange('manual')}
-                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                  locationMethod === 'manual'
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${locationMethod === 'manual'
+                  ? 'bg-violet-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 Nhập thủ công
               </button>
@@ -416,12 +444,12 @@ const LocationModal = ({
                   width="100%"
                   height="200"
                   style={{ border: 0 }}
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${currentLocation.lng-0.01},${currentLocation.lat-0.01},${currentLocation.lng+0.01},${currentLocation.lat+0.01}&layer=mapnik&marker=${currentLocation.lat},${currentLocation.lng}`}
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${currentLocation.lng - 0.01},${currentLocation.lat - 0.01},${currentLocation.lng + 0.01},${currentLocation.lat + 0.01}&layer=mapnik&marker=${currentLocation.lat},${currentLocation.lng}`}
                   allowFullScreen
                   title="Location Preview"
                 ></iframe>
                 <div className="text-xs text-gray-500 mt-1 text-center">
-                  <a 
+                  <a
                     href={`https://www.openstreetmap.org/?mlat=${currentLocation.lat}&mlon=${currentLocation.lng}#map=15/${currentLocation.lat}/${currentLocation.lng}`}
                     target="_blank"
                     rel="noopener noreferrer"
