@@ -14,7 +14,9 @@ const { getStorage, ref, deleteObject } = require("firebase/storage");
 const { initializeApp } = require("firebase/app");
 const { v4: uuidv4 } = require("uuid");
 const fetch = require("node-fetch");
+const { GoogleGenAI } = require('@google/genai');
 const PORT = 9999;
+
 // Cấu hình CORS
 app.use(
   cors({
@@ -37,6 +39,11 @@ app.options("*", cors()); // Preflight request handler for all routes
 // Load environment variables from .env file
 const envPath = path.resolve(__dirname, ".env");
 dotenv.config({ path: envPath });
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY
+});
+
 // app.use(favicon(path.join(__dirname, 'public', 'favicon.webp')));
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -46,6 +53,211 @@ const pool = mysql.createPool({
   port: process.env.DB_PORT,
 });
 
+const tekutokoGuide = `
+# TEKUTOKO - Hướng dẫn sử dụng cho Người dùng
+
+## 🎯 Giới thiệu về Tekutoko
+
+Tekutoko là nền tảng tham gia các hoạt động tương tác vui nhộn như:
+- **Săn ảnh thú vị** - Chụp và chia sẻ ảnh để hoàn thành thử thách
+- **Sưu tập tem** - Thu thập tem và đạt mục tiêu đề ra  
+- **Thử thách đố vui** - Giải đố và trả lời câu hỏi
+- **Nhật ký nhiệm vụ** - Hoàn thành các thử thách vui nhộn
+- **Nộp báo cáo/bài tập** - Gửi và theo dõi tiến độ
+
+## 🚀 Đăng ký và Đăng nhập
+
+### **Tạo tài khoản mới**
+1. Nhấn nút "Đăng ký" trên màn hình chính
+2. Nhập thông tin:
+   - Username (duy nhất)
+   - Email (để nhận thông báo)
+   - Password (ít nhất 6 ký tự)
+   - Fullname (tên hiển thị)
+3. Nhấn "Đăng ký" để hoàn tất
+
+### **Đăng nhập**
+- **Bằng tài khoản Tekutoko**: Nhập username/email + password
+- **Bằng Google**: Nhấn nút Google để đăng nhập nhanh
+- **Bằng LINE**: Kết nối qua tài khoản LINE
+
+### **Quên mật khẩu**
+1. Nhấn "Forgot Password?" ở màn hình đăng nhập
+2. Nhập email đã đăng ký
+3. Kiểm tra email để nhận link reset password
+4. Nhấn vào link trong email
+5. Nhập mật khẩu mới và xác nhận
+6. Đăng nhập với mật khẩu mới
+
+## 🏠 Dashboard - Màn hình chính
+
+Sau khi đăng nhập, bạn sẽ thấy:
+- **Rooms Joined**: Các phòng bạn đã tham gia
+- **Join Game by Code**: Nhập mã để tham gia phòng mới
+- **Discovery**: Khám phá các phòng có sẵn
+- **Profile**: Quản lý thông tin cá nhân
+
+## 🎮 Cách tham gia phòng game
+
+### **Tham gia bằng mã phòng**
+1. Lấy mã phòng từ người tổ chức (VD: "ABC123")
+2. Nhập vào ô "Join Game by Code"
+3. Nhấn "Join" để tham gia
+
+### **Khám phá phòng trong Discovery**
+- **Tab Popular**: Các phòng được nhiều người tham gia
+- **Tab Nearby**: Phòng game gần vị trí của bạn (cần bật GPS)
+- **Tab Search**: Tìm kiếm bằng từ khóa khi bạn gõ vào ô search
+
+### **Cho phép truy cập vị trí**
+- Khi sử dụng tính năng "Nearby", app sẽ xin phép truy cập GPS
+- Nhấn "Allow" để tìm các phòng game gần bạn
+- Hệ thống sẽ tự động phát hiện thành phố và hiển thị phòng phù hợp
+
+## 🎯 Hoàn thành nhiệm vụ trong phòng
+
+### **Các loại câu hỏi/nhiệm vụ**
+1. **Trả lời văn bản**: Gõ câu trả lời vào ô text
+2. **Trắc nghiệm**: Chọn đáp án đúng từ các lựa chọn
+3. **Upload ảnh/file**: Chụp ảnh hoặc tải file lên
+
+### **Quy trình hoàn thành**
+1. Đọc kỹ đề bài và hướng dẫn
+2. Thực hiện nhiệm vụ theo yêu cầu
+3. Nhập câu trả lời hoặc upload file
+4. Nhấn "Submit" để gửi
+5. Xem kết quả ngay lập tức
+6. Chuyển sang câu tiếp theo
+
+### **Upload ảnh**
+- Chọn "Take Photo" để chụp ảnh mới
+- Hoặc "Choose from Gallery" để chọn ảnh có sẵn
+- Ảnh sẽ được tự động nén để upload nhanh hơn
+- Đợi upload hoàn tất rồi nhấn Submit
+
+## 🎁 Nhận phần thưởng
+
+### **Điều kiện nhận thưởng**
+- Hoàn thành tất cả câu hỏi trong phòng
+- Đạt điểm số yêu cầu (nếu có)
+
+### **Cách nhận**
+1. Sau khi hoàn thành, sẽ xuất hiện nút "Claim Reward"
+2. Nhấn để xem phần thưởng
+3. Quét QR code để sử dụng voucher (nếu có)
+4. Hoặc screenshot để lưu thông tin
+
+## 👤 Quản lý Profile
+
+### **Cập nhật thông tin cá nhân**
+1. Vào Profile từ menu
+2. Nhấn "Edit Profile"
+3. Thay đổi:
+   - Avatar (ảnh đại diện)
+   - Fullname (tên hiển thị)
+   - Bio (giới thiệu bản thân)
+   - Background image (ảnh nền profile)
+
+### **Liên kết social media**
+- Thêm link Instagram, Facebook, Twitter
+- Hiển thị trên profile để người khác kết nối
+
+## 🌐 Chuyển đổi ngôn ngữ
+
+Tekutoko hỗ trợ 3 ngôn ngữ:
+- **English (en)** - Tiếng Anh
+- **Tiếng Việt (vi)** - Vietnamese  
+- **日本語 (ja)** - Tiếng Nhật
+
+Thay đổi bằng cách nhấn vào dropdown ngôn ngữ ở góc trên màn hình.
+
+## 👥 Tính năng Follow
+
+### **Follow người tổ chức**
+1. Vào profile của người tổ chức
+2. Nhấn nút "Follow"
+3. Bạn sẽ nhận thông báo khi họ tạo sự kiện mới
+
+### **Xem Following/Followers**
+- Trong profile có hiển thị số người follow và đang follow
+- Nhấn vào để xem danh sách chi tiết
+
+## 📱 Navigation - Di chuyển trong app
+
+### **Bottom Navigation Bar**
+- **Home**: Về Dashboard chính
+- **Discovery**: Khám phá phòng mới
+- **Create**: Tạo phòng (nếu có quyền)
+- **Profile**: Quản lý tài khoản
+
+### **Header**
+- Logo Tekutoko (nhấn để về Home)
+- Search bar (tìm kiếm phòng)
+- Language selector (chọn ngôn ngữ)
+- Menu dropdown (logout, settings)
+
+## 🔧 Troubleshooting - Xử lý sự cố
+
+### **Không tham gia được phòng**
+- Kiểm tra mã phòng có đúng không
+- Đảm bảo phòng vẫn đang hoạt động
+- Thử đăng xuất và đăng nhập lại
+
+### **Upload ảnh không thành công**
+- Kiểm tra kết nối internet
+- Thử chụp ảnh mới với chất lượng thấp hơn
+- Đảm bảo file không quá 10MB
+
+### **Không nhận được email reset password**
+- Kiểm tra thư mục Spam/Junk
+- Đảm bảo email nhập đúng
+- Thử lại sau 5-10 phút
+
+### **GPS không hoạt động**
+- Bật Location Services trong Settings điện thoại
+- Cho phép browser truy cập vị trí
+- Thử refresh trang và cho phép lại
+
+### **App chạy chậm**
+- Đóng các tab/app khác không cần thiết
+- Kiểm tra kết nối wifi/4G
+- Clear cache browser nếu cần
+
+## 💡 Tips sử dụng hiệu quả
+
+### **Cho người mới**
+- Bắt đầu với các phòng Popular để làm quen
+- Đọc kỹ hướng dẫn trước khi bắt đầu
+- Thử các loại câu hỏi khác nhau để hiểu cách chơi
+
+### **Cho người dùng thường xuyên**
+- Follow các host yêu thích để không bỏ lỡ sự kiện
+- Dùng tính năng Nearby để tìm hoạt động gần nhà
+- Cập nhật profile để thu hút người khác follow
+
+### **Bảo mật tài khoản**
+- Sử dụng mật khẩu mạnh và duy nhất
+- Không chia sẻ thông tin đăng nhập
+- Đăng xuất khi sử dụng máy chung
+`;
+function buildPrompt(userQuestion) {
+  return `Bạn là TekuBot - trợ lý ảo chuyên về ứng dụng Tekutoko.
+
+**Nhiệm vụ:** Trả lời câu hỏi của người dùng về cách sử dụng Tekutoko một cách thân thiện và chính xác.
+
+**Quy tắc:**
+1. Chỉ trả lời dựa trên thông tin trong tài liệu hướng dẫn
+2. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, tôi không tìm thấy thông tin này trong tài liệu hướng dẫn Tekutoko"
+3. Trả lời ngắn gọn và dễ hiểu, ngôn ngữ trả lời luôn luôn phải cùng ngôn ngữ với câu hỏi của người dùng. Người dùng sử dụng ngôn ngữ nào thì TekuBot trả lời bằng ngôn ngữ đó.
+4. Sử dụng emoji phù hợp để làm cho câu trả lời sinh động
+
+**Tài liệu hướng dẫn Tekutoko:**
+${tekutokoGuide}
+
+**Câu hỏi:** ${userQuestion}
+
+**Trả lời:**`;
+}
 // Middleware để quản lý kết nối
 const dbMiddleware = (req, res, next) => {
   pool.getConnection((err, connection) => {
@@ -4695,6 +4907,40 @@ app.get("/health", async (req, res) => {
     });
   } catch (err) {
     res.status(500).send("Application is unhealthy");
+  }
+});
+
+// ✅ Endpoint chat với API mới
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { question } = req.body;
+    
+    if (!question) {
+      return res.status(400).json({ 
+        error: 'Vui lòng nhập câu hỏi' 
+      });
+    }
+
+    console.log('Received question:', question);
+
+    const prompt = buildPrompt(question);
+    
+    // ✅ Sử dụng API mới với syntax đúng
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-exp', // Hoặc gemini-1.5-flash
+      contents: prompt,
+    });
+
+    res.json({ 
+      answer: response.text,
+      timestamp: new Date().toISOString() 
+    });
+
+  } catch (error) {
+    console.error('Chatbot error:', error);
+    res.status(500).json({ 
+      error: 'Xin lỗi, TekuBot đang gặp sự cố. Vui lòng thử lại sau!' 
+    });
   }
 });
 
