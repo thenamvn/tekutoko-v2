@@ -26,26 +26,29 @@ import {
   Star,
   Zap,
   Heart,
-  Rocket
+  Rocket,
+  MessageCircle,
+  Send,
+  Bot,
+  User
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-// OPTIMIZATION: Custom hook to detect mobile devices.
-// We use a breakpoint of 1024px to include tablets, which often have similar performance constraints to phones.
+// Custom hook to detect if the device is mobile
 const useIsMobile = (breakpoint = 1024) => {
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     // This check ensures the code doesn't break during server-side rendering
     if (typeof window === 'undefined') {
-        return;
+      return;
     }
 
     const checkDevice = () => setIsMobile(window.innerWidth < breakpoint);
-    
+
     checkDevice();
     window.addEventListener('resize', checkDevice);
-    
+
     return () => window.removeEventListener('resize', checkDevice);
   }, [breakpoint]);
   return isMobile;
@@ -124,7 +127,7 @@ const MagneticButton = ({ children, className, onClick, ...props }) => {
       y: (e.clientY - centerY) * 0.1,
     });
   };
-  
+
   const resetPosition = () => {
     if (isMobile) return;
     setIsHovered(false);
@@ -159,7 +162,7 @@ const MagneticButton = ({ children, className, onClick, ...props }) => {
 // Enhanced Background Component
 const EnhancedBackground = ({ children, variant = "default" }) => {
   const isMobile = useIsMobile();
-  
+
   // OPTIMIZATION: Drastically reduce the number of animated elements on mobile to save CPU/GPU resources.
   const particleCount = isMobile ? 8 : 30;
   const showComplexShapes = !isMobile;
@@ -186,8 +189,8 @@ const EnhancedBackground = ({ children, variant = "default" }) => {
       <div className="fixed inset-0 z-0">
         {/* Animated Background Gradient */}
         <div className={`absolute inset-0 bg-gradient-to-br ${config.gradient}`}>
-           {/* OPTIMIZATION: The radial gradient animation is subtle but can be costly. We disable it on mobile. */}
-           {!isMobile && <motion.div
+          {/* OPTIMIZATION: The radial gradient animation is subtle but can be costly. We disable it on mobile. */}
+          {!isMobile && <motion.div
             className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-400/20 via-blue-400/10 to-transparent"
             animate={{
               background: [
@@ -259,13 +262,13 @@ const EnhancedBackground = ({ children, variant = "default" }) => {
             />
           </div>
         )}
-        
+
         {/* Lightning effects - Disabled on mobile */}
         {showLightning && <motion.div
-            className="absolute w-1 h-96 bg-gradient-to-b from-transparent via-purple-400/30 to-transparent transform rotate-45"
-            style={{ top: '10%', left: '30%' }}
-            animate={{ opacity: [0, 1, 0], scaleY: [0, 1, 0]}}
-            transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 8 }}
+          className="absolute w-1 h-96 bg-gradient-to-b from-transparent via-purple-400/30 to-transparent transform rotate-45"
+          style={{ top: '10%', left: '30%' }}
+          animate={{ opacity: [0, 1, 0], scaleY: [0, 1, 0] }}
+          transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 8 }}
         />}
       </div>
 
@@ -506,14 +509,14 @@ const HeroSection = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const images = ['/images/1.webp', '/images/2.webp', '/images/3.webp', '/images/4.webp'];
   const isMobile = useIsMobile();
-  
+
   // State để theo dõi xem có phải là lần render đầu tiên không
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
       // Sau lần chuyển ảnh đầu tiên, nó không còn là initial load nữa
-      setIsInitialLoad(false); 
+      setIsInitialLoad(false);
       setCurrentImage((prev) => (prev + 1) % images.length);
     }, 4000);
     return () => clearInterval(interval);
@@ -530,14 +533,14 @@ const HeroSection = () => {
   // Trạng thái cho các ảnh trong slideshow
   const slideshowVariants = {
     initial: isMobile
-        ? { opacity: 0, scale: 1.1 }
-        : { opacity: 0, scale: 1.3, rotateY: 90, filter: "blur(20px)" },
+      ? { opacity: 0, scale: 1.1 }
+      : { opacity: 0, scale: 1.3, rotateY: 90, filter: "blur(20px)" },
     animate: isMobile
-        ? { opacity: 1, scale: 1 }
-        : { opacity: 1, scale: 1, rotateY: 0, filter: "blur(0px)" },
+      ? { opacity: 1, scale: 1 }
+      : { opacity: 1, scale: 1, rotateY: 0, filter: "blur(0px)" },
     exit: isMobile
-        ? { opacity: 0, scale: 0.9 }
-        : { opacity: 0, scale: 0.8, rotateY: -90, filter: "blur(10px)" }
+      ? { opacity: 0, scale: 0.9 }
+      : { opacity: 0, scale: 0.8, rotateY: -90, filter: "blur(10px)" }
   };
 
   return (
@@ -574,7 +577,7 @@ const HeroSection = () => {
                     src={images[currentImage]}
                     alt={`Screenshot ${currentImage + 1}`}
                     className="w-full h-full object-cover"
-                    
+
                     // OPTIMIZATION: Sử dụng variants đã định nghĩa
                     // Nếu là lần tải đầu tiên, dùng initialLoadVariants, ngược lại dùng slideshowVariants
                     variants={isInitialLoad ? initialLoadVariants : slideshowVariants}
@@ -601,7 +604,7 @@ const HeroSection = () => {
                   className="absolute w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white shadow-lg"
                   style={{ top: `${20 + index * 20}%`, left: index % 2 === 0 ? '-15%' : '95%' }}
                   animate={{ y: [0, -20, 0], rotate: [0, 360], scale: [1, 1.2, 1] }}
-                  transition={{ duration: 3 + index, repeat: Infinity, delay: index * 0.5, ease: "linear"}}
+                  transition={{ duration: 3 + index, repeat: Infinity, delay: index * 0.5, ease: "linear" }}
                 >
                   <Icon className="w-6 h-6" />
                 </motion.div>
@@ -801,12 +804,12 @@ const FeaturesShowcase = () => {
             className="inline-block p-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl mb-8"
             whileHover={{ scale: 1.1, rotate: 5 }}
             animate={!isMobile ? {
-                boxShadow: [
-                  "0 0 20px rgba(147, 51, 234, 0.3)",
-                  "0 0 40px rgba(59, 130, 246, 0.4)",
-                  "0 0 20px rgba(147, 51, 234, 0.3)",
-                ]
-              } : {}}
+              boxShadow: [
+                "0 0 20px rgba(147, 51, 234, 0.3)",
+                "0 0 40px rgba(59, 130, 246, 0.4)",
+                "0 0 20px rgba(147, 51, 234, 0.3)",
+              ]
+            } : {}}
             transition={{ boxShadow: { duration: 3, repeat: Infinity }, hover: { duration: 0.3 } }}
           >
             <div className="bg-white rounded-xl p-4">
@@ -881,197 +884,197 @@ const FeaturesShowcase = () => {
 
 // Enhanced Detailed Features Section
 const DetailedFeaturesSection = () => {
-    const { t } = useTranslation();
-    const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
-    const navigate = useNavigate();
-    const isMobile = useIsMobile();
+  const { t } = useTranslation();
+  const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
-    const features = [
-      {
-        title: t('homepage.detailedFeatures.items.eventOrganization.title'),
-        description: t('homepage.detailedFeatures.items.eventOrganization.description'),
-        image: "./images/feature1.webp",
-        points: [
-          t('homepage.detailedFeatures.items.eventOrganization.points.0'),
-          t('homepage.detailedFeatures.items.eventOrganization.points.1'),
-          t('homepage.detailedFeatures.items.eventOrganization.points.2')
-        ],
-        color: "purple",
-        icon: Calendar
-      },
-      {
-        title: t('homepage.detailedFeatures.items.exclusiveRewards.title'),
-        description: t('homepage.detailedFeatures.items.exclusiveRewards.description'),
-        image: "./images/feature2.webp",
-        points: [
-          t('homepage.detailedFeatures.items.exclusiveRewards.points.0'),
-          t('homepage.detailedFeatures.items.exclusiveRewards.points.1'),
-          t('homepage.detailedFeatures.items.exclusiveRewards.points.2')
-        ],
-        color: "blue",
-        icon: Gift
-      },
-      {
-        title: t('homepage.detailedFeatures.items.eventTracking.title'),
-        description: t('homepage.detailedFeatures.items.eventTracking.description'),
-        image: "./images/feature3.webp",
-        points: [
-          t('homepage.detailedFeatures.items.eventTracking.points.0'),
-          t('homepage.detailedFeatures.items.eventTracking.points.1'),
-          t('homepage.detailedFeatures.items.eventTracking.points.2')
-        ],
-        color: "green",
-        icon: Share2
-      }
-    ];
+  const features = [
+    {
+      title: t('homepage.detailedFeatures.items.eventOrganization.title'),
+      description: t('homepage.detailedFeatures.items.eventOrganization.description'),
+      image: "./images/feature1.webp",
+      points: [
+        t('homepage.detailedFeatures.items.eventOrganization.points.0'),
+        t('homepage.detailedFeatures.items.eventOrganization.points.1'),
+        t('homepage.detailedFeatures.items.eventOrganization.points.2')
+      ],
+      color: "purple",
+      icon: Calendar
+    },
+    {
+      title: t('homepage.detailedFeatures.items.exclusiveRewards.title'),
+      description: t('homepage.detailedFeatures.items.exclusiveRewards.description'),
+      image: "./images/feature2.webp",
+      points: [
+        t('homepage.detailedFeatures.items.exclusiveRewards.points.0'),
+        t('homepage.detailedFeatures.items.exclusiveRewards.points.1'),
+        t('homepage.detailedFeatures.items.exclusiveRewards.points.2')
+      ],
+      color: "blue",
+      icon: Gift
+    },
+    {
+      title: t('homepage.detailedFeatures.items.eventTracking.title'),
+      description: t('homepage.detailedFeatures.items.eventTracking.description'),
+      image: "./images/feature3.webp",
+      points: [
+        t('homepage.detailedFeatures.items.eventTracking.points.0'),
+        t('homepage.detailedFeatures.items.eventTracking.points.1'),
+        t('homepage.detailedFeatures.items.eventTracking.points.2')
+      ],
+      color: "green",
+      icon: Share2
+    }
+  ];
 
-    const colorClasses = {
-      purple: { bg: "bg-purple-100", border: "border-purple-200", icon: "text-purple-600", button: "bg-purple-600 hover:bg-purple-700", accent: "bg-purple-500" },
-      blue: { bg: "bg-blue-100", border: "border-blue-200", icon: "text-blue-600", button: "bg-blue-600 hover:bg-blue-700", accent: "bg-blue-500" },
-      green: { bg: "bg-green-100", border: "border-green-200", icon: "text-green-600", button: "bg-green-600 hover:bg-green-700", accent: "bg-green-500" }
-    };
-    return (
-      <section ref={ref} className="py-28 overflow-hidden">
-        <div className="container mx-auto px-4">
+  const colorClasses = {
+    purple: { bg: "bg-purple-100", border: "border-purple-200", icon: "text-purple-600", button: "bg-purple-600 hover:bg-purple-700", accent: "bg-purple-500" },
+    blue: { bg: "bg-blue-100", border: "border-blue-200", icon: "text-blue-600", button: "bg-blue-600 hover:bg-blue-700", accent: "bg-blue-500" },
+    green: { bg: "bg-green-100", border: "border-green-200", icon: "text-green-600", button: "bg-green-600 hover:bg-green-700", accent: "bg-green-500" }
+  };
+  return (
+    <section ref={ref} className="py-28 overflow-hidden">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-20"
+        >
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-20"
+            className="inline-block p-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mb-6"
+            whileHover={{ scale: 1.05, rotate: 5 }}
           >
-            <motion.div
-              className="inline-block p-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mb-6"
-              whileHover={{ scale: 1.05, rotate: 5 }}
-            >
-              <div className="bg-white rounded-full p-3">
-                <Sparkles className="w-8 h-8 text-purple-600" />
-              </div>
-            </motion.div>
-  
-            <motion.h2 className="text-5xl md:text-6xl xl:text-7xl font-black mb-8 leading-tight text-white">
-              <motion.span
-                className="block"
-                animate={!isMobile ? {
-                  textShadow: [
-                    "0 0 20px rgba(255,255,255,0.5)",
-                    "0 0 40px rgba(147,51,234,0.8)",
-                    "0 0 20px rgba(255,255,255,0.5)",
-                  ]
-                } : {}}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                {t('homepage.detailedFeatures.title')}
-              </motion.span>
-            </motion.h2>
-            <p className="text-xl text-gray-200 max-w-3xl mx-auto">
-              {t('homepage.detailedFeatures.description')}
-            </p>
+            <div className="bg-white rounded-full p-3">
+              <Sparkles className="w-8 h-8 text-purple-600" />
+            </div>
           </motion.div>
-  
-          {/* Desktop Layout: 3 columns (hidden on mobile) */}
-          <div className="hidden lg:grid lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
+
+          <motion.h2 className="text-5xl md:text-6xl xl:text-7xl font-black mb-8 leading-tight text-white">
+            <motion.span
+              className="block"
+              animate={!isMobile ? {
+                textShadow: [
+                  "0 0 20px rgba(255,255,255,0.5)",
+                  "0 0 40px rgba(147,51,234,0.8)",
+                  "0 0 20px rgba(255,255,255,0.5)",
+                ]
+              } : {}}
+              transition={{ duration: 3, repeat: Infinity }}
+            >
+              {t('homepage.detailedFeatures.title')}
+            </motion.span>
+          </motion.h2>
+          <p className="text-xl text-gray-200 max-w-3xl mx-auto">
+            {t('homepage.detailedFeatures.description')}
+          </p>
+        </motion.div>
+
+        {/* Desktop Layout: 3 columns (hidden on mobile) */}
+        <div className="hidden lg:grid lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 50 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8, delay: index * 0.2 }}
+              className="group h-full"
+            >
               <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 50 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                className="group h-full"
+                className={`relative bg-white rounded-3xl shadow-xl overflow-hidden border-2 ${colorClasses[feature.color].border} h-full flex flex-col`}
+                whileHover={{ scale: 1.02, y: -10, boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
+                transition={{ duration: 0.3 }}
               >
-                <motion.div
-                  className={`relative bg-white rounded-3xl shadow-xl overflow-hidden border-2 ${colorClasses[feature.color].border} h-full flex flex-col`}
-                  whileHover={{ scale: 1.02, y: -10, boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="relative overflow-hidden">
-                    <motion.img src={feature.image} alt={feature.title} className="w-full h-48 object-cover" />
-                  </div>
-                  <div className="p-6 flex flex-col flex-grow">
-                    <div className="flex items-center mb-4">
-                        <div className={`w-12 h-12 ${colorClasses[feature.color].accent} rounded-xl flex items-center justify-center mr-4`}>
-                           <feature.icon className="w-6 h-6 text-white" />
-                        </div>
-                         <h3 className="text-xl font-bold text-gray-900">{feature.title}</h3>
-                    </div>
-                    <p className="text-gray-600 mb-6 leading-relaxed flex-grow">{feature.description}</p>
-                    <div className="space-y-3">
-                      {feature.points.map((point, pointIndex) => (
-                        <div key={pointIndex} className="flex items-center text-gray-700">
-                          <div className={`w-2 h-2 ${colorClasses[feature.color].accent} rounded-full mr-3`} />
-                          <span className="text-sm font-medium">{point}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
-  
-          {/* Mobile/Tablet Layout: Stacked */}
-          <div className="lg:hidden space-y-16">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 50 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ duration: 0.8, delay: index * 0.2 }}
-                className="bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-gray-200">
                 <div className="relative overflow-hidden">
-                  <img src={feature.image} alt={feature.title} className="w-full h-64 md:h-80 object-cover" />
+                  <motion.img src={feature.image} alt={feature.title} className="w-full h-48 object-cover" />
                 </div>
-                <div className="p-6 md:p-8">
+                <div className="p-6 flex flex-col flex-grow">
                   <div className="flex items-center mb-4">
                     <div className={`w-12 h-12 ${colorClasses[feature.color].accent} rounded-xl flex items-center justify-center mr-4`}>
                       <feature.icon className="w-6 h-6 text-white" />
                     </div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-gray-900">{feature.title}</h3>
+                    <h3 className="text-xl font-bold text-gray-900">{feature.title}</h3>
                   </div>
-                  <p className="text-lg text-gray-600 mb-6 leading-relaxed">{feature.description}</p>
-                  <div className="space-y-3 mb-6">
+                  <p className="text-gray-600 mb-6 leading-relaxed flex-grow">{feature.description}</p>
+                  <div className="space-y-3">
                     {feature.points.map((point, pointIndex) => (
                       <div key={pointIndex} className="flex items-center text-gray-700">
-                        <div className={`w-3 h-3 ${colorClasses[feature.color].accent} rounded-full mr-4 flex-shrink-0`}/>
-                        <span className="font-medium">{point}</span>
+                        <div className={`w-2 h-2 ${colorClasses[feature.color].accent} rounded-full mr-3`} />
+                        <span className="text-sm font-medium">{point}</span>
                       </div>
                     ))}
                   </div>
-                  <motion.button
-                    className={`w-full ${colorClasses[feature.color].button} text-white py-3 px-8 rounded-xl font-semibold shadow-lg`}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {t('homepage.detailedFeatures.exploreButton')}
-                  </motion.button>
                 </div>
               </motion.div>
-            ))}
-          </div>
-  
-          {/* Bottom CTA Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="mt-20 text-center"
-          >
-            <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden">
-              <h3 className="text-2xl md:text-3xl font-bold mb-4">{t('homepage.detailedFeatures.cta.title')}</h3>
-              <p className="text-lg md:text-xl opacity-90 mb-8 max-w-2xl mx-auto">{t('homepage.detailedFeatures.cta.description')}</p>
-              <motion.button
-                className="bg-white text-purple-600 py-4 px-8 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl"
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/home')}
-              >
-                {t('homepage.detailedFeatures.cta.button')}
-              </motion.button>
-            </div>
-          </motion.div>
+            </motion.div>
+          ))}
         </div>
-      </section>
-    );
-  };
-  
+
+        {/* Mobile/Tablet Layout: Stacked */}
+        <div className="lg:hidden space-y-16">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 50 }}
+              animate={inView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.8, delay: index * 0.2 }}
+              className="bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-gray-200">
+              <div className="relative overflow-hidden">
+                <img src={feature.image} alt={feature.title} className="w-full h-64 md:h-80 object-cover" />
+              </div>
+              <div className="p-6 md:p-8">
+                <div className="flex items-center mb-4">
+                  <div className={`w-12 h-12 ${colorClasses[feature.color].accent} rounded-xl flex items-center justify-center mr-4`}>
+                    <feature.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900">{feature.title}</h3>
+                </div>
+                <p className="text-lg text-gray-600 mb-6 leading-relaxed">{feature.description}</p>
+                <div className="space-y-3 mb-6">
+                  {feature.points.map((point, pointIndex) => (
+                    <div key={pointIndex} className="flex items-center text-gray-700">
+                      <div className={`w-3 h-3 ${colorClasses[feature.color].accent} rounded-full mr-4 flex-shrink-0`} />
+                      <span className="font-medium">{point}</span>
+                    </div>
+                  ))}
+                </div>
+                <motion.button
+                  className={`w-full ${colorClasses[feature.color].button} text-white py-3 px-8 rounded-xl font-semibold shadow-lg`}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {t('homepage.detailedFeatures.exploreButton')}
+                </motion.button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Bottom CTA Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8, delay: 0.8 }}
+          className="mt-20 text-center"
+        >
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl p-8 md:p-12 text-white relative overflow-hidden">
+            <h3 className="text-2xl md:text-3xl font-bold mb-4">{t('homepage.detailedFeatures.cta.title')}</h3>
+            <p className="text-lg md:text-xl opacity-90 mb-8 max-w-2xl mx-auto">{t('homepage.detailedFeatures.cta.description')}</p>
+            <motion.button
+              className="bg-white text-purple-600 py-4 px-8 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl"
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/home')}
+            >
+              {t('homepage.detailedFeatures.cta.button')}
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
 
 // Q&A Section
 const QASection = () => {
@@ -1242,6 +1245,340 @@ const Footer = () => {
   );
 };
 
+// Typing Animation Component
+const TypingAnimation = () => {
+  return (
+    <div className="flex items-center space-x-1 px-4 py-2">
+      <div className="flex space-x-1">
+        <motion.div
+          className="w-2 h-2 bg-gray-400 rounded-full"
+          animate={{ scale: [1, 1.5, 1] }}
+          transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+        />
+        <motion.div
+          className="w-2 h-2 bg-gray-400 rounded-full"
+          animate={{ scale: [1, 1.5, 1] }}
+          transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
+        />
+        <motion.div
+          className="w-2 h-2 bg-gray-400 rounded-full"
+          animate={{ scale: [1, 1.5, 1] }}
+          transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
+        />
+      </div>
+      <span className="text-sm text-gray-500 ml-2">Typing...</span>
+    </div>
+  );
+};
+
+// Chat Bubble Component
+const ChatBubble = ({ message, isBot, isTyping = false }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.8 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.3, type: "spring" }}
+      className={`flex ${isBot ? 'justify-start' : 'justify-end'} mb-4`}
+    >
+      <div className={`flex max-w-[80%] ${isBot ? 'flex-row' : 'flex-row-reverse'}`}>
+        {/* Avatar */}
+        <div className={`flex-shrink-0 ${isBot ? 'mr-3' : 'ml-3'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isBot ? 'bg-gradient-to-r from-purple-600 to-blue-600' : 'bg-gray-300'
+            }`}>
+            {isBot ? (
+              <Bot className="w-5 h-5 text-white" />
+            ) : (
+              <User className="w-5 h-5 text-gray-600" />
+            )}
+          </div>
+        </div>
+
+        {/* Message */}
+        <div className={`px-4 py-2 rounded-2xl ${isBot
+            ? 'bg-gray-100 text-gray-800 rounded-bl-sm'
+            : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-sm'
+          }`}>
+          {isTyping ? (
+            <TypingAnimation />
+          ) : (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message}</p>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Main Chatbot Component
+const ChatBot = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const apiUrl = process.env.REACT_APP_API_URL;
+  const { t } = useTranslation();
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      text: t('homepage.chatbot.welcomeMessage', 'Chào mừng bạn đến với TEKUTOKO! Tôi là TekuBot, trợ lý ảo của bạn. Hãy hỏi tôi bất kỳ điều gì nhé!'),
+      isBot: true,
+      timestamp: new Date()
+    }
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [newMessageCount, setNewMessageCount] = useState(0);
+
+  // Auto scroll to bottom
+  const messagesEndRef = React.useRef(null);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  // Handle sending message
+  const handleSendMessage = async () => {
+    if (!inputValue.trim()) return;
+
+    const userMessage = {
+      id: Date.now(),
+      text: inputValue,
+      isBot: false,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+    setIsTyping(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question: inputValue }),
+      });
+
+      const data = await response.json();
+
+      // Simulate typing delay
+      setTimeout(() => {
+        setIsTyping(false);
+        const botMessage = {
+          id: Date.now() + 1,
+          text: data.answer || "Xin lỗi, tôi không thể trả lời câu hỏi này lúc này. Vui lòng thử lại sau!",
+          isBot: true,
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, botMessage]);
+
+        // Show notification if chat is closed
+        if (!isOpen) {
+          setNewMessageCount(prev => prev + 1);
+        }
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setTimeout(() => {
+        setIsTyping(false);
+        const errorMessage = {
+          id: Date.now() + 1,
+          text: "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại sau!",
+          isBot: true,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }, 1500);
+    }
+  };
+
+  // Handle key press
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  // Quick suggestions
+  const quickSuggestions = [
+    t('homepage.chatbot.suggestions.suggestion1'),
+    t('homepage.chatbot.suggestions.suggestion2'),
+    t('homepage.chatbot.suggestions.suggestion3'),
+    t('homepage.chatbot.suggestions.suggestion4')
+  ];
+
+  const handleSuggestionClick = (suggestion) => {
+    setInputValue(suggestion);
+  };
+
+  // Clear new message count when opening chat
+  const handleToggleChat = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setNewMessageCount(0);
+    }
+  };
+
+  return (
+    <>
+      {/* Chat Bubble Button */}
+      <motion.div
+        className="fixed bottom-6 right-6 z-50"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 2, type: "spring", stiffness: 260, damping: 20 }}
+      >
+        <motion.button
+          onClick={handleToggleChat}
+          className="relative w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center text-white"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          animate={{
+            boxShadow: [
+              "0 0 20px rgba(147, 51, 234, 0.3)",
+              "0 0 30px rgba(59, 130, 246, 0.4)",
+              "0 0 20px rgba(147, 51, 234, 0.3)"
+            ]
+          }}
+          transition={{ boxShadow: { duration: 2, repeat: Infinity } }}
+        >
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isOpen ? 'close' : 'chat'}
+              initial={{ rotate: -90, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: 90, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* New message notification */}
+          {newMessageCount > 0 && !isOpen && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
+            >
+              {newMessageCount}
+            </motion.div>
+          )}
+        </motion.button>
+      </motion.div>
+
+      {/* Chat Window */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 100, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 100, scale: 0.8 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            className="fixed bottom-20 right-2 sm:right-6 z-50 
+                 w-[calc(100vw-16px)] sm:w-96 
+                 h-[70vh] sm:h-[500px] 
+                 max-w-sm sm:max-w-none
+                 bg-white rounded-2xl shadow-2xl
+                 flex flex-col overflow-hidden"
+          >
+            {/* Header - Fixed height */}
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-3 sm:p-4 text-white flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white/20 rounded-full flex items-center justify-center mr-2 sm:mr-3">
+                    <Bot className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm sm:text-base">{t('homepage.chatbot.title')}</h3>
+                    <p className="text-xs opacity-90 hidden sm:block">{t('homepage.chatbot.description')}</p>
+                  </div>
+                </div>
+                <motion.button
+                  onClick={() => setIsOpen(false)}
+                  className="p-1 hover:bg-white/20 rounded-full"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Messages - Flexible height */}
+            <div className="flex-1 p-3 sm:p-4 overflow-y-auto min-h-0">
+              {messages.map((message) => (
+                <ChatBubble
+                  key={message.id}
+                  message={message.text}
+                  isBot={message.isBot}
+                />
+              ))}
+
+              {/* Typing indicator */}
+              {isTyping && (
+                <ChatBubble isBot={true} isTyping={true} />
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Quick Suggestions - Show only on larger screens */}
+            {messages.length <= 1 && !isTyping && (
+              <div className="px-3 sm:px-4 pb-2 flex-shrink-0 hidden sm:block">
+                <div className="flex flex-wrap gap-2">
+                  {quickSuggestions.map((suggestion, index) => (
+                    <motion.button
+                      key={index}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="px-2 sm:px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs hover:bg-gray-200 transition-colors"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {suggestion}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Input - Fixed height */}
+            <div className="p-3 sm:p-4 border-t border-gray-200 flex-shrink-0">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={t('homepage.chatbot.inputPlaceholder', 'Nhập câu hỏi của bạn...')}
+                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-xl 
+                       focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                       min-h-[40px]"
+                  disabled={isTyping}
+                />
+                <motion.button
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim() || isTyping}
+                  className="p-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl 
+                       disabled:opacity-50 disabled:cursor-not-allowed
+                       w-10 h-10 flex items-center justify-center flex-shrink-0"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
 
 // Main HomePage Component
 const HomePage = () => {
@@ -1250,13 +1587,14 @@ const HomePage = () => {
       <div className="min-h-screen">
         <Header />
         <main>
-            <HeroSection />
-            <IntroductionSection />
-            <FeaturesShowcase />
-            <DetailedFeaturesSection />
-            <QASection />
+          <HeroSection />
+          <IntroductionSection />
+          <FeaturesShowcase />
+          <DetailedFeaturesSection />
+          <QASection />
         </main>
         <Footer />
+        <ChatBot />
       </div>
     </EnhancedBackground>
   );

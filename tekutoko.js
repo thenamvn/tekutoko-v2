@@ -58,7 +58,7 @@ const tekutokoGuide = `
 
 ## 🎯 Giới thiệu về Tekutoko
 
-Tekutoko là nền tảng tham gia các hoạt động tương tác vui nhộn như:
+Tekutoko là nền tảng trực tuyến miễn phí cho phép tham gia các hoạt động tương tác vui nhộn như:
 - **Săn ảnh thú vị** - Chụp và chia sẻ ảnh để hoàn thành thử thách
 - **Sưu tập tem** - Thu thập tem và đạt mục tiêu đề ra  
 - **Thử thách đố vui** - Giải đố và trả lời câu hỏi
@@ -248,9 +248,9 @@ function buildPrompt(userQuestion) {
 **Quy tắc:**
 1. Chỉ trả lời dựa trên thông tin trong tài liệu hướng dẫn
 2. Nếu không tìm thấy thông tin, trả lời: "Xin lỗi, tôi không tìm thấy thông tin này trong tài liệu hướng dẫn Tekutoko"
-3. Trả lời ngắn gọn và dễ hiểu, ngôn ngữ trả lời luôn luôn phải cùng ngôn ngữ với câu hỏi của người dùng. Người dùng sử dụng ngôn ngữ nào thì TekuBot trả lời bằng ngôn ngữ đó.
+3. Trả lời ngắn gọn và dễ hiểu, ngôn ngữ trả lời luôn luôn phải cùng ngôn ngữ với câu hỏi của người dùng. Người dùng sử dụng ngôn ngữ nào thì TekuBot trả lời bằng ngôn ngữ đó. Nghiêm cấm trả lời bằng ngôn ngữ khác với ngôn ngữ của user đang trò chuyện.
 4. Sử dụng emoji phù hợp để làm cho câu trả lời sinh động
-
+5. Cho phép trò chuyện tự nhiên, nhưng không được đi lạc đề
 **Tài liệu hướng dẫn Tekutoko:**
 ${tekutokoGuide}
 
@@ -4920,8 +4920,6 @@ app.post('/api/chat', async (req, res) => {
         error: 'Vui lòng nhập câu hỏi' 
       });
     }
-
-    console.log('Received question:', question);
 
     const prompt = buildPrompt(question);
     

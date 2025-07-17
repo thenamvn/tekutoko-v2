@@ -568,6 +568,18 @@
                 "privacy": "Privacy Policy",
                 "terms": "Terms of Service"
             }
+        },
+        "chatbot": {
+            "title": "TekuBot",
+            "description": "TEKUTOKO Assistant",
+            "inputPlaceholder": "Ask me anything...",
+            "welcomeMessage": "Hi! I'm TekuBot, your TEKUTOKO assistant. How can I help you today?",
+            "suggestions": {
+                "suggestion1": "What is TEKUTOKO?",
+                "suggestion2": "How to create an event?",
+                "suggestion3": "How to get rewards?",
+                "suggestion4": "Is the app free?"
+            }
         }
     },
     "alert": {

@@ -569,6 +569,18 @@
                 "privacy": "Chính sách bảo mật",
                 "terms": "Điều khoản dịch vụ"
             }
+        },
+        "chatbot": {
+            "title": "TekuBot",
+            "description": "Trợ lý ảo TEKUTOKO",
+            "inputPlaceholder": "Hỏi tôi bất cứ điều gì...",
+            "welcomeMessage": "Xin chào! Tôi là TekuBot, trợ lý ảo của TEKUTOKO. Tôi có thể giúp gì cho bạn hôm nay?",
+            "suggestions": {
+                "suggestion1": "TEKUTOKO là gì?",
+                "suggestion2": "Làm thế nào để tạo sự kiện?",
+                "suggestion3": "Cách lấy phần thưởng?",
+                "suggestion4": "Ứng dụng có miễn phí không?"
+            }
         }
     },
     "alert": {

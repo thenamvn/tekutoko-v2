@@ -568,6 +568,18 @@
                 "privacy": "プライバシーポリシー",
                 "terms": "利用規約"
             }
+        },
+        "chatbot": {
+            "title": "TekuBot",
+            "description" : "TEKUTOKO アシスタント",
+            "inputPlaceholder": "何でも聞いてください...",
+            "welcomeMessage": "こんにちは！TEKUTOKOのチャットボットです。何かお手伝いできることはありますか？",
+            "suggestions": {
+                "suggestion1": "TEKUTOKOは何ですか？",
+                "suggestion2": "イベントを作成するには？",
+                "suggestion3": "報酬を得るには？",
+                "suggestion4": "アプリは無料ですか？"
+            }
         }
     },
     "alert": {
