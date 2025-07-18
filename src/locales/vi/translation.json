@@ -193,7 +193,9 @@
     "discovery": {
         "title": "TEKUTOKO",
         "searchPlaceholder": "Nhập mã phòng, tiêu đề...",
-        "noMoreGames": "Không còn trò chơi nào nữa"
+        "noMoreGames": "Không còn trò chơi nào nữa",
+        "popular": "Phổ biến",
+        "nearby": "Gần bạn"
     },
     "dashboard": {
         "title": "Phòng của tôi",

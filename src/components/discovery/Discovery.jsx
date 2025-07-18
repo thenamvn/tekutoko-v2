@@ -303,7 +303,7 @@ const Discovery = () => {
                                     : 'text-white/80 hover:text-white hover:bg-white/10'
                             }`}
                         >
-                            🔥 Popular
+                            🔥 {t("discovery.popular")}
                         </button>
                         <button
                             onClick={() => handleTabChange('nearby')}
@@ -313,7 +313,7 @@ const Discovery = () => {
                                     : 'text-white/80 hover:text-white hover:bg-white/10'
                             }`}
                         >
-                            📍 Nearby
+                            📍 {t("discovery.nearby")}
                             {locationInfo && (
                                 <span className="ml-1 text-xs opacity-75">
                                     {locationInfo.city}

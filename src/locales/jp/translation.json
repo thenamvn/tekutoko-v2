@@ -193,7 +193,9 @@
     "discovery": {
         "title": "TEKUTOKO",
         "searchPlaceholder": "部屋コード、タイトルを入力...",
-        "noMoreGames": "これ以上のゲームはありません"
+        "noMoreGames": "これ以上のゲームはありません",
+        "popular": "人気のある",
+        "nearby": "近くの"
     },
     "dashboard": {
         "title": "マイルーム",
