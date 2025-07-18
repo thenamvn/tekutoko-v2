@@ -1317,7 +1317,7 @@ const ChatBot = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: t('homepage.chatbot.welcomeMessage', 'Chào mừng bạn đến với TEKUTOKO! Tôi là TekuBot, trợ lý ảo của bạn. Hãy hỏi tôi bất kỳ điều gì nhé!'),
+      text: t('homepage.chatbot.welcomeMessage'),
       isBot: true,
       timestamp: new Date()
     }
@@ -1430,7 +1430,7 @@ const ChatBot = () => {
         className="fixed bottom-6 right-6 z-50"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        transition={{ delay: 2, type: "spring", stiffness: 260, damping: 20 }}
+        transition={{ delay: 0.3, type: "spring", stiffness: 260, damping: 20 }}
       >
         <motion.button
           onClick={handleToggleChat}
