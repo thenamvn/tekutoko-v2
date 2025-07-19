@@ -1295,8 +1295,8 @@ const ChatBubble = ({ message, isBot, isTyping = false }) => {
 
         {/* Message */}
         <div className={`px-4 py-2 rounded-2xl ${isBot
-            ? 'bg-gray-100 text-gray-800 rounded-bl-sm'
-            : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-sm'
+          ? 'bg-gray-100 text-gray-800 rounded-bl-sm'
+          : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-sm'
           }`}>
           {isTyping ? (
             <TypingAnimation />
@@ -1313,18 +1313,35 @@ const ChatBubble = ({ message, isBot, isTyping = false }) => {
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const apiUrl = process.env.REACT_APP_API_URL;
-  const { t } = useTranslation();
-  const [messages, setMessages] = useState([
-    {
+  const { t, i18n } = useTranslation(); // Thêm i18n để theo dõi thay đổi ngôn ngữ
+
+  // Khởi tạo messages với một mảng trống trước
+  const [messages, setMessages] = useState([]);
+
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [newMessageCount, setNewMessageCount] = useState(0);
+
+  // useEffect để cập nhật tin nhắn chào mừng khi ngôn ngữ thay đổi
+  useEffect(() => {
+    const welcomeMessage = {
       id: 1,
       text: t('homepage.chatbot.welcomeMessage'),
       isBot: true,
       timestamp: new Date()
-    }
-  ]);
-  const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [newMessageCount, setNewMessageCount] = useState(0);
+    };
+
+    // Nếu chưa có tin nhắn nào hoặc tin nhắn đầu tiên là tin nhắn chào mừng
+    setMessages(prevMessages => {
+      if (prevMessages.length === 0) {
+        return [welcomeMessage];
+      } else if (prevMessages[0].id === 1 && prevMessages[0].isBot) {
+        // Cập nhật tin nhắn chào mừng
+        return [welcomeMessage, ...prevMessages.slice(1)];
+      }
+      return prevMessages;
+    });
+  }, [t, i18n.language]); // Theo dõi sự thay đổi của ngôn ngữ
 
   // Auto scroll to bottom
   const messagesEndRef = React.useRef(null);
