@@ -834,7 +834,7 @@ app.get("/room/:id/info", (req, res) => {
   const roomId = req.params.id;
 
   const query = `
-    SELECT r.room_id, r.room_title, r.room_type, r.admin_username, r.description, r.how2play, r.thumbnail, 
+    SELECT r.room_id, r.room_title, r.room_type, r.admin_username, r.description, r.how2play, r.thumbnail, r.location, 
            u.fullname, (u.id + 1093046400) AS id,
            COALESCE(up.avatarImage, 'https://www.svgrepo.com/show/341256/user-avatar-filled.svg') AS avatarImage,
            up.backgroundImage

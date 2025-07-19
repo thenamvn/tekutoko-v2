@@ -8,6 +8,7 @@ import QRCode from "qrcode.react";
 import { getUsernameFromToken, isTokenValid } from '../../utils/jwt_decode';
 import UserRewardView from './UserRewardView'; // Adjust the import path as needed
 import LocationModal from './LocationModal';
+import ViewLocationModal from './ViewLocationModal';
 const QuizRoom = () => {
   const apiUrl = process.env.REACT_APP_API_URL
   const { t } = useTranslation(); // Uncomment if using i18n
@@ -25,7 +26,8 @@ const QuizRoom = () => {
     hostId: "sampleHostId",
     hostUsername: "sampleHost",
     how2play: "To play, simply click on the question you want to answer. You can answer them in any order. Good luck!",
-    thumbnailUrl: "https://via.placeholder.co/600x200.png?text=Thumbnail+Image"
+    thumbnailUrl: "https://via.placeholder.co/600x200.png?text=Thumbnail+Image",
+    location: { lat: 35.6895, lng: 139.6917 } // Example coordinates for Tokyo
   });
   const [progress, setProgress] = useState(0); // State to track quiz progress (you might fetch this)
   const [isLoading, setIsLoading] = useState(true);
@@ -47,9 +49,9 @@ const QuizRoom = () => {
 
   //location
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showViewLocationModal, setShowViewLocationModal] = useState(false);
 
   const handleLocationSave = (location) => {
-    console.log("Location saved:", location);
     setShowLocationModal(false);
   };
 
@@ -100,7 +102,6 @@ const QuizRoom = () => {
         }
 
         const data = await response.json();
-        console.log('Joined room successfully:', data);
       } catch (error) {
         console.error('Error joining room:', error);
       }
@@ -142,6 +143,7 @@ const QuizRoom = () => {
           room_type: roomData.room_type,
           hostId: roomData.id,
           hostUsername: roomData.admin_username,
+          location: roomData.location
         };
 
         setRoomInfo(updatedRoomInfo);
@@ -162,7 +164,6 @@ const QuizRoom = () => {
           if (questionsResponse.status === 404) {
             setQuestions([]);
             setTotalQuestions(0); // Set total questions to 0 if none found
-            console.log("No questions found for this room");
           } else {
             throw new Error('Failed to fetch questions');
           }
@@ -287,32 +288,39 @@ const QuizRoom = () => {
               {roomInfo.title}
             </h1>
           </div>
-          {isAdmin && (
-            <button
-              className="text-white hover:text-gray-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
-              onClick={() => setShowLocationModal(true)}
+          <button
+            className="text-white hover:text-gray-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
+            onClick={() => {
+              if (isAdmin) {
+                // Admin: Mở modal để chọn/thay đổi vị trí
+                setShowLocationModal(true);
+              } else {
+                // User: Mở modal để xem vị trí phòng trên map
+                setShowViewLocationModal(true);
+              }
+            }}
+            title={isAdmin ? "Chọn vị trí phòng" : "Xem vị trí phòng"}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-6 h-6"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 0115 0z"
-                />
-              </svg>
-            </button>
-          )}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 0115 0z"
+              />
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -623,14 +631,21 @@ const QuizRoom = () => {
       </div>
       {/* Location Modal */}
       {showLocationModal && (
-      <LocationModal
-        isOpen={showLocationModal}
-        onClose={() => setShowLocationModal(false)}
-        onSave={handleLocationSave}
-        roomId={roomId}
-        username={username}
-        apiUrl={apiUrl}
-      />
+        <LocationModal
+          isOpen={showLocationModal}
+          onClose={() => setShowLocationModal(false)}
+          onSave={handleLocationSave}
+          roomId={roomId}
+          username={username}
+          apiUrl={apiUrl}
+        />
+      )}
+      {showViewLocationModal && (
+        <ViewLocationModal
+          isOpen={showViewLocationModal}
+          onClose={() => setShowViewLocationModal(false)}
+          roomInfo={roomInfo}
+        />
       )}
       {/* Footer Navigation với glassmorphism */}
       <div className="fixed w-full max-w-md bottom-0 z-50">
