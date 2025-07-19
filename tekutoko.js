@@ -97,6 +97,68 @@ Sau khi đăng nhập, bạn sẽ thấy:
 - **Discovery**: Khám phá các phòng có sẵn
 - **Profile**: Quản lý thông tin cá nhân
 
+## 🎨 Tạo phòng chơi mới
+
+### **Điều kiện tạo phòng**
+- Đã đăng nhập vào tài khoản Tekutoko
+- Có quyền tạo phòng (host privileges)
+
+### **Cách tạo phòng**
+1. Vào Dashboard và nhấn "Create New Game"
+2. Hoặc nhấn icon "+" trong Bottom Navigation
+3. Điền thông tin cơ bản:
+   - **Room Title**: Tên phòng (bắt buộc)
+   - **Description**: Mô tả ngắn gọn về phòng
+   - **Thumbnail**: Upload ảnh đại diện cho phòng
+   - **How to Play**: Hướng dẫn chi tiết cho người chơi
+
+### **Thiết lập câu hỏi**
+1. **Thêm câu hỏi mới**: Nhấn "Add Question"
+2. **Chọn loại câu hỏi**:
+   - **Text**: Người chơi nhập văn bản
+   - **Multiple Choice**: Chọn từ các đáp án có sẵn
+   - **Upload**: Yêu cầu upload ảnh/file
+
+3. **Nhập nội dung**:
+   - Question Text: Đề bài câu hỏi
+   - Correct Answer: Đáp án đúng
+   - Explanation: Giải thích (tùy chọn)
+
+4. **Với Multiple Choice**: Thêm các lựa chọn A, B, C, D
+
+### **Thiết lập phần thưởng (tùy chọn)**
+1. Bật "Enable Reward"
+2. Chọn loại thưởng:
+   - **Voucher**: Tạo mã giảm giá
+   - **Certificate**: Chứng chỉ hoàn thành
+   - **Custom**: Phần thưởng tùy chỉnh
+
+3. **Thiết lập voucher**:
+   - Discount Name: Tên ưu đãi
+   - Discount Value: Giá trị giảm (% hoặc số tiền)
+   - Description: Mô tả chi tiết
+   - Expiration Date: Ngày hết hạn
+   - Upload ticket image: Ảnh voucher
+
+### **Hoàn tất và xuất bản**
+1. Preview phòng để kiểm tra
+2. Nhấn "Create Room" để tạo
+3. Chia sẻ Room ID cho người chơi
+4. Theo dõi tiến độ trong Room Management
+
+### **Quản lý phòng đã tạo**
+- Xem danh sách người tham gia
+- Kiểm tra kết quả của từng người chơi
+- Chỉnh sửa câu hỏi (nếu chưa có người chơi)
+- Xóa phòng khi không cần thiết
+
+### **Tips tạo phòng hiệu quả**
+- Đặt tên phòng rõ ràng, dễ hiểu
+- Viết hướng dẫn chi tiết trong "How to Play"
+- Sử dụng ảnh thumbnail hấp dẫn
+- Tạo câu hỏi đa dạng về độ khó
+- Thiết lập phần thưởng để thu hút
+
 ## 🎮 Cách tham gia phòng game
 
 ### **Tham gia bằng mã phòng**
