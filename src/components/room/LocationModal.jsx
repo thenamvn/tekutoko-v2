@@ -150,7 +150,7 @@ const LocationModal = ({
       // Use current language for Nominatim
       const language = i18n.language === 'vi' ? 'vi' : i18n.language === 'ja' ? 'ja' : 'en';
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manualLocation)}&format=json&limit=1&addressdetails=1&accept-language=${language}`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manualLocation)}&format=json&limit=1&addressdetails=1`,
         {
           headers: {
             'User-Agent': 'TekutokoApp/1.0'
