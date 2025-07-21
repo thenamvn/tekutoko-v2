@@ -238,6 +238,54 @@
             "errorGettingAddress": "住所取得時にエラーが発生しました"
         }
     },
+    "locationModal": {
+        "title": "ルーム位置を設定",
+        "methodSelection": {
+            "label": "位置取得方法を選択:",
+            "auto": "自動GPS",
+            "manual": "手動入力"
+        },
+        "autoGPS": {
+            "description": "下のボタンを押して現在位置を取得してください",
+            "getCurrentLocation": "現在位置を取得",
+            "gettingLocation": "位置を取得中..."
+        },
+        "manualInput": {
+            "label": "住所を入力:",
+            "placeholder": "例: ジャーナリズム・コミュニケーション学院",
+            "searchAddress": "住所を検索",
+            "searching": "検索中..."
+        },
+        "locationPreview": {
+            "found": "位置が見つかりました:",
+            "coordinates": "座標:",
+            "checkBeforeSave": "📍 保存前に位置をご確認ください",
+            "viewOnOSM": "OpenStreetMapで詳細を見る"
+        },
+        "buttons": {
+            "cancel": "キャンセル",
+            "saveLocation": "位置を保存",
+            "saving": "保存中..."
+        },
+        "errors": {
+            "gpsNotSupported": "ブラウザがGPS位置情報をサポートしていません",
+            "permissionDenied": "ユーザーが位置情報アクセス権限を拒否しました",
+            "positionUnavailable": "位置情報が利用できません",
+            "timeout": "位置取得がタイムアウトしました",
+            "unknownError": "位置取得時に不明なエラーが発生しました",
+            "pleaseEnterAddress": "住所を入力してください",
+            "addressNotFound": "この住所が見つかりませんでした",
+            "searchError": "住所検索時にエラーが発生しました",
+            "pleaseSelectLocation": "保存前に位置を選択してください",
+            "missingInfo": "位置保存に必要な情報が不足しています",
+            "pleaseLogin": "再度ログインしてください",
+            "saveError": "位置保存時にエラーが発生しました",
+            "connectionError": "位置保存時に接続エラーが発生しました"
+        },
+        "success": {
+            "locationSaved": "位置を正常に保存しました！"
+        }
+    },
     "dashboard": {
         "title": "マイルーム",
         "createGameButton": "新しいゲームを作成",

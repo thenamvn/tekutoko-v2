@@ -238,6 +238,54 @@
             "errorGettingAddress": "Lỗi khi lấy địa chỉ"
         }
     },
+    "locationModal": {
+        "title": "Đặt vị trí phòng",
+        "methodSelection": {
+            "label": "Chọn cách lấy vị trí:",
+            "auto": "GPS tự động",
+            "manual": "Nhập thủ công"
+        },
+        "autoGPS": {
+            "description": "Nhấn nút bên dưới để lấy vị trí hiện tại của bạn",
+            "getCurrentLocation": "Lấy vị trí hiện tại",
+            "gettingLocation": "Đang lấy vị trí..."
+        },
+        "manualInput": {
+            "label": "Nhập địa chỉ:",
+            "placeholder": "Ví dụ: Học viện Báo chí và Tuyên truyền",
+            "searchAddress": "Tìm kiếm địa chỉ",
+            "searching": "Đang tìm kiếm..."
+        },
+        "locationPreview": {
+            "found": "Vị trí đã tìm thấy:",
+            "coordinates": "Tọa độ:",
+            "checkBeforeSave": "📍 Vui lòng kiểm tra vị trí trước khi lưu",
+            "viewOnOSM": "Xem chi tiết trên OpenStreetMap"
+        },
+        "buttons": {
+            "cancel": "Hủy",
+            "saveLocation": "Lưu vị trí",
+            "saving": "Đang lưu..."
+        },
+        "errors": {
+            "gpsNotSupported": "Trình duyệt không hỗ trợ định vị GPS",
+            "permissionDenied": "Người dùng từ chối quyền truy cập vị trí",
+            "positionUnavailable": "Thông tin vị trí không khả dụng",
+            "timeout": "Hết thời gian chờ lấy vị trí",
+            "unknownError": "Lỗi không xác định khi lấy vị trí",
+            "pleaseEnterAddress": "Vui lòng nhập địa chỉ",
+            "addressNotFound": "Không tìm thấy địa chỉ này",
+            "searchError": "Lỗi khi tìm kiếm địa chỉ",
+            "pleaseSelectLocation": "Vui lòng chọn vị trí trước khi lưu",
+            "missingInfo": "Thiếu thông tin cần thiết để lưu vị trí",
+            "pleaseLogin": "Vui lòng đăng nhập lại",
+            "saveError": "Lỗi khi lưu vị trí",
+            "connectionError": "Lỗi kết nối khi lưu vị trí"
+        },
+        "success": {
+            "locationSaved": "Đã lưu vị trí thành công!"
+        }
+    },
     "dashboard": {
         "title": "Phòng của tôi",
         "createGameButton": "Tạo trò chơi mới",

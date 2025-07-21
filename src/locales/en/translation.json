@@ -238,6 +238,54 @@
             "errorGettingAddress": "Error getting address"
         }
     },
+    "locationModal": {
+        "title": "Set Room Location",
+        "methodSelection": {
+            "label": "Choose location method:",
+            "auto": "Auto GPS",
+            "manual": "Manual Input"
+        },
+        "autoGPS": {
+            "description": "Press the button below to get your current location",
+            "getCurrentLocation": "Get Current Location",
+            "gettingLocation": "Getting location..."
+        },
+        "manualInput": {
+            "label": "Enter address:",
+            "placeholder": "Example: Academy of Journalism and Communication",
+            "searchAddress": "Search Address",
+            "searching": "Searching..."
+        },
+        "locationPreview": {
+            "found": "Location found:",
+            "coordinates": "Coordinates:",
+            "checkBeforeSave": "📍 Please check location before saving",
+            "viewOnOSM": "View details on OpenStreetMap"
+        },
+        "buttons": {
+            "cancel": "Cancel",
+            "saveLocation": "Save Location",
+            "saving": "Saving..."
+        },
+        "errors": {
+            "gpsNotSupported": "Browser does not support GPS positioning",
+            "permissionDenied": "User denied location access permission",
+            "positionUnavailable": "Location information unavailable",
+            "timeout": "Location request timeout",
+            "unknownError": "Unknown error while getting location",
+            "pleaseEnterAddress": "Please enter an address",
+            "addressNotFound": "Could not find this address",
+            "searchError": "Error searching for address",
+            "pleaseSelectLocation": "Please select a location before saving",
+            "missingInfo": "Missing required information to save location",
+            "pleaseLogin": "Please log in again",
+            "saveError": "Error saving location",
+            "connectionError": "Connection error while saving location"
+        },
+        "success": {
+            "locationSaved": "Location saved successfully!"
+        }
+    },
     "dashboard": {
         "title": "My Rooms",
         "createGameButton": "Create New Game",

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const LocationModal = ({
   isOpen,
@@ -8,6 +9,7 @@ const LocationModal = ({
   username,
   apiUrl
 }) => {
+  const { t, i18n } = useTranslation();
   const [locationMethod, setLocationMethod] = useState('auto');
   const [currentLocation, setCurrentLocation] = useState(null);
   const [manualLocation, setManualLocation] = useState('');
@@ -18,7 +20,7 @@ const LocationModal = ({
   // Debug: Log khi component re-render - THÊM DEPENDENCY ARRAY
   useEffect(() => {
     // console.log('LocationModal rendered:', { isOpen, currentLocation, isSaving });
-  }, [isOpen, currentLocation, isSaving]); // Thêm dependency array này
+  }, [isOpen, currentLocation, isSaving]);
 
   // Reset state khi modal đóng/mở
   useEffect(() => {
@@ -32,8 +34,6 @@ const LocationModal = ({
     }
   }, [isOpen]);
 
-  // ...existing code... (giữ nguyên tất cả các hàm khác)
-
   // Hàm lấy vị trí GPS tự động
   const getCurrentLocation = () => {
     console.log('getCurrentLocation called');
@@ -42,7 +42,7 @@ const LocationModal = ({
     setCurrentLocation(null);
 
     if (!navigator.geolocation) {
-      setLocationError('Trình duyệt không hỗ trợ định vị GPS');
+      setLocationError(t('locationModal.errors.gpsNotSupported'));
       setIsGettingLocation(false);
       return;
     }
@@ -52,8 +52,10 @@ const LocationModal = ({
         const { latitude, longitude } = position.coords;
 
         try {
+          // Use current language for Nominatim
+          const language = i18n.language === 'vi' ? 'vi' : i18n.language === 'ja' ? 'ja' : 'en';
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&accept-language=${language}`,
             {
               headers: {
                 'User-Agent': 'TekutokoApp/1.0'
@@ -105,23 +107,23 @@ const LocationModal = ({
         setIsGettingLocation(false);
       },
       (error) => {
-        let errorMessage = 'Không thể lấy vị trí';
+        let errorKey = 'unknownError';
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = 'Người dùng từ chối quyền truy cập vị trí';
+            errorKey = 'permissionDenied';
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Thông tin vị trí không khả dụng';
+            errorKey = 'positionUnavailable';
             break;
           case error.TIMEOUT:
-            errorMessage = 'Hết thời gian chờ lấy vị trí';
+            errorKey = 'timeout';
             break;
           default:
-            errorMessage = 'Lỗi không xác định khi lấy vị trí';
+            errorKey = 'unknownError';
             break;
         }
-        console.log('Geolocation error:', errorMessage);
-        setLocationError(errorMessage);
+        console.log('Geolocation error:', errorKey);
+        setLocationError(t(`locationModal.errors.${errorKey}`));
         setIsGettingLocation(false);
         setCurrentLocation(null);
       },
@@ -136,7 +138,7 @@ const LocationModal = ({
   // Hàm tìm kiếm địa chỉ thủ công với Nominatim
   const searchManualLocation = async () => {
     if (!manualLocation.trim()) {
-      setLocationError('Vui lòng nhập địa chỉ');
+      setLocationError(t('locationModal.errors.pleaseEnterAddress'));
       return;
     }
 
@@ -145,8 +147,10 @@ const LocationModal = ({
     setCurrentLocation(null);
 
     try {
+      // Use current language for Nominatim
+      const language = i18n.language === 'vi' ? 'vi' : i18n.language === 'ja' ? 'ja' : 'en';
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manualLocation)}&format=json&limit=1&addressdetails=1`,
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manualLocation)}&format=json&limit=1&addressdetails=1&accept-language=${language}`,
         {
           headers: {
             'User-Agent': 'TekutokoApp/1.0'
@@ -182,16 +186,15 @@ const LocationModal = ({
           nominatim_data: result // ✅ GIỮ LẠI CHO HIỂN THỊ
         };
 
-        // console.log('Manual location found:', location);
         setCurrentLocation(location);
         setLocationError('');
       } else {
-        setLocationError('Không tìm thấy địa chỉ này');
+        setLocationError(t('locationModal.errors.addressNotFound'));
         setCurrentLocation(null);
       }
     } catch (error) {
       console.error('Error searching location:', error);
-      setLocationError('Lỗi khi tìm kiếm địa chỉ');
+      setLocationError(t('locationModal.errors.searchError'));
       setCurrentLocation(null);
     }
 
@@ -201,12 +204,12 @@ const LocationModal = ({
   // ✅ SỬA HÀM SAVE LOCATION
   const saveLocation = async () => {
     if (!currentLocation) {
-      setLocationError('Vui lòng chọn vị trí trước khi lưu');
+      setLocationError(t('locationModal.errors.pleaseSelectLocation'));
       return;
     }
 
     if (!roomId || !username || !apiUrl) {
-      setLocationError('Thiếu thông tin cần thiết để lưu vị trí');
+      setLocationError(t('locationModal.errors.missingInfo'));
       return;
     }
 
@@ -216,7 +219,7 @@ const LocationModal = ({
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        setLocationError('Vui lòng đăng nhập lại');
+        setLocationError(t('locationModal.errors.pleaseLogin'));
         setIsSaving(false);
         return;
       }
@@ -237,11 +240,9 @@ const LocationModal = ({
         })
       });
 
-      // console.log('Save response status:', response.status);
-
       if (response.ok) {
         const responseData = await response.json();
-        alert('Đã lưu vị trí thành công!');
+        alert(t('locationModal.success.locationSaved'));
         console.log('Saved location data:', responseData.data);
         if (onSave) {
           onSave(responseData.data);
@@ -250,11 +251,11 @@ const LocationModal = ({
       } else {
         const errorData = await response.text();
         console.error('Save location error:', errorData);
-        setLocationError('Lỗi khi lưu vị trí');
+        setLocationError(t('locationModal.errors.saveError'));
       }
     } catch (error) {
       console.error('Error saving location:', error);
-      setLocationError('Lỗi kết nối khi lưu vị trí');
+      setLocationError(t('locationModal.errors.connectionError'));
     } finally {
       setIsSaving(false);
     }
@@ -262,7 +263,6 @@ const LocationModal = ({
 
   // Hàm đóng modal và reset state
   const handleClose = () => {
-    // console.log('handleClose called');
     setCurrentLocation(null);
     setManualLocation('');
     setLocationError('');
@@ -274,7 +274,6 @@ const LocationModal = ({
 
   // Hàm reset khi đổi method
   const handleMethodChange = (method) => {
-    // console.log('Method changed to:', method);
     setLocationMethod(method);
     setCurrentLocation(null);
     setLocationError('');
@@ -283,7 +282,6 @@ const LocationModal = ({
 
   // Hàm xử lý click button save với log
   const handleSaveClick = (e) => {
-    // console.log('🔥 Save button clicked!', e);
     e.preventDefault();
     e.stopPropagation();
     saveLocation();
@@ -296,7 +294,9 @@ const LocationModal = ({
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto scrollbar-hide">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">Đặt vị trí phòng</h2>
+          <h2 className="text-lg font-semibold text-gray-800">
+            {t('locationModal.title')}
+          </h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -312,7 +312,9 @@ const LocationModal = ({
         <div className="p-4 space-y-4">
           {/* Method Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Chọn cách lấy vị trí:</label>
+            <label className="text-sm font-medium text-gray-700">
+              {t('locationModal.methodSelection.label')}
+            </label>
             <div className="flex space-x-2">
               <button
                 type="button"
@@ -322,7 +324,7 @@ const LocationModal = ({
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
               >
-                GPS tự động
+                {t('locationModal.methodSelection.auto')}
               </button>
               <button
                 type="button"
@@ -332,7 +334,7 @@ const LocationModal = ({
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
               >
-                Nhập thủ công
+                {t('locationModal.methodSelection.manual')}
               </button>
             </div>
           </div>
@@ -341,7 +343,7 @@ const LocationModal = ({
           {locationMethod === 'auto' && (
             <div className="space-y-3">
               <div className="text-sm text-gray-600">
-                Nhấn nút bên dưới để lấy vị trí hiện tại của bạn
+                {t('locationModal.autoGPS.description')}
               </div>
               <button
                 type="button"
@@ -355,10 +357,10 @@ const LocationModal = ({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Đang lấy vị trí...
+                    {t('locationModal.autoGPS.gettingLocation')}
                   </>
                 ) : (
-                  'Lấy vị trí hiện tại'
+                  t('locationModal.autoGPS.getCurrentLocation')
                 )}
               </button>
             </div>
@@ -369,13 +371,13 @@ const LocationModal = ({
             <div className="space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nhập địa chỉ:
+                  {t('locationModal.manualInput.label')}
                 </label>
                 <input
                   type="text"
                   value={manualLocation}
                   onChange={(e) => setManualLocation(e.target.value)}
-                  placeholder="Ví dụ: Học viện Báo chí và Tuyên truyền"
+                  placeholder={t('locationModal.manualInput.placeholder')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
@@ -397,10 +399,10 @@ const LocationModal = ({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Đang tìm kiếm...
+                    {t('locationModal.manualInput.searching')}
                   </>
                 ) : (
-                  'Tìm kiếm địa chỉ'
+                  t('locationModal.manualInput.searchAddress')
                 )}
               </button>
             </div>
@@ -427,13 +429,17 @@ const LocationModal = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-blue-800">Vị trí đã tìm thấy:</p>
-                  <p className="text-sm text-blue-600 mt-1 break-words">{currentLocation.address}</p>
+                  <p className="text-sm font-medium text-blue-800">
+                    {t('locationModal.locationPreview.found')}
+                  </p>
+                  <p className="text-sm text-blue-600 mt-1 break-words">
+                    {currentLocation.address}
+                  </p>
                   <p className="text-xs text-blue-500 mt-1">
-                    Tọa độ: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                    {t('locationModal.locationPreview.coordinates')} {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
                   </p>
                   <p className="text-xs text-orange-600 mt-2 font-medium">
-                    📍 Vui lòng kiểm tra vị trí trước khi lưu
+                    {t('locationModal.locationPreview.checkBeforeSave')}
                   </p>
                 </div>
               </div>
@@ -455,7 +461,7 @@ const LocationModal = ({
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline"
                   >
-                    Xem chi tiết trên OpenStreetMap
+                    {t('locationModal.locationPreview.viewOnOSM')}
                   </a>
                 </div>
               </div>
@@ -470,7 +476,7 @@ const LocationModal = ({
                 onClick={handleClose}
                 className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors"
               >
-                Hủy
+                {t('locationModal.buttons.cancel')}
               </button>
             ) : (
               <>
@@ -479,7 +485,7 @@ const LocationModal = ({
                   onClick={handleClose}
                   className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg font-medium transition-colors"
                 >
-                  Hủy
+                  {t('locationModal.buttons.cancel')}
                 </button>
                 <button
                   type="button"
@@ -493,10 +499,10 @@ const LocationModal = ({
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Đang lưu...
+                      {t('locationModal.buttons.saving')}
                     </>
                   ) : (
-                    'Lưu vị trí'
+                    t('locationModal.buttons.saveLocation')
                   )}
                 </button>
               </>
