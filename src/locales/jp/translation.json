@@ -209,6 +209,35 @@
         "errorFetchingRooms": "ルーム取得エラー: {{error}}",
         "tryAgain": "再試行"
     },
+    "viewLocationModal": {
+        "title": "ルーム位置: {{roomTitle}}",
+        "mapLoading": "マップを読み込み中...",
+        "addressLoading": "住所を検索中...",
+        "locationInfo": {
+            "address": "住所:",
+            "coordinates": "座標:",
+            "roomGameLocation": "ルームゲームの位置"
+        },
+        "actions": {
+            "directions": "道順",
+            "copyCoordinates": "座標をコピー",
+            "viewOnOSM": "OSMで表示"
+        },
+        "noLocation": {
+            "title": "ルーム位置が設定されていません",
+            "description": "ルーム管理者のみが位置を設定できます",
+            "debugInvalidFormat": "デバッグ: 無効な座標フォーマット"
+        },
+        "buttons": {
+            "close": "閉じる"
+        },
+        "messages": {
+            "coordinatesCopied": "座標をクリップボードにコピーしました！",
+            "cannotDetermineAddress": "住所を特定できません",
+            "unableToGetAddress": "住所を取得できません",
+            "errorGettingAddress": "住所取得時にエラーが発生しました"
+        }
+    },
     "dashboard": {
         "title": "マイルーム",
         "createGameButton": "新しいゲームを作成",

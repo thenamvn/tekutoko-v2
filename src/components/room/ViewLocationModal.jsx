@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
+    const { t, i18n } = useTranslation();
     const [mapLoaded, setMapLoaded] = useState(false);
     const [address, setAddress] = useState('');
     const [loadingAddress, setLoadingAddress] = useState(false);
@@ -43,6 +45,8 @@ const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
         const lat = parseFloat(location.y); // y là latitude
         const lng = parseFloat(location.x); // x là longitude
 
+        console.log('Coordinates:', { lat, lng, original: location });
+
         // Validate coordinates
         if (isNaN(lat) || isNaN(lng)) {
             console.error('Invalid coordinates:', { lat, lng });
@@ -58,7 +62,7 @@ const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
         return { lat, lng };
     };
 
-    // Fetch address from coordinates using Nominatim
+    // Fetch address from coordinates using Nominatim with current language
     const fetchAddress = async () => {
         const coordinates = getCoordinates(roomInfo?.location);
         if (!coordinates) return;
@@ -66,12 +70,16 @@ const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
         setLoadingAddress(true);
         try {
             const { lat, lng } = coordinates;
+            // Use current language for Nominatim
+            const language = i18n.language === 'vi' ? 'vi' : i18n.language === 'ja' ? 'ja' : 'en';
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=vi`
+                `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1&accept-language=${language}`
             );
 
             if (response.ok) {
                 const data = await response.json();
+                console.log('Nominatim response:', data);
+
                 // Build formatted address
                 const addressParts = [];
                 if (data.address) {
@@ -102,15 +110,15 @@ const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
 
                 const formattedAddress = addressParts.length > 0
                     ? addressParts.join(', ')
-                    : data.display_name || 'Không thể xác định địa chỉ';
+                    : data.display_name || t('viewLocationModal.messages.cannotDetermineAddress');
 
                 setAddress(formattedAddress);
             } else {
-                setAddress('Không thể lấy địa chỉ');
+                setAddress(t('viewLocationModal.messages.unableToGetAddress'));
             }
         } catch (error) {
             console.error('Error fetching address:', error);
-            setAddress('Lỗi khi lấy địa chỉ');
+            setAddress(t('viewLocationModal.messages.errorGettingAddress'));
         } finally {
             setLoadingAddress(false);
         }
@@ -166,7 +174,7 @@ const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
         marker.bindPopup(`
       <div style="text-align: center; padding: 5px;">
         <h3 style="margin: 0 0 5px 0; font-weight: bold; color: #374151;">${roomInfo.room_title || roomInfo.title}</h3>
-        <p style="margin: 0; font-size: 12px; color: #6B7280;">Vị trí phòng game</p>
+        <p style="margin: 0; font-size: 12px; color: #6B7280;">${t('viewLocationModal.locationInfo.roomGameLocation')}</p>
       </div>
     `).openPopup();
 
@@ -186,7 +194,7 @@ const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
                 <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-violet-600 to-indigo-600">
                     <div className="flex items-center justify-between">
                         <h3 className="text-lg font-semibold text-white">
-                            📍 Vị trí phòng: {roomInfo?.room_title || roomInfo?.title}
+                            📍 {t('viewLocationModal.title', { roomTitle: roomInfo?.room_title || roomInfo?.title })}
                         </h3>
                         <button
                             onClick={onClose}
@@ -211,7 +219,7 @@ const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
                                     <div className="flex items-center justify-center h-full">
                                         <div className="text-center">
                                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600 mx-auto mb-2"></div>
-                                            <p className="text-gray-500">Đang tải bản đồ...</p>
+                                            <p className="text-gray-500">{t('viewLocationModal.mapLoading')}</p>
                                         </div>
                                     </div>
                                 )}
@@ -220,20 +228,24 @@ const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
                             {/* Location Info */}
                             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                                 <div className="flex items-start space-x-2">
-                                    <span className="text-gray-500 font-medium min-w-[80px]">Địa chỉ:</span>
+                                    <span className="text-gray-500 font-medium min-w-[80px]">
+                                        {t('viewLocationModal.locationInfo.address')}
+                                    </span>
                                     <div className="text-gray-700">
                                         {loadingAddress ? (
                                             <div className="flex items-center space-x-2">
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-violet-600"></div>
-                                                <span className="text-sm">Đang tìm địa chỉ...</span>
+                                                <span className="text-sm">{t('viewLocationModal.addressLoading')}</span>
                                             </div>
                                         ) : (
-                                            address || 'Không thể xác định địa chỉ'
+                                            address || t('viewLocationModal.messages.cannotDetermineAddress')
                                         )}
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                    <span className="text-gray-500 font-medium min-w-[80px]">Tọa độ:</span>
+                                    <span className="text-gray-500 font-medium min-w-[80px]">
+                                        {t('viewLocationModal.locationInfo.coordinates')}
+                                    </span>
                                     <span className="text-gray-700 font-mono text-sm">
                                         {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
                                     </span>
@@ -250,18 +262,18 @@ const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
                                         className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center justify-center space-x-1"
                                     >
                                         <span>🧭</span>
-                                        <span>Chỉ đường</span>
+                                        <span>{t('viewLocationModal.actions.directions')}</span>
                                     </button>
                                     <button
                                         onClick={() => {
                                             const { lat, lng } = coordinates;
                                             navigator.clipboard.writeText(`${lat}, ${lng}`);
-                                            alert('Đã copy tọa độ vào clipboard!');
+                                            alert(t('viewLocationModal.messages.coordinatesCopied'));
                                         }}
                                         className="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium flex items-center justify-center space-x-1"
                                     >
                                         <span>📋</span>
-                                        <span>Copy tọa độ</span>
+                                        <span>{t('viewLocationModal.actions.copyCoordinates')}</span>
                                     </button>
                                 </div>
                             </div>
@@ -269,11 +281,11 @@ const ViewLocationModal = ({ isOpen, onClose, roomInfo }) => {
                     ) : (
                         <div className="text-center py-12">
                             <div className="text-6xl mb-4">📍</div>
-                            <p className="text-gray-500 text-lg mb-2">Phòng chưa có vị trí được thiết lập</p>
-                            <p className="text-gray-400 text-sm">Chỉ người quản lý mới có thể thiết lập vị trí cho phòng</p>
+                            <p className="text-gray-500 text-lg mb-2">{t('viewLocationModal.noLocation.title')}</p>
+                            <p className="text-gray-400 text-sm">{t('viewLocationModal.noLocation.description')}</p>
                             {roomInfo?.location && (
                                 <div className="mt-4 p-3 bg-red-50 rounded-lg">
-                                    <p className="text-red-600 text-sm">Debug: Invalid coordinate format</p>
+                                    <p className="text-red-600 text-sm">{t('viewLocationModal.noLocation.debugInvalidFormat')}</p>
                                     <pre className="text-xs text-red-500 mt-1">
                                         {JSON.stringify(roomInfo.location, null, 2)}
                                     </pre>

@@ -209,6 +209,35 @@
         "errorFetchingRooms": "Error fetching rooms: {{error}}",
         "tryAgain": "Try again"
     },
+    "viewLocationModal": {
+        "title": "Room Location: {{roomTitle}}",
+        "mapLoading": "Loading map...",
+        "addressLoading": "Finding address...",
+        "locationInfo": {
+            "address": "Address:",
+            "coordinates": "Coordinates:",
+            "roomGameLocation": "Room game location"
+        },
+        "actions": {
+            "directions": "Directions",
+            "copyCoordinates": "Copy coordinates",
+            "viewOnOSM": "View OSM"
+        },
+        "noLocation": {
+            "title": "Room location not set",
+            "description": "Only room managers can set location for this room",
+            "debugInvalidFormat": "Debug: Invalid coordinate format"
+        },
+        "buttons": {
+            "close": "Close"
+        },
+        "messages": {
+            "coordinatesCopied": "Coordinates copied to clipboard!",
+            "cannotDetermineAddress": "Cannot determine address",
+            "unableToGetAddress": "Unable to get address",
+            "errorGettingAddress": "Error getting address"
+        }
+    },
     "dashboard": {
         "title": "My Rooms",
         "createGameButton": "Create New Game",

@@ -209,6 +209,35 @@
         "errorFetchingRooms": "Lỗi khi tải phòng: {{error}}",
         "tryAgain": "Thử lại"
     },
+    "viewLocationModal": {
+        "title": "Vị trí phòng: {{roomTitle}}",
+        "mapLoading": "Đang tải bản đồ...",
+        "addressLoading": "Đang tìm địa chỉ...",
+        "locationInfo": {
+            "address": "Địa chỉ:",
+            "coordinates": "Tọa độ:",
+            "roomGameLocation": "Vị trí phòng game"
+        },
+        "actions": {
+            "directions": "Chỉ đường",
+            "copyCoordinates": "Copy tọa độ",
+            "viewOnOSM": "Xem OSM"
+        },
+        "noLocation": {
+            "title": "Phòng chưa có vị trí được thiết lập",
+            "description": "Chỉ người quản lý mới có thể thiết lập vị trí cho phòng",
+            "debugInvalidFormat": "Debug: Invalid coordinate format"
+        },
+        "buttons": {
+            "close": "Đóng"
+        },
+        "messages": {
+            "coordinatesCopied": "Đã copy tọa độ vào clipboard!",
+            "cannotDetermineAddress": "Không thể xác định địa chỉ",
+            "unableToGetAddress": "Không thể lấy địa chỉ",
+            "errorGettingAddress": "Lỗi khi lấy địa chỉ"
+        }
+    },
     "dashboard": {
         "title": "Phòng của tôi",
         "createGameButton": "Tạo trò chơi mới",
