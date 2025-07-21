@@ -193,10 +193,21 @@
     },
     "discovery": {
         "title": "TEKUTOKO",
-        "searchPlaceholder": "部屋コード、タイトルを入力...",
+        "searchPlaceholder": "ルームコード、タイトルを入力...",
         "noMoreGames": "これ以上のゲームはありません",
-        "popular": "人気のある",
-        "nearby": "近くの"
+        "popular": "人気",
+        "nearby": "近く",
+        "enableLocation": "位置情報アクセスを有効にする",
+        "error": {
+            "cannotFindLocation": "あなたの位置を見つけることができません！",
+            "gpsNotSupported": "ブラウザがGPSをサポートしていません！",
+            "locationPermissionDenied": "位置情報アクセスが拒否されました。ブラウザ設定で位置情報サービスを有効にしてください。",
+            "missUserLocation": "ユーザーの位置情報が不足しています。",
+            "errorConnectionGetNearbyRooms": "近くのルームを検索する際の接続エラー"
+        },
+        "loading": "読み込み中...",
+        "errorFetchingRooms": "ルーム取得エラー: {{error}}",
+        "tryAgain": "再試行"
     },
     "dashboard": {
         "title": "マイルーム",
@@ -574,7 +585,7 @@
         },
         "chatbot": {
             "title": "TekuBot",
-            "description" : "TEKUTOKO アシスタント",
+            "description": "TEKUTOKO アシスタント",
             "inputPlaceholder": "何でも聞いてください...",
             "welcomeMessage": "こんにちは！TEKUTOKOのチャットボットです。何かお手伝いできることはありますか？",
             "suggestions": {

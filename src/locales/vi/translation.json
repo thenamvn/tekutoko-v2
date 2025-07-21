@@ -194,9 +194,20 @@
     "discovery": {
         "title": "TEKUTOKO",
         "searchPlaceholder": "Nhập mã phòng, tiêu đề...",
-        "noMoreGames": "Không còn trò chơi nào nữa",
+        "noMoreGames": "Không còn phòng nào",
         "popular": "Phổ biến",
-        "nearby": "Gần bạn"
+        "nearby": "Gần đây",
+        "enableLocation": "Cho phép truy cập vị trí",
+        "error": {
+            "cannotFindLocation": "Không thể tìm thấy vị trí của bạn!",
+            "gpsNotSupported": "Trình duyệt không hỗ trợ GPS!",
+            "locationPermissionDenied": "Quyền truy cập vị trí bị từ chối. Vui lòng bật dịch vụ vị trí trong cài đặt trình duyệt.",
+            "missUserLocation": "Thiếu thông tin vị trí người dùng.",
+            "errorConnectionGetNearbyRooms": "Lỗi kết nối khi tìm kiếm phòng gần đây"
+        },
+        "loading": "Đang tải...",
+        "errorFetchingRooms": "Lỗi khi tải phòng: {{error}}",
+        "tryAgain": "Thử lại"
     },
     "dashboard": {
         "title": "Phòng của tôi",

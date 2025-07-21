@@ -11,13 +11,13 @@ const Discovery = () => {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
-    
+
     // ✅ THÊM STATE CHO TABS VÀ LOCATION
     const [activeTab, setActiveTab] = useState('popular'); // 'popular', 'nearby', 'search'
     const [userLocation, setUserLocation] = useState(null);
     const [locationError, setLocationError] = useState('');
     const [locationInfo, setLocationInfo] = useState(null); // ✅ THÊM STATE CHO LOCATION INFO
-    
+
     const observer = useRef();
     const navigate = useNavigate();
     const apiUrl = process.env.REACT_APP_API_URL;
@@ -40,7 +40,7 @@ const Discovery = () => {
             }
 
             const data = await response.json();
-            
+
             if (data && data.address) {
                 const addr = data.address;
                 return {
@@ -61,17 +61,17 @@ const Discovery = () => {
     // ✅ HÀM LẤY VỊ TRÍ NGƯỜI DÙNG (CẬP NHẬT)
     const getCurrentLocation = () => {
         if (!navigator.geolocation) {
-            setLocationError('Trình duyệt không hỗ trợ định vị GPS');
+            setLocationError(t("discovery.error.gpsNotSupported"));
             return;
         }
 
         setLoading(true);
-        setLocationError('Đang lấy vị trí...');
+        setLocationError(t("discovery.loading"));
 
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
-                
+
                 // ✅ SET LOCATION TRƯỚC
                 setUserLocation({
                     lat: latitude,
@@ -83,7 +83,7 @@ const Discovery = () => {
                 if (locationInfo) {
                     setLocationInfo(locationInfo);
                     setLocationError('');
-                    console.log('Location info:', locationInfo);
+                    // console.log('Location info:', locationInfo);
                 } else {
                     setLocationInfo({
                         city: '',
@@ -97,7 +97,7 @@ const Discovery = () => {
                 setLoading(false);
             },
             (error) => {
-                setLocationError('Không thể lấy vị trí hiện tại');
+                setLocationError(t("discovery.error.cannotFindLocation"));
                 console.error('Geolocation error:', error);
                 setLoading(false);
             },
@@ -129,7 +129,7 @@ const Discovery = () => {
     // ✅ FETCH NEARBY ROOMS (CẬP NHẬT VỚI CITY/COUNTRY FILTER)
     const fetchNearbyRooms = async (page = 1) => {
         if (!userLocation) {
-            setLocationError('Cần có vị trí để tìm phòng gần đây');
+            setLocationError(t("discovery.error.missUserLocation"));
             return;
         }
 
@@ -154,11 +154,11 @@ const Discovery = () => {
                 params.append('country', locationInfo.country_code);
             }
 
-            console.log('Nearby search params:', params.toString());
+            // console.log('Nearby search params:', params.toString());
 
             const response = await fetch(`${apiUrl}/api/room/search/nearby?${params}`);
             const data = await response.json();
-            
+
             if (response.ok) {
                 setRooms((prevRooms) => (page === 1 ? data.data : [...prevRooms, ...data.data]));
                 setHasMore(data.pagination.has_more);
@@ -168,7 +168,7 @@ const Discovery = () => {
             }
         } catch (error) {
             console.error('Error fetching nearby rooms:', error);
-            setLocationError('Lỗi kết nối khi tìm phòng gần đây');
+            setLocationError(t("discovery.error.errorConnectionGetNearbyRooms"));
         } finally {
             setLoading(false);
         }
@@ -180,7 +180,7 @@ const Discovery = () => {
         setPage(1);
         setRooms([]);
         setHasMore(true);
-        
+
         if (tab === 'nearby') {
             if (!userLocation) {
                 getCurrentLocation();
@@ -297,21 +297,19 @@ const Discovery = () => {
                     <div className="flex bg-white/20 backdrop-blur-sm rounded-xl p-1">
                         <button
                             onClick={() => handleTabChange('popular')}
-                            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                activeTab === 'popular' 
-                                    ? 'bg-white text-violet-600 shadow-lg' 
-                                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                            }`}
+                            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'popular'
+                                ? 'bg-white text-violet-600 shadow-lg'
+                                : 'text-white/80 hover:text-white hover:bg-white/10'
+                                }`}
                         >
                             🔥 {t("discovery.popular")}
                         </button>
                         <button
                             onClick={() => handleTabChange('nearby')}
-                            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                activeTab === 'nearby' 
-                                    ? 'bg-white text-violet-600 shadow-lg' 
-                                    : 'text-white/80 hover:text-white hover:bg-white/10'
-                            }`}
+                            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'nearby'
+                                ? 'bg-white text-violet-600 shadow-lg'
+                                : 'text-white/80 hover:text-white hover:bg-white/10'
+                                }`}
                         >
                             📍 {t("discovery.nearby")}
                             {locationInfo && (
@@ -323,11 +321,10 @@ const Discovery = () => {
                         {searchQuery && (
                             <button
                                 onClick={() => handleTabChange('search')}
-                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                    activeTab === 'search' 
-                                        ? 'bg-white text-violet-600 shadow-lg' 
-                                        : 'text-white/80 hover:text-white hover:bg-white/10'
-                                }`}
+                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === 'search'
+                                    ? 'bg-white text-violet-600 shadow-lg'
+                                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                                    }`}
                             >
                                 🔍 Search
                             </button>
@@ -341,11 +338,11 @@ const Discovery = () => {
                         <div className="text-xs text-white/80 bg-white/10 rounded-lg px-3 py-2">
                             <div className="flex items-center">
                                 <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                                 </svg>
                                 <span className="truncate">
-                                    {locationInfo.city && locationInfo.country 
+                                    {locationInfo.city && locationInfo.country
                                         ? `${locationInfo.city}, ${locationInfo.country}`
                                         : locationInfo.display_name
                                     }
@@ -370,7 +367,7 @@ const Discovery = () => {
                                     onClick={getCurrentLocation}
                                     className="mt-2 text-xs text-orange-600 hover:text-orange-700 font-medium underline"
                                 >
-                                    Thử lại
+                                    {t("discovery.tryAgain", "Try again")}
                                 </button>
                             )}
                         </div>
@@ -396,7 +393,7 @@ const Discovery = () => {
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                        
+
                                         {/* ✅ HIỂN THỊ DISTANCE CHO NEARBY */}
                                         {activeTab === 'nearby' && room.distance_m !== undefined && (
                                             <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
@@ -411,7 +408,7 @@ const Discovery = () => {
                                         <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
                                             {room.description}
                                         </p>
-                                        
+
                                         {/* ✅ HIỂN THỊ ADMIN INFO CHO NEARBY */}
                                         {activeTab === 'nearby' && room.admin_info && (
                                             <div className="mt-2 flex items-center space-x-2">
@@ -425,7 +422,7 @@ const Discovery = () => {
                                                 </span>
                                             </div>
                                         )}
-                                        
+
                                         <div className="mt-3 flex items-center justify-between">
                                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-violet-100 to-indigo-100 text-violet-800">
                                                 {activeTab === 'nearby' ? `${room.city || 'Unknown'}` : 'Active'}
@@ -457,9 +454,9 @@ const Discovery = () => {
                                 </svg>
                             </div>
                             <p className="text-slate-500 font-medium">
-                                {activeTab === 'nearby' 
-                                    ? `Không tìm thấy phòng gần đây${locationInfo ? ` trong ${locationInfo.city}` : ''}` 
-                                    : t("discovery.noRoomsFound", "No games found.")
+                                {activeTab === 'nearby'
+                                    ? `${t("discovery.noMoreGames", "No games found.")}${locationInfo ? ` trong ${locationInfo.city}` : ''}`
+                                    : t("discovery.noMoreGames", "No games found.")
                                 }
                             </p>
                             {activeTab === 'nearby' && !userLocation && (
@@ -467,7 +464,7 @@ const Discovery = () => {
                                     onClick={getCurrentLocation}
                                     className="mt-4 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 transition-colors"
                                 >
-                                    Cho phép truy cập vị trí
+                                    {t("discovery.enableLocation")}
                                 </button>
                             )}
                         </div>
@@ -480,8 +477,8 @@ const Discovery = () => {
                         <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-4 border-violet-200 border-t-violet-600 mx-auto mb-3"></div>
                             <p className="text-sm text-slate-600 font-medium">
-                                {locationError.includes('Đang') ? locationError : 
-                                 activeTab === 'nearby' ? 'Đang tìm phòng gần bạn...' : 'Loading...'}
+                                {locationError.includes('Đang') ? locationError :
+                                    activeTab === 'nearby' ? t("discovery.loading", "Loading nearby rooms...") : t("discovery.loading", "Loading...")}
                             </p>
                         </div>
                     </div>

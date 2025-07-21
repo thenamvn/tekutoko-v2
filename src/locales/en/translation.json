@@ -196,7 +196,18 @@
         "searchPlaceholder": "Enter room code, title...",
         "noMoreGames": "No more games",
         "popular": "Popular",
-        "nearby": "Nearby"
+        "nearby": "Nearby",
+        "enableLocation": "Enable Location Access",
+        "error": {
+            "cannotFindLocation": "Cannot find your location!",
+            "gpsNotSupported": "Browser does not support GPS!",
+            "locationPermissionDenied": "Location permission denied. Please enable location services in your browser settings.",
+            "missUserLocation": "Missing user location information.",
+            "errorConnectionGetNearbyRooms": "Connection error when searching for nearby rooms"
+        },
+        "loading": "Loading...",
+        "errorFetchingRooms": "Error fetching rooms: {{error}}",
+        "tryAgain": "Try again"
     },
     "dashboard": {
         "title": "My Rooms",
