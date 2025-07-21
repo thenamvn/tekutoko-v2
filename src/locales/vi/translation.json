@@ -188,7 +188,8 @@
         "fetchError": "Có lỗi xảy ra khi lấy voucher",
         "permissionDenied": "Quyền truy cập camera bị từ chối",
         "noCameraFound": "Không tìm thấy thiết bị camera",
-        "showQrCode": "Hiển thị mã QR để đổi phần thưởng"
+        "showQrCode": "Hiển thị mã QR để đổi phần thưởng",
+        "notAuthorized": "Bạn không có quyền đổi voucher này. Chỉ có chủ phòng mới có thể quét và đổi voucher."
     },
     "discovery": {
         "title": "TEKUTOKO",

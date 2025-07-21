@@ -188,7 +188,8 @@
         "fetchError": "Error fetching vouchers",
         "permissionDenied": "Camera access denied",
         "noCameraFound": "No camera device found",
-        "showQrCode": "Show this QR code to redeem your reward"
+        "showQrCode": "Show this QR code to redeem your reward",
+        "notAuthorized": "You are not authorized to redeem this voucher. Only the host can scan and redeem vouchers."
     },
     "discovery": {
         "title": "TEKUTOKO",

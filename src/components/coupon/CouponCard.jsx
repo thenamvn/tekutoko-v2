@@ -34,7 +34,7 @@ const CouponCard = () => {
         // Step 1: Decrypt the QR code data
         const bytes = CryptoJS.AES.decrypt(result[0].rawValue, secret);
         const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
-        console.log(decryptedData);
+        // console.log(decryptedData);
 
         // Step 2: Parse the decrypted data
         const [username, voucher_id] = decryptedData.split('|');
@@ -50,19 +50,28 @@ const CouponCard = () => {
 
         const data = await response.json();
         if (data.exists) {
-          console.log('Voucher exists in the database');
+          // console.log('Voucher exists in the database');
 
           // Step 4: Fetch the voucher details
           try {
             const voucherResponse = await fetch(`${apiUrl}/api/voucher/${voucher_id}`);
             const voucherData = await voucherResponse.json();
+            const host_username = voucherData.host_room;
 
-            // Step 5: Set the reward information and update the state
+            // Step 5: Check if current user is the host
+            if (username !== host_username) {
+              setError(t('couponCard.notAuthorized', 'You are not authorized to redeem this voucher. Only the host can scan and redeem vouchers.'));
+              alert(t('couponCard.notAuthorized', 'You are not authorized to redeem this voucher. Only the host can scan and redeem vouchers.'));
+              setScanning(false);
+              return;
+            }
+
+            // Step 6: Set the reward information and update the state
             setRewardInfo(voucherData);
             setScanning(false);
             setShowResult(true);
 
-            // Step 6: Delete the voucher from the user_vouchers table
+            // Step 7: Delete the voucher from the user_vouchers table
             await fetch(`${apiUrl}/api/deleteUserVoucher`, {
               method: 'DELETE',
               headers: {
@@ -247,8 +256,8 @@ const CouponCard = () => {
           <div className="flex bg-slate-100 rounded-xl p-1">
             <button
               className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'vouchers'
-                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
-                  : 'text-slate-600 hover:bg-white/50'
+                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
+                : 'text-slate-600 hover:bg-white/50'
                 }`}
               onClick={() => setActiveTab('vouchers')}
             >
@@ -257,8 +266,8 @@ const CouponCard = () => {
             </button>
             <button
               className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'tickets'
-                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
-                  : 'text-slate-600 hover:bg-white/50'
+                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
+                : 'text-slate-600 hover:bg-white/50'
                 }`}
               onClick={() => setActiveTab('tickets')}
             >

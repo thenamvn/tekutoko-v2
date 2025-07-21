@@ -188,7 +188,8 @@
         "fetchError": "バウチャーの取得エラー",
         "permissionDenied": "カメラアクセスが拒否されました",
         "noCameraFound": "カメラデバイスが見つかりません",
-        "showQrCode": "報酬を受け取るにはこのQRコードを表示してください"
+        "showQrCode": "報酬を受け取るにはこのQRコードを表示してください",
+        "notAuthorized": "このバウチャーを受け取る権限がありません。ホストのみがバウチャーをスキャンして受け取ることができます。"
     },
     "discovery": {
         "title": "TEKUTOKO",
