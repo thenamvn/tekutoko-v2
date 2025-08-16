@@ -5005,6 +5005,152 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+// ✅ API tạo câu hỏi tự động bằng AI
+// ✅ API tạo câu hỏi tự động bằng AI
+app.post('/api/ai/generate-questions', async (req, res) => {
+  try {
+    const { topic, numQuestions = 5, difficulty = 'medium', questionTypes = ['text', 'multiple-choice'] } = req.body;
+    
+    if (!topic) {
+      return res.status(400).json({ 
+        error: 'Vui lòng nhập chủ đề để tạo câu hỏi' 
+      });
+    }
+
+    // Validate số lượng câu hỏi - Tăng từ 10 lên 25
+    const validNumQuestions = Math.min(Math.max(parseInt(numQuestions), 1), 25);
+    
+    // ✅ Timeout tối ưu hơn: min 30s, với 10 câu = 15s thêm, 25 câu = 37.5s thêm
+    const timeoutMs = Math.max(30000, Math.round(validNumQuestions * 1500)); // 1.5s mỗi câu thay vì 15s
+    req.setTimeout(timeoutMs);
+    
+    console.log(`Generating ${validNumQuestions} questions with ${timeoutMs}ms timeout`);
+    
+    // Tạo prompt cho AI
+    const prompt = buildQuestionGenerationPrompt(topic, validNumQuestions, difficulty, questionTypes);
+    
+    // Gọi AI để tạo câu hỏi
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: prompt,
+    });
+
+    // Parse JSON response từ AI
+    let generatedQuestions;
+    try {
+      // Lấy text từ response và parse JSON
+      const responseText = response.text || response.response?.text || '';
+      
+      // Tìm JSON trong response text
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        generatedQuestions = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('Không tìm thấy JSON trong response');
+      }
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+      return res.status(500).json({ 
+        error: 'Lỗi xử lý phản hồi từ AI. Vui lòng thử lại!' 
+      });
+    }
+
+    // Validate và format câu hỏi
+    const formattedQuestions = formatGeneratedQuestions(generatedQuestions.questions || []);
+
+    res.json({ 
+      success: true,
+      questions: formattedQuestions,
+      topic: topic,
+      difficulty: difficulty,
+      estimatedTime: `${Math.round(timeoutMs / 1000)}s`,
+      actualQuestions: formattedQuestions.length,
+      requestedQuestions: validNumQuestions,
+      timestamp: new Date().toISOString() 
+    });
+
+  } catch (error) {
+    console.error('AI Question Generation error:', error);
+    res.status(500).json({ 
+      error: 'Xin lỗi, có lỗi xảy ra khi tạo câu hỏi. Vui lòng thử lại sau!' 
+    });
+  }
+});
+
+// Hàm tạo prompt cho AI
+function buildQuestionGenerationPrompt(topic, numQuestions, difficulty, questionTypes) {
+  const difficultyDesc = {
+    easy: 'dễ (cơ bản)',
+    medium: 'trung bình',
+    hard: 'khó (nâng cao)'
+  };
+
+  const typeDesc = {
+    text: 'Câu hỏi văn bản (người dùng nhập đáp án)',
+    'multiple-choice': 'Câu hỏi trắc nghiệm (4 lựa chọn)',
+    upload: 'Câu hỏi upload ảnh (không cần đáp án cụ thể)'
+  };
+
+  return `Bạn là một chuyên gia giáo dục. Tạo ${numQuestions} câu hỏi về chủ đề "${topic}" với độ khó ${difficultyDesc[difficulty] || 'trung bình'}.
+
+**Yêu cầu:**
+1. Tạo câu hỏi đa dạng với các loại: ${questionTypes.map(type => typeDesc[type]).join(', ')}
+2. Phân bố đều các loại câu hỏi
+3. Câu hỏi phải phù hợp với độ khó ${difficulty}
+4. Đối với multiple-choice: tạo 4 lựa chọn, chỉ 1 đúng
+5. Đối với text: cung cấp nhiều đáp án đúng có thể (cách nhau bằng |)
+6. Đối với upload: tạo câu hỏi yêu cầu upload ảnh/file
+
+**Format JSON trả về:**
+{
+  "questions": [
+    {
+      "question_text": "Nội dung câu hỏi",
+      "question_type": "text|multiple-choice|upload",
+      "hint": "Gợi ý (tùy chọn)",
+      "explanation": "Giải thích đáp án",
+      "correct_text_answer": "đáp án 1|đáp án 2|đáp án 3" (chỉ cho type text),
+      "options": [
+        {"option_text": "Lựa chọn A", "is_correct": false},
+        {"option_text": "Lựa chọn B", "is_correct": true},
+        {"option_text": "Lựa chọn C", "is_correct": false},
+        {"option_text": "Lựa chọn D", "is_correct": false}
+      ] (chỉ cho type multiple-choice)
+    }
+  ]
+}
+
+Chỉ trả về JSON, không thêm text khác.`;
+}
+
+// Hàm format và validate câu hỏi được tạo
+function formatGeneratedQuestions(questions) {
+  return questions.map((q, index) => {
+    const formattedQuestion = {
+      tempId: Date.now() + index,
+      question_text: q.question_text || '',
+      question_type: q.question_type || 'text',
+      hint: q.hint || '',
+      explanation: q.explanation || '',
+    };
+
+    // Xử lý theo loại câu hỏi
+    if (q.question_type === 'text') {
+      formattedQuestion.correct_text_answer = q.correct_text_answer || '';
+    } else if (q.question_type === 'multiple-choice') {
+      formattedQuestion.options = q.options || [
+        { option_text: '', is_correct: false },
+        { option_text: '', is_correct: false },
+        { option_text: '', is_correct: false },
+        { option_text: '', is_correct: false }
+      ];
+    }
+    // upload type không cần thêm gì
+
+    return formattedQuestion;
+  }).filter(q => q.question_text.trim() !== ''); // Loại bỏ câu hỏi rỗng
+}
+
 app.listen(PORT, () => {
   console.log("Server is running on port 9999");
 });

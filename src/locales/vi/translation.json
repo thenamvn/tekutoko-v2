@@ -133,6 +133,57 @@
             "compressionError": "Lỗi nén hình ảnh. Vui lòng thử lại."
         }
     },
+    "aiGenerator": {
+        "title": "Tạo câu hỏi bằng AI",
+        "topic": "Chủ đề",
+        "topicPlaceholder": "VD: Toán học, Lịch sử, Khoa học...",
+        "numQuestions": "Số lượng câu hỏi",
+        "numQuestionsPlaceholder": "Nhập từ 1-25",
+        "difficulty": "Độ khó",
+        "easy": "Dễ",
+        "medium": "Trung bình",
+        "hard": "Khó",
+        "questionTypes": "Loại câu hỏi",
+        "textType": "Câu hỏi văn bản",
+        "textTypeDesc": "Người dùng nhập đáp án bằng text",
+        "multipleChoiceType": "Câu hỏi trắc nghiệm",
+        "multipleChoiceTypeDesc": "Chọn từ 4 đáp án có sẵn",
+        "uploadType": "Câu hỏi upload ảnh",
+        "uploadTypeDesc": "Yêu cầu người dùng upload ảnh/file",
+        "generate": "Tạo câu hỏi",
+        "generating": "Đang tạo {{count}} câu hỏi... (~{{time}})",
+        "preview": {
+            "title": "Xem trước câu hỏi AI ({{count}} câu)",
+            "selectAll": "Chọn tất cả",
+            "deselectAll": "Bỏ chọn tất cả",
+            "selected": "Đã chọn: {{selected}}/{{total}}",
+            "topic": "Chủ đề: {{topic}}",
+            "recreate": "← Tạo lại",
+            "addSelected": "Thêm {{count}} câu hỏi →",
+            "hint": "Gợi ý:",
+            "correctAnswer": "Đáp án đúng:",
+            "options": "Lựa chọn:",
+            "uploadQuestion": "Câu hỏi yêu cầu người dùng upload file/ảnh",
+            "explanation": "Giải thích:"
+        },
+        "validation": {
+            "fillAllFields": "Vui lòng điền đầy đủ thông tin hợp lệ",
+            "selectQuestionType": "Vui lòng chọn ít nhất 1 loại câu hỏi",
+            "selectAtLeastOne": "Vui lòng chọn ít nhất 1 câu hỏi!",
+            "questionsRange": "Chỉ từ 1-25 câu"
+        },
+        "tips": {
+            "fasterGeneration": "💡 Ít câu hỏi = tạo nhanh hơn. Nhiều câu hỏi có thể mất {{time}}.",
+            "estimatedTime": "⏱️ ~{{time}}"
+        },
+        "errors": {
+            "timeout": "Yêu cầu mất quá nhiều thời gian (>{{time}}). Hãy thử giảm số câu hỏi!",
+            "connectionError": "Không thể kết nối đến server. Kiểm tra xem backend có đang chạy không?",
+            "aiOverloaded": "AI đang quá tải. Hãy thử lại sau ít phút hoặc giảm số câu hỏi xuống dưới {{count}}!",
+            "cannotGenerate": "Không thể tạo câu hỏi. Vui lòng thử lại!",
+            "generalError": "Có lỗi xảy ra. Vui lòng thử lại!"
+        }
+    },
     "questionPage": {
         "title": "Câu hỏi quiz",
         "hint": "Gợi ý",

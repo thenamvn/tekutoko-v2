@@ -133,6 +133,57 @@
             "compressionError": "Error compressing image. Please try again."
         }
     },
+    "aiGenerator": {
+        "title": "AI Question Generator",
+        "topic": "Topic",
+        "topicPlaceholder": "e.g: Math, History, Science...",
+        "numQuestions": "Number of Questions",
+        "numQuestionsPlaceholder": "Enter 1-25",
+        "difficulty": "Difficulty",
+        "easy": "Easy",
+        "medium": "Medium",
+        "hard": "Hard",
+        "questionTypes": "Question Types",
+        "textType": "Text Questions",
+        "textTypeDesc": "Users type their answers",
+        "multipleChoiceType": "Multiple Choice Questions",
+        "multipleChoiceTypeDesc": "Choose from 4 options",
+        "uploadType": "Upload Questions",
+        "uploadTypeDesc": "Users upload images/files",
+        "generate": "Generate Questions",
+        "generating": "Generating {{count}} questions... (~{{time}})",
+        "preview": {
+            "title": "AI Questions Preview ({{count}} questions)",
+            "selectAll": "Select All",
+            "deselectAll": "Deselect All",
+            "selected": "Selected: {{selected}}/{{total}}",
+            "topic": "Topic: {{topic}}",
+            "recreate": "← Recreate",
+            "addSelected": "Add {{count}} questions →",
+            "hint": "Hint:",
+            "correctAnswer": "Correct Answer:",
+            "options": "Options:",
+            "uploadQuestion": "Question requires users to upload file/image",
+            "explanation": "Explanation:"
+        },
+        "validation": {
+            "fillAllFields": "Please fill in all required fields correctly",
+            "selectQuestionType": "Please select at least 1 question type",
+            "selectAtLeastOne": "Please select at least 1 question!",
+            "questionsRange": "Only 1-25 questions"
+        },
+        "tips": {
+            "fasterGeneration": "💡 Fewer questions = faster generation. More questions may take {{time}}.",
+            "estimatedTime": "⏱️ ~{{time}}"
+        },
+        "errors": {
+            "timeout": "Request took too long (>{{time}}). Try reducing the number of questions!",
+            "connectionError": "Cannot connect to server. Check if backend is running?",
+            "aiOverloaded": "AI is overloaded. Try again in a few minutes or reduce questions below {{count}}!",
+            "cannotGenerate": "Cannot generate questions. Please try again!",
+            "generalError": "An error occurred. Please try again!"
+        }
+    },
     "questionPage": {
         "title": "Quiz Question",
         "hint": "Hint",

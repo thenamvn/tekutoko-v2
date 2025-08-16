@@ -133,6 +133,57 @@
             "compressionError": "画像の圧縮エラー。もう一度お試しください。"
         }
     },
+    "aiGenerator": {
+        "title": "AI質問ジェネレーター",
+        "topic": "トピック",
+        "topicPlaceholder": "例：数学、歴史、科学...",
+        "numQuestions": "質問数",
+        "numQuestionsPlaceholder": "1-25を入力",
+        "difficulty": "難易度",
+        "easy": "簡単",
+        "medium": "普通",
+        "hard": "難しい",
+        "questionTypes": "質問タイプ",
+        "textType": "テキスト問題",
+        "textTypeDesc": "ユーザーがテキストで回答",
+        "multipleChoiceType": "選択式問題",
+        "multipleChoiceTypeDesc": "4つの選択肢から選択",
+        "uploadType": "アップロード問題",
+        "uploadTypeDesc": "ユーザーが画像/ファイルをアップロード",
+        "generate": "質問を作成",
+        "generating": "{{count}}問を作成中... (~{{time}})",
+        "preview": {
+            "title": "AI質問プレビュー（{{count}}問）",
+            "selectAll": "すべて選択",
+            "deselectAll": "すべて解除",
+            "selected": "選択済み: {{selected}}/{{total}}",
+            "topic": "トピック: {{topic}}",
+            "recreate": "← 再作成",
+            "addSelected": "{{count}}問を追加 →",
+            "hint": "ヒント:",
+            "correctAnswer": "正解:",
+            "options": "選択肢:",
+            "uploadQuestion": "ファイル/画像のアップロードが必要な問題",
+            "explanation": "解説:"
+        },
+        "validation": {
+            "fillAllFields": "すべての必要項目を正しく入力してください",
+            "selectQuestionType": "少なくとも1つの質問タイプを選択してください",
+            "selectAtLeastOne": "少なくとも1つの質問を選択してください！",
+            "questionsRange": "1-25問のみ"
+        },
+        "tips": {
+            "fasterGeneration": "💡 少ない質問数 = 速い作成。多い質問数は{{time}}かかる場合があります。",
+            "estimatedTime": "⏱️ ~{{time}}"
+        },
+        "errors": {
+            "timeout": "リクエストに時間がかかりすぎています（>{{time}}）。質問数を減らしてみてください！",
+            "connectionError": "サーバーに接続できません。バックエンドが動作しているか確認してください。",
+            "aiOverloaded": "AIが過負荷です。数分後に再試行するか、質問数を{{count}}未満に減らしてください！",
+            "cannotGenerate": "質問を作成できません。再試行してください！",
+            "generalError": "エラーが発生しました。再試行してください！"
+        }
+    },
     "questionPage": {
         "title": "クイズの質問",
         "hint": "ヒント",
