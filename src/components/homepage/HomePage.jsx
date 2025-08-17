@@ -527,7 +527,12 @@ const HeroSection = () => {
   const initialLoadVariants = {
     initial: { opacity: 1, scale: 1.05 },
     animate: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: "easeInOut" } },
-    exit: { opacity: 0, scale: 0.9, transition: { duration: 0.8, ease: "easeInOut" } }
+    exit: { 
+      x: "-100%", 
+      opacity: 0, 
+      scale: 0.9, 
+      transition: { duration: 0.4, ease: "easeInOut" } 
+    }
   };
 
   // Trạng thái cho các ảnh trong slideshow
@@ -547,70 +552,93 @@ const HeroSection = () => {
     <section id="hero" className="min-h-screen flex items-center justify-center relative overflow-hidden">
       <div className="container mx-auto px-4 relative z-10 pt-20 pb-16">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-16">
-          {/* Enhanced Phone Mockup */}
+        {/* Enhanced Phone Mockup */}
+        <motion.div
+          className="relative"
+          variants={slideInLeft}
+          initial="initial"
+          animate="animate"
+        >
           <motion.div
-            className="relative"
-            variants={slideInLeft}
-            initial="initial"
-            animate="animate"
+            className="relative w-72 h-144"
+            style={{ perspective: 1000 }}
+            whileHover={!isMobile ? { rotateY: 15, rotateX: 5, scale: 1.05 } : {}}
+            transition={{ type: "spring", stiffness: 300 }}
           >
+            {/* Phone Shadow */}
             <motion.div
-              className="relative w-72 h-144"
-              style={{ perspective: 1000 }}
-              whileHover={!isMobile ? { rotateY: 15, rotateX: 5, scale: 1.05 } : {}}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              {/* Phone Shadow */}
+              className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-48 h-16 bg-black/20 rounded-full blur-xl"
+              animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            />
+
+{/* Phone Frame */}
+<div className="relative w-64 h-128 bg-gradient-to-br from-gray-800 to-black rounded-[2.5rem] border-8 border-gray-800 overflow-hidden shadow-2xl">
+  <div className="absolute inset-2 bg-gradient-to-br from-white/10 to-transparent rounded-[1.75rem] z-20 pointer-events-none"></div>
+
+  {/* Thay thế AnimatePresence mode="wait" bằng mode="popLayout" */}
+  <AnimatePresence mode="popLayout">
+    <motion.img
+      key={currentImage}
+      src={images[currentImage]}
+      alt={`Screenshot ${currentImage + 1}`}
+      className="absolute inset-0 w-full h-full object-cover" // Thêm absolute positioning
+      // Hiệu ứng fade + slide mượt mà hơn
+      variants={isInitialLoad ? initialLoadVariants : {
+        initial: { 
+          x: "100%", 
+          opacity: 0,
+          scale: 1.05
+        },
+        animate: { 
+          x: 0, 
+          opacity: 1,
+          scale: 1,
+          transition: { 
+            x: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
+            opacity: { duration: 0.4, ease: "easeOut" },
+            scale: { duration: 0.6, ease: "easeOut" }
+          }
+        },
+        exit: { 
+          x: "-50%", // Giảm khoảng cách slide ra
+          opacity: 0,
+          scale: 0.95,
+          transition: { 
+            x: { duration: 0.4, ease: "easeIn" },
+            opacity: { duration: 0.3, ease: "easeIn" },
+            scale: { duration: 0.4, ease: "easeIn" }
+          }
+        }
+      }}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    />
+  </AnimatePresence>
+
+  {/* Glowing border effect - Disabled on mobile */}
+  {!isMobile && <motion.div
+    className="absolute inset-0 rounded-[2.5rem]"
+    animate={{ boxShadow: ["0 0 20px rgba(147, 51, 234, 0.3)", "0 0 40px rgba(59, 130, 246, 0.4)", "0 0 20px rgba(147, 51, 234, 0.3)"] }}
+    transition={{ duration: 3, repeat: Infinity }}
+  />}
+</div>
+
+            {/* Floating icons around phone - Disabled on mobile */}
+            {!isMobile && [Camera, Heart, Star, Zap].map((Icon, index) => (
               <motion.div
-                className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-48 h-16 bg-black/20 rounded-full blur-xl"
-                animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              />
-
-              {/* Phone Frame */}
-              <div className="relative w-64 h-128 bg-gradient-to-br from-gray-800 to-black rounded-[2.5rem] border-8 border-gray-800 overflow-hidden shadow-2xl">
-                <div className="absolute inset-2 bg-gradient-to-br from-white/10 to-transparent rounded-[1.75rem] z-20 pointer-events-none"></div>
-
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={currentImage}
-                    src={images[currentImage]}
-                    alt={`Screenshot ${currentImage + 1}`}
-                    className="w-full h-full object-cover"
-
-                    // OPTIMIZATION: Sử dụng variants đã định nghĩa
-                    // Nếu là lần tải đầu tiên, dùng initialLoadVariants, ngược lại dùng slideshowVariants
-                    variants={isInitialLoad ? initialLoadVariants : slideshowVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    // Áp dụng transition chung cho slideshow, initial load có transition riêng
-                    transition={{ duration: 0.8, ease: "easeInOut" }}
-                  />
-                </AnimatePresence>
-
-                {/* Glowing border effect - Disabled on mobile */}
-                {!isMobile && <motion.div
-                  className="absolute inset-0 rounded-[2.5rem]"
-                  animate={{ boxShadow: ["0 0 20px rgba(147, 51, 234, 0.3)", "0 0 40px rgba(59, 130, 246, 0.4)", "0 0 20px rgba(147, 51, 234, 0.3)"] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                />}
-              </div>
-
-              {/* Floating icons around phone - Disabled on mobile */}
-              {!isMobile && [Camera, Heart, Star, Zap].map((Icon, index) => (
-                <motion.div
-                  key={index}
-                  className="absolute w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white shadow-lg"
-                  style={{ top: `${20 + index * 20}%`, left: index % 2 === 0 ? '-15%' : '95%' }}
-                  animate={{ y: [0, -20, 0], rotate: [0, 360], scale: [1, 1.2, 1] }}
-                  transition={{ duration: 3 + index, repeat: Infinity, delay: index * 0.5, ease: "linear" }}
-                >
-                  <Icon className="w-6 h-6" />
-                </motion.div>
-              ))}
-            </motion.div>
+                key={index}
+                className="absolute w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white shadow-lg"
+                style={{ top: `${20 + index * 20}%`, left: index % 2 === 0 ? '-15%' : '95%' }}
+                animate={{ y: [0, -20, 0], rotate: [0, 360], scale: [1, 1.2, 1] }}
+                transition={{ duration: 3 + index, repeat: Infinity, delay: index * 0.5, ease: "linear" }}
+              >
+                <Icon className="w-6 h-6" />
+              </motion.div>
+            ))}
           </motion.div>
+        </motion.div>
 
           {/* Enhanced Hero Content (không thay đổi) */}
           <motion.div
@@ -982,7 +1010,7 @@ const DetailedFeaturesSection = () => {
               className="group h-full"
             >
               <motion.div
-                className={`relative bg-white rounded-3xl shadow-xl overflow-hidden border-2 ${colorClasses[feature.color].border} h-full flex flex-col`}
+                className={`relative bg-white rounded-3xl shadow-xl overflow-hidden border-none ${colorClasses[feature.color].border} h-full flex flex-col`}
                 whileHover={{ scale: 1.02, y: -10, boxShadow: "0 25px 50px rgba(0,0,0,0.15)" }}
                 transition={{ duration: 0.3 }}
               >
@@ -1451,17 +1479,17 @@ const ChatBot = () => {
       >
         <motion.button
           onClick={handleToggleChat}
-          className="relative w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shadow-2xl flex items-center justify-center text-white"
-          whileHover={{ scale: 1.1 }}
+          className="relative w-16 h-16 bg-white/80 rounded-full shadow-2xl flex items-center justify-center text-gray-600 border border-gray-200 hover:bg-white transition-colors duration-300"
+          whileHover={{ scale: 1.1, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
           whileTap={{ scale: 0.9 }}
           animate={{
             boxShadow: [
-              "0 0 20px rgba(147, 51, 234, 0.3)",
-              "0 0 30px rgba(59, 130, 246, 0.4)",
-              "0 0 20px rgba(147, 51, 234, 0.3)"
+              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+              "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
             ]
           }}
-          transition={{ boxShadow: { duration: 2, repeat: Infinity } }}
+          transition={{ boxShadow: { duration: 3, repeat: Infinity } }}
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -1471,7 +1499,11 @@ const ChatBot = () => {
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+              {isOpen ? (
+                <X className="w-6 h-6 text-gray-500" />
+              ) : (
+                <MessageCircle className="w-6 h-6 text-blue-500" />
+              )}
             </motion.div>
           </AnimatePresence>
 
@@ -1480,10 +1512,26 @@ const ChatBot = () => {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold"
+              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg"
             >
               {newMessageCount}
             </motion.div>
+          )}
+
+          {/* Pulse effect khi có tin nhắn mới */}
+          {newMessageCount > 0 && !isOpen && (
+            <motion.div
+              className="absolute inset-0 bg-blue-400 rounded-full"
+              animate={{
+                scale: [1, 1.4],
+                opacity: [0.7, 0]
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeOut"
+              }}
+            />
           )}
         </motion.button>
       </motion.div>
