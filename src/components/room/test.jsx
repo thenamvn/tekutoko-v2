@@ -9,6 +9,7 @@ import { getUsernameFromToken, isTokenValid } from '../../utils/jwt_decode';
 import UserRewardView from './UserRewardView'; // Adjust the import path as needed
 import LocationModal from './LocationModal';
 import ViewLocationModal from './ViewLocationModal';
+import Leaderboard from './Leaderboard';
 const QuizRoom = () => {
   const apiUrl = process.env.REACT_APP_API_URL
   const { t } = useTranslation(); // Uncomment if using i18n
@@ -50,6 +51,8 @@ const QuizRoom = () => {
   //location
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showViewLocationModal, setShowViewLocationModal] = useState(false);
+
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const handleLocationSave = (location) => {
     setShowLocationModal(false);
@@ -437,6 +440,26 @@ const QuizRoom = () => {
             ))}
           </div>
         </div>
+        {/* Leaderboard Section - Only show for admin */}
+        {isAdmin && (
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-slate-800 flex items-center">
+              <svg className="w-5 h-5 text-violet-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Bảng thành tích
+            </h2>
+            <p className="text-slate-600 text-sm mb-4 leading-relaxed">
+              Xem kết quả và thành tích của tất cả người tham gia
+            </p>
+            <button
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-4 rounded-xl font-semibold shadow-lg transition-all duration-200 hover:scale-[1.02]"
+              onClick={() => setShowLeaderboard(true)}
+            >
+              Xem bảng thành tích
+            </button>
+          </div>
+        )}
         {/* User Submissions Section - Only show for admin and if there are upload questions */}
         {isAdmin && hasUploadQuestions && userSubmissions.length > 0 && (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 mb-6">
@@ -587,7 +610,14 @@ const QuizRoom = () => {
             </button>
           </div>
         </div>
-
+      {/* Leaderboard Modal */}
+      <Leaderboard
+        isOpen={showLeaderboard}
+        onClose={() => setShowLeaderboard(false)}
+        roomId={roomId}
+        apiUrl={apiUrl}
+        isAdmin={isAdmin}
+      />
         {/* QR Code popup với glassmorphism */}
         {isQrCodeClicked && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-[51] cursor-pointer" onClick={() => setIsQrCodeClicked(false)}>
