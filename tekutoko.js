@@ -4626,6 +4626,83 @@ app.get(
   }
 );
 
+app.get("/api/room/:roomId/all-users-results", async (req, res) => {
+  try {
+    const { roomId } = req.params;
+
+    // Đếm tổng số câu hỏi trong room
+    const [totalQuestions] = await pool
+      .promise()
+      .query("SELECT COUNT(*) as total FROM Questions WHERE room_id = ?", [
+        roomId,
+      ]);
+
+    const totalQuestionsCount = totalQuestions[0].total;
+
+    if (totalQuestionsCount === 0) {
+      return res.json({
+        success: true,
+        message: "No questions found in this room",
+        totalQuestions: 0,
+        users: []
+      });
+    }
+
+    // Lấy kết quả của tất cả user đã submit trong room
+    const [userResults] = await pool.promise().query(
+      `SELECT 
+        us.user_id as username,
+        u.fullname,
+        COALESCE(up.avatarImage, 'https://www.svgrepo.com/show/341256/user-avatar-filled.svg') AS avatarImage,
+        COUNT(DISTINCT us.question_id) as answered_questions,
+        COUNT(CASE WHEN us.is_correct = 1 THEN 1 END) as correct_answers,
+        ROUND((COUNT(CASE WHEN us.is_correct = 1 THEN 1 END) / ?) * 100, 2) as score_percentage,
+        MAX(us.submitted_at) as last_submission
+      FROM User_Submissions us
+      JOIN Questions q ON us.question_id = q.question_id
+      JOIN users u ON us.user_id = u.username
+      LEFT JOIN UserProfile up ON u.username = up.username
+      WHERE q.room_id = ?
+      GROUP BY us.user_id, u.fullname, up.avatarImage
+      ORDER BY score_percentage DESC, correct_answers DESC, last_submission ASC`,
+      [totalQuestionsCount, roomId]
+    );
+
+    // Thêm thông tin về việc hoàn thành tất cả câu hỏi
+    const processedResults = userResults.map(user => ({
+      ...user,
+      allCorrect: user.correct_answers === totalQuestionsCount,
+      allAnswered: user.answered_questions === totalQuestionsCount,
+      completion_status: user.answered_questions === totalQuestionsCount ? 
+        (user.correct_answers === totalQuestionsCount ? 'perfect' : 'completed') : 
+        'incomplete'
+    }));
+
+    // Thống kê tổng quan
+    const stats = {
+      totalUsers: processedResults.length,
+      perfectScores: processedResults.filter(u => u.allCorrect).length,
+      completedUsers: processedResults.filter(u => u.allAnswered).length,
+      averageScore: processedResults.length > 0 ? 
+        (processedResults.reduce((sum, u) => sum + u.score_percentage, 0) / processedResults.length).toFixed(2) : 0
+    };
+
+    res.json({
+      success: true,
+      totalQuestions: totalQuestionsCount,
+      stats: stats,
+      users: processedResults
+    });
+
+  } catch (err) {
+    console.error("Error checking all users results:", err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to check all users results",
+    });
+  }
+});
+
 app.get("/api/room/:roomId/user-submissions-upload", async (req, res) => {
   try {
     const { roomId } = req.params;
