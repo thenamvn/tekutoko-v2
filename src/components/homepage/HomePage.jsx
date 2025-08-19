@@ -571,8 +571,8 @@ const HeroSection = () => {
               />
 
               {/* Phone Frame */}
-              <div className="relative w-64 h-128 bg-gradient-to-br from-gray-800 to-black rounded-[2.5rem] border-8 border-gray-800 overflow-hidden shadow-2xl">
-                <div className="absolute inset-2 bg-gradient-to-br from-white/10 to-transparent rounded-[1.75rem] z-20 pointer-events-none"></div>
+              <div className="relative w-64 h-128 bg-gradient-to-br from-gray-800 to-black rounded-[2.5rem] border-[4px] border-gray-800 overflow-hidden shadow-2xl">
+                <div className="absolute inset-[4px] bg-gradient-to-br from-white/10 to-transparent rounded-[1.75rem] z-20 pointer-events-none"></div>
 
                 {/* Thay thế AnimatePresence mode="wait" bằng mode="popLayout" */}
                 <AnimatePresence mode="popLayout">
