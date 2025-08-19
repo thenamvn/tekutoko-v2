@@ -336,8 +336,6 @@ const Header = () => {
           >
             <motion.div
               className="relative mr-3"
-              animate={{ rotateY: [0, 360] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
             >
               <div className="w-10 h-8 border-2 border-blue-500 rounded-md transform skew-x-6"></div>
               <motion.div
