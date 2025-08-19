@@ -51,6 +51,10 @@ const AccountPage = () => {
 
     const handleAccountInfoSubmit = async (e) => {
         e.preventDefault();
+        if (!fullName || fullName.trim() === '') {
+            alert(t('accountPage.fullNameRequired', 'Full name cannot be empty or contain only spaces'));
+            return;
+        }
         try {
             const response = await fetch(`${apiUrl}/user/update/fullname/${email}`, {
                 method: 'PUT',
@@ -76,6 +80,10 @@ const AccountPage = () => {
 
     const handlePasswordChangeSubmit = async (e) => {
         e.preventDefault();
+        if (!newPassword || newPassword.trim() === '' ) {
+            alert(t('accountPage.newPasswordRequired', 'New password cannot be empty or contain only spaces'));
+            return;
+        }
         if (newPassword === confirmPassword) {
             try {
                 const response = await fetch(`${apiUrl}/user/update/password/${email}`, {
