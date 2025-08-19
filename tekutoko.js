@@ -4265,59 +4265,6 @@ app.get(
   }
 );
 
-// Endpoint to get user's quiz progress (answered questions count) in a room
-app.get("/api/room/:roomId/user/:username/progress", async (req, res) => {
-  try {
-    const { roomId, username } = req.params;
-
-    // Validate input
-    if (!roomId || !username) {
-      return res.status(400).json({
-        success: false,
-        error: "Room ID and username are required",
-      });
-    }
-
-    // First get the total number of questions in the room
-    const [totalResult] = await pool
-      .promise()
-      .query("SELECT COUNT(*) as total FROM Questions WHERE room_id = ?", [
-        roomId,
-      ]);
-
-    const totalQuestions = totalResult[0].total;
-
-    // Then get the count of unique questions the user has answered
-    const [answeredResult] = await pool.promise().query(
-      `SELECT COUNT(DISTINCT question_id) as answered 
-       FROM User_Submissions 
-       WHERE room_id = ? AND user_id = ?`,
-      [roomId, username]
-    );
-
-    const answeredQuestions = answeredResult[0].answered;
-
-    // Return the progress data
-    return res.json({
-      success: true,
-      progress: {
-        answered: answeredQuestions,
-        total: totalQuestions,
-        completion:
-          totalQuestions > 0
-            ? Math.round((answeredQuestions / totalQuestions) * 100)
-            : 0,
-      },
-    });
-  } catch (err) {
-    console.error("Error fetching user progress:", err);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to fetch progress",
-      details: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
-  }
-});
 
 app.get("/user/:userId/hosted-rooms", async (req, res) => {
   const { userId } = req.params;
@@ -4782,6 +4729,43 @@ app.get("/user/:username/following", async (req, res) => {
   }
 });
 
+// Endpoint to get total number of questions in a room
+app.get("/api/room/:roomId/user/:username/progress", async (req, res) => {
+  try {
+    const { roomId, username } = req.params;
+
+    // Validate input
+    if (!roomId || !username) {
+      return res.status(400).json({
+        success: false,
+        error: "Room ID and username are required",
+      });
+    }
+
+    // Get the total number of questions in the room
+    const [totalResult] = await pool
+      .promise()
+      .query("SELECT COUNT(*) as total FROM Questions WHERE room_id = ?", [
+        roomId,
+      ]);
+
+    const totalQuestions = totalResult[0].total;
+
+    // Return only the total count
+    return res.json({
+      success: true,
+      total: totalQuestions,
+    });
+  } catch (err) {
+    console.error("Error fetching question count:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to fetch question count",
+      details: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+});
+
 // API endpoint để kiểm tra xem user có trả lời đúng tất cả câu hỏi không
 app.get(
   "/api/room/:roomId/user/:username/correct-answers",
@@ -4796,23 +4780,27 @@ app.get(
           roomId,
         ]);
 
-      // Đếm số câu trả lời đúng của user
+      // Đếm số câu trả lời đúng của user và lấy danh sách question_id
       const [correctAnswers] = await pool.promise().query(
-        `SELECT COUNT(*) as correct 
-       FROM User_Submissions us
-       JOIN Questions q ON us.question_id = q.question_id
-       WHERE us.user_id = ? AND q.room_id = ? AND us.is_correct = 1`,
+        `SELECT COUNT(*) as correct, GROUP_CONCAT(q.question_id) as correct_question_ids
+         FROM User_Submissions us
+         JOIN Questions q ON us.question_id = q.question_id
+         WHERE us.user_id = ? AND q.room_id = ? AND us.is_correct = 1`,
         [username, roomId]
       );
 
       const total = totalQuestions[0].total;
       const correct = correctAnswers[0].correct;
+      const correctQuestionIds = correctAnswers[0].correct_question_ids 
+        ? correctAnswers[0].correct_question_ids.split(',').map(id => parseInt(id))
+        : [];
 
       res.json({
         success: true,
         allCorrect: total > 0 && correct === total,
         correct: correct,
         total: total,
+        correctQuestionIds: correctQuestionIds
       });
     } catch (err) {
       console.error("Error checking correct answers:", err);

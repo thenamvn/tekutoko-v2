@@ -15,7 +15,6 @@ const QuizRoom = () => {
   const { t } = useTranslation(); // Uncomment if using i18n
   const { roomId } = useParams(); // Get room ID from URL
   const navigate = useNavigate(); // Hook for navigation
-  const [questions, setQuestions] = useState([]); // State to hold quiz questions
   const [roomInfo, setRoomInfo] = useState({ // Example state for room details
     room_id: "sampleRoomId",
     title: "Classroom Quiz",
@@ -54,8 +53,18 @@ const QuizRoom = () => {
 
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
+  //for gray correct answered
+  const [questions, setQuestions] = useState([]); // State to hold quiz questions
+  const [correctQuestionIds, setCorrectQuestionIds] = useState([]);
+
   const handleLocationSave = (location) => {
     setShowLocationModal(false);
+  };
+
+    // Helper function to check if a question is answered correctly
+  const isQuestionCorrect = (questionNumber) => {
+    const question = questions.find(q => q.number === questionNumber);
+    return question && correctQuestionIds.includes(question.questionId);
   };
 
   // --- Mock Data Fetching ---
@@ -74,7 +83,12 @@ const QuizRoom = () => {
         const data = await response.json();
         if (data.success) {
           setShowUserReward(data.allCorrect);
-          // console.log("All answers correct:", data.allCorrect);
+          setCorrectQuestionIds(data.correctQuestionIds);
+        }
+        if (currentUsername) {
+          setProgress(data.correct)
+        } else {
+          setProgress(0);
         }
       } catch (error) {
         console.error('Error checking correct answers:', error);
@@ -176,6 +190,7 @@ const QuizRoom = () => {
           // Transform API data to match the expected format in your component
           const formattedQuestions = questionsData.map(q => ({
             id: `Q${q.number}`,
+            questionId: q.id,
             number: q.number,
             text: q.text,
             type: q.type,
@@ -186,20 +201,6 @@ const QuizRoom = () => {
           setTotalQuestions(questionsData.length); // Set total questions based on fetched data
           const hasUpload = questionsData.some(q => q.type === 'upload'); // Check if any question is of type 'upload'
           setHasUploadQuestions(hasUpload);
-        }
-        // Fetch user progress if username is available
-        if (currentUsername) {
-          const progressResponse = await fetch(`${apiUrl}/api/room/${roomId}/user/${currentUsername}/progress`);
-
-          if (progressResponse.ok) {
-            const progressData = await progressResponse.json();
-            if (progressData.success) {
-              setProgress(progressData.progress.answered);
-              // console.log("User progress:", progressData.progress.answered);
-            }
-          }
-        } else {
-          setProgress(0); // Default progress if no username found
         }
 
       } catch (err) {
@@ -411,23 +412,45 @@ const QuizRoom = () => {
             {t('room.questions')}
           </h2>
           <div className="grid grid-cols-2 gap-4">
-            {questions.map((question) => (
-              <div
-                key={question.id}
-                className="group bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col justify-center items-center h-32 text-center hover:scale-[1.02] hover:bg-white"
-                onClick={() => handleQuestionClick(question.number)}
-                role="button"
-                tabIndex={0}
-                onKeyPress={(e) => e.key === 'Enter' && handleQuestionClick(question.number)}
-              >
-                <div className="font-bold text-violet-600 mb-2 group-hover:text-indigo-600 transition-colors duration-200">
-                  {question.id}
+            {questions.map((question) => {
+              const isCorrect = isQuestionCorrect(question.number);
+              return (
+                <div
+                  key={question.id}
+                  className={`group rounded-xl shadow-lg border cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col justify-center items-center h-32 text-center hover:scale-[1.02] relative ${
+                    isCorrect 
+                      ? 'bg-gray-300/80 backdrop-blur-sm border-gray-400/30 hover:bg-gray-400/80' 
+                      : 'bg-white/90 backdrop-blur-sm border-white/20 hover:bg-white'
+                  }`}
+                  onClick={() => handleQuestionClick(question.number)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => e.key === 'Enter' && handleQuestionClick(question.number)}
+                >
+                  {/* Add check icon for completed questions */}
+                  {isCorrect && (
+                    <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                  
+                  <div className={`font-bold mb-2 transition-colors duration-200 ${
+                    isCorrect 
+                      ? 'text-gray-600 group-hover:text-gray-700' 
+                      : 'text-violet-600 group-hover:text-indigo-600'
+                  }`}>
+                    {question.id}
+                  </div>
+                  <p className={`text-sm line-clamp-3 px-2 leading-relaxed ${
+                    isCorrect ? 'text-gray-700' : 'text-slate-800'
+                  }`}>
+                    {question.text}
+                  </p>
                 </div>
-                <p className="text-slate-800 text-sm line-clamp-3 px-2 leading-relaxed">
-                  {question.text}
-                </p>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Placeholder for locked questions */}
             {questions.length < totalQuestions && Array.from({ length: totalQuestions - questions.length }).map((_, index) => (
@@ -438,6 +461,7 @@ const QuizRoom = () => {
                 <p className="text-slate-500 text-sm">(Locked)</p>
               </div>
             ))}
+            
           </div>
         </div>
         {/* Leaderboard Section - Only show for admin */}
