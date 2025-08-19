@@ -3392,7 +3392,6 @@ app.delete("/api/delete/vouchers/:roomId/:hostId", verifyToken, (req, res) => {
 
 // Cron job để xoá các voucher hết hạn
 cron.schedule("0 0 * * *", async () => {
-  // Lịch trình: hàng ngày lúc 00:00
   console.log("Checking for expired vouchers to delete...");
 
   const query =
@@ -3404,54 +3403,253 @@ cron.schedule("0 0 * * *", async () => {
       return;
     }
 
+    if (results.length === 0) {
+      console.log("No expired vouchers found.");
+      return;
+    }
+
+    console.log(`Found ${results.length} expired vouchers to delete.`);
+
     for (const row of results) {
       const voucherId = row.id;
-      const ticketImageUrl = row.ticket_image_url; // Lấy link ảnh
+      const ticketImageUrl = row.ticket_image_url;
 
-      // Xoá ảnh khỏi Firebase Storage
-      if (ticketImageUrl) {
-        const fileRef = ref(storage, ticketImageUrl);
-        try {
-          await deleteObject(fileRef);
-          console.log(`Image deleted from Firebase Storage: ${ticketImageUrl}`);
-        } catch (error) {
-          if (error.code === "storage/object-not-found") {
-            console.warn(
-              `Image not found in Firebase Storage: ${ticketImageUrl}`
-            );
-          } else {
-            console.error("Error deleting image:", error);
-          }
+      // Sử dụng transaction để đảm bảo tính nhất quán
+      pool.getConnection((err, connection) => {
+        if (err) {
+          console.error("Error getting database connection:", err);
+          return;
         }
-      }
 
-      // Xoá các dòng dữ liệu `images` liên quan
-      const deleteImagesQuery = "DELETE FROM images WHERE image_path = ?";
-      await new Promise((resolve, reject) => {
-        pool.query(deleteImagesQuery, [ticketImageUrl], (err, results) => {
+        connection.beginTransaction(async (err) => {
           if (err) {
-            console.error("Error deleting images:", err);
-            reject(err);
-          } else {
-            console.log(
-              `Images deleted successfully for voucher: ${voucherId}`
-            );
-            resolve();
+            console.error("Error starting transaction:", err);
+            connection.release();
+            return;
+          }
+
+          try {
+            // 1. Xoá voucher trước (quan trọng nhất)
+            await new Promise((resolve, reject) => {
+              connection.query("DELETE FROM vouchers WHERE id = ?", [voucherId], (err, results) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  console.log(`Voucher deleted successfully: ${voucherId}`);
+                  resolve(results);
+                }
+              });
+            });
+
+            // 2. Xoá dữ liệu liên quan trong bảng images (nếu có)
+            if (ticketImageUrl) {
+              await new Promise((resolve, reject) => {
+                connection.query("DELETE FROM images WHERE image_path = ?", [ticketImageUrl], (err, results) => {
+                  if (err) {
+                    console.error("Error deleting from images table:", err);
+                    // Không reject ở đây vì không quan trọng bằng việc xóa voucher
+                  } else {
+                    console.log(`Images table cleaned for voucher: ${voucherId}`);
+                  }
+                  resolve(results);
+                });
+              });
+
+              // 3. Cuối cùng mới xoá ảnh từ Firebase Storage
+              try {
+                const fileRef = ref(storage, ticketImageUrl);
+                await deleteObject(fileRef);
+                console.log(`Image deleted from Firebase Storage: ${ticketImageUrl}`);
+              } catch (error) {
+                if (error.code === "storage/object-not-found") {
+                  console.warn(`Image not found in Firebase Storage: ${ticketImageUrl}`);
+                } else {
+                  console.error("Error deleting image from Firebase:", error);
+                  // Không throw error vì việc xóa voucher đã thành công
+                }
+              }
+            }
+
+            // Commit transaction
+            connection.commit((err) => {
+              if (err) {
+                console.error("Error committing transaction:", err);
+                connection.rollback(() => {
+                  connection.release();
+                });
+              } else {
+                console.log(`Successfully processed expired voucher: ${voucherId}`);
+                connection.release();
+              }
+            });
+
+          } catch (error) {
+            console.error(`Error processing voucher ${voucherId}:`, error);
+            connection.rollback(() => {
+              connection.release();
+            });
           }
         });
       });
-
-      // Xoá voucher
-      const deleteQuery = "DELETE FROM vouchers WHERE id = ?";
-      pool.query(deleteQuery, [voucherId], (err, results) => {
-        if (err) {
-          console.error("Error deleting voucher:", err);
-        } else {
-          console.log(`Voucher deleted successfully: ${voucherId}`);
-        }
-      });
     }
   });
+});
+
+app.post("/api/cleanup-expired-vouchers", verifyToken, async (req, res) => {
+  try {
+    console.log("Starting manual cleanup of expired vouchers...");
+
+    const query = "SELECT id, ticket_image_url FROM vouchers WHERE expiration_date < CURDATE()";
+
+    pool.query(query, async (err, results) => {
+      if (err) {
+        console.error("Error checking expired vouchers:", err);
+        return res.status(500).json({ 
+          success: false, 
+          error: "Database error",
+          details: err.message 
+        });
+      }
+
+      if (results.length === 0) {
+        console.log("No expired vouchers found.");
+        return res.json({ 
+          success: true,
+          message: "No expired vouchers found",
+          deleted: 0,
+          total: 0
+        });
+      }
+
+      console.log(`Found ${results.length} expired vouchers to delete.`);
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors = [];
+
+      // Process each voucher
+      for (const row of results) {
+        const voucherId = row.id;
+        const ticketImageUrl = row.ticket_image_url;
+
+        try {
+          // Use promise-based approach for better control
+          await new Promise((resolve, reject) => {
+            pool.getConnection((err, connection) => {
+              if (err) {
+                reject(new Error(`Database connection error: ${err.message}`));
+                return;
+              }
+
+              connection.beginTransaction(async (err) => {
+                if (err) {
+                  connection.release();
+                  reject(new Error(`Transaction start error: ${err.message}`));
+                  return;
+                }
+
+                try {
+                  // 1. Delete voucher first (most important)
+                  await new Promise((resolveDelete, rejectDelete) => {
+                    connection.query("DELETE FROM vouchers WHERE id = ?", [voucherId], (err, results) => {
+                      if (err) {
+                        rejectDelete(err);
+                      } else {
+                        console.log(`Voucher deleted successfully: ${voucherId}`);
+                        resolveDelete(results);
+                      }
+                    });
+                  });
+
+                  // 2. Clean related data in images table (if exists)
+                  if (ticketImageUrl) {
+                    await new Promise((resolveImage, rejectImage) => {
+                      connection.query("DELETE FROM images WHERE image_path = ?", [ticketImageUrl], (err, results) => {
+                        if (err) {
+                          console.error("Error deleting from images table:", err);
+                          // Don't reject here as it's not as critical as voucher deletion
+                        } else {
+                          console.log(`Images table cleaned for voucher: ${voucherId}`);
+                        }
+                        resolveImage(results);
+                      });
+                    });
+
+                    // 3. Finally delete image from Firebase Storage
+                    try {
+                      const fileRef = ref(storage, ticketImageUrl);
+                      await deleteObject(fileRef);
+                      console.log(`Image deleted from Firebase Storage: ${ticketImageUrl}`);
+                    } catch (error) {
+                      if (error.code === "storage/object-not-found") {
+                        console.warn(`Image not found in Firebase Storage: ${ticketImageUrl}`);
+                      } else {
+                        console.error("Error deleting image from Firebase:", error);
+                        // Don't throw error as voucher deletion was successful
+                      }
+                    }
+                  }
+
+                  // Commit transaction
+                  connection.commit((err) => {
+                    if (err) {
+                      connection.rollback(() => {
+                        connection.release();
+                        reject(new Error(`Transaction commit error: ${err.message}`));
+                      });
+                    } else {
+                      console.log(`Successfully processed expired voucher: ${voucherId}`);
+                      connection.release();
+                      resolve();
+                    }
+                  });
+
+                } catch (error) {
+                  connection.rollback(() => {
+                    connection.release();
+                    reject(error);
+                  });
+                }
+              });
+            });
+          });
+
+          successCount++;
+          
+        } catch (error) {
+          console.error(`Error processing voucher ${voucherId}:`, error);
+          errorCount++;
+          errors.push({
+            voucherId: voucherId,
+            error: error.message
+          });
+        }
+      }
+
+      // Return comprehensive results
+      res.json({
+        success: true,
+        message: "Cleanup completed",
+        total: results.length,
+        deleted: successCount,
+        errors: errorCount,
+        details: {
+          successfulDeletions: successCount,
+          failedDeletions: errorCount,
+          errorDetails: errors.length > 0 ? errors : null
+        },
+        timestamp: new Date().toISOString()
+      });
+    });
+
+  } catch (error) {
+    console.error("Unexpected error in cleanup:", error);
+    res.status(500).json({
+      success: false,
+      error: "Unexpected error occurred",
+      details: error.message
+    });
+  }
 });
 
 //api report
