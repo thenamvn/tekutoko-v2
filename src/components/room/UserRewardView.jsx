@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-const UserRewardView = ({ username, room_id, onClose, room_title }) => {
+const UserRewardView = ({ username, room_id, onClose, room_title, voucher, progress }) => {
   const { t } = useTranslation();
   const [listVoucher, setListVoucher] = useState([]);
   const [listTicket, setListTicket] = useState([]);
@@ -20,12 +20,9 @@ const UserRewardView = ({ username, room_id, onClose, room_title }) => {
 
   const fetchRewards = async () => {
     try {
-      const response = await fetch(`${apiUrl}/get/vouchers/room/${room_id}`);
-      const data = await response.json();
-
-      if (data.length > 0) {
-        const discountVouchers = data.filter(voucher => voucher.reward_type === 'discount');
-        const ticketVouchers = data.filter(voucher => voucher.reward_type === 'ticket');
+      if (voucher.length > 0) {
+        const discountVouchers = voucher.filter(voucher => voucher.reward_type === 'discount');
+        const ticketVouchers = voucher.filter(voucher => voucher.reward_type === 'ticket');
         setListVoucher(discountVouchers);
         setListTicket(ticketVouchers);
       }
@@ -36,24 +33,16 @@ const UserRewardView = ({ username, room_id, onClose, room_title }) => {
 
   const fetchUserProgress = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/room/${room_id}/user/${username}/progress`);
-      const data = await response.json();
-
-      if (data.success) {
-        const progress = data.progress;
-        const allCompleted = progress.answered === progress.total && progress.total > 0;
-
-        // Check if all answers are correct
-        const correctResponse = await fetch(`${apiUrl}/api/room/${room_id}/user/${username}/correct-answers`);
-        const correctData = await correctResponse.json();
+      if (progress) {
+        const allCompleted = progress.correct === progress.total && progress.total > 0;
 
         setUserProgress({
-          answered: progress.answered,
+          answered: progress.correct,
           total: progress.total,
-          allCorrect: correctData.allCorrect
+          allCorrect: progress.allCorrect
         });
 
-        setCanClaim(allCompleted && correctData.allCorrect);
+        setCanClaim(allCompleted && progress.allCorrect);
       }
     } catch (error) {
       console.error('Error fetching user progress:', error);

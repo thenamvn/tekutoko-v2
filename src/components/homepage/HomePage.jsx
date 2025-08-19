@@ -525,11 +525,11 @@ const HeroSection = () => {
   const initialLoadVariants = {
     initial: { opacity: 1, scale: 1.05 },
     animate: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: "easeInOut" } },
-    exit: { 
-      x: "-100%", 
-      opacity: 0, 
-      scale: 0.9, 
-      transition: { duration: 0.4, ease: "easeInOut" } 
+    exit: {
+      x: "-100%",
+      opacity: 0,
+      scale: 0.9,
+      transition: { duration: 0.4, ease: "easeInOut" }
     }
   };
 
@@ -550,93 +550,92 @@ const HeroSection = () => {
     <section id="hero" className="min-h-screen flex items-center justify-center relative overflow-hidden">
       <div className="container mx-auto px-4 relative z-10 pt-20 pb-16">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-16">
-        {/* Enhanced Phone Mockup */}
-        <motion.div
-          className="relative"
-          variants={slideInLeft}
-          initial="initial"
-          animate="animate"
-        >
+          {/* Enhanced Phone Mockup */}
           <motion.div
-            className="relative w-72 h-144"
-            style={{ perspective: 1000 }}
-            whileHover={!isMobile ? { rotateY: 15, rotateX: 5, scale: 1.05 } : {}}
-            transition={{ type: "spring", stiffness: 300 }}
+            className="relative"
+            variants={slideInLeft}
+            initial="initial"
+            animate="animate"
           >
-            {/* Phone Shadow */}
             <motion.div
-              className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-48 h-16 bg-black/20 rounded-full blur-xl"
-              animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            />
-
-{/* Phone Frame */}
-<div className="relative w-64 h-128 bg-gradient-to-br from-gray-800 to-black rounded-[2.5rem] border-8 border-gray-800 overflow-hidden shadow-2xl">
-  <div className="absolute inset-2 bg-gradient-to-br from-white/10 to-transparent rounded-[1.75rem] z-20 pointer-events-none"></div>
-
-  {/* Thay thế AnimatePresence mode="wait" bằng mode="popLayout" */}
-  <AnimatePresence mode="popLayout">
-    <motion.img
-      key={currentImage}
-      src={images[currentImage]}
-      alt={`Screenshot ${currentImage + 1}`}
-      className="absolute inset-0 w-full h-full object-cover" // Thêm absolute positioning
-      // Hiệu ứng fade + slide mượt mà hơn
-      variants={isInitialLoad ? initialLoadVariants : {
-        initial: { 
-          x: "100%", 
-          opacity: 0,
-          scale: 1.05
-        },
-        animate: { 
-          x: 0, 
-          opacity: 1,
-          scale: 1,
-          transition: { 
-            x: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
-            opacity: { duration: 0.4, ease: "easeOut" },
-            scale: { duration: 0.6, ease: "easeOut" }
-          }
-        },
-        exit: { 
-          x: "-50%", // Giảm khoảng cách slide ra
-          opacity: 0,
-          scale: 0.95,
-          transition: { 
-            x: { duration: 0.4, ease: "easeIn" },
-            opacity: { duration: 0.3, ease: "easeIn" },
-            scale: { duration: 0.4, ease: "easeIn" }
-          }
-        }
-      }}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-    />
-  </AnimatePresence>
-
-  {/* Glowing border effect - Disabled on mobile */}
-  {!isMobile && <motion.div
-    className="absolute inset-0 rounded-[2.5rem]"
-    animate={{ boxShadow: ["0 0 20px rgba(147, 51, 234, 0.3)", "0 0 40px rgba(59, 130, 246, 0.4)", "0 0 20px rgba(147, 51, 234, 0.3)"] }}
-    transition={{ duration: 3, repeat: Infinity }}
-  />}
-</div>
-
-            {/* Floating icons around phone - Disabled on mobile */}
-            {!isMobile && [Camera, Heart, Star, Zap].map((Icon, index) => (
+              className="relative w-72 h-144"
+              style={{ perspective: 1000 }}
+              whileHover={!isMobile ? { rotateY: 15, rotateX: 5, scale: 1.05 } : {}}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              {/* Phone Shadow */}
               <motion.div
-                key={index}
-                className="absolute w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white shadow-lg"
-                style={{ top: `${20 + index * 20}%`, left: index % 2 === 0 ? '-15%' : '95%' }}
-                animate={{ y: [0, -20, 0], rotate: [0, 360], scale: [1, 1.2, 1] }}
-                transition={{ duration: 3 + index, repeat: Infinity, delay: index * 0.5, ease: "linear" }}
-              >
-                <Icon className="w-6 h-6" />
-              </motion.div>
-            ))}
+                className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-48 h-16 bg-black/20 rounded-full blur-xl"
+                animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              />
+
+              {/* Phone Frame */}
+              <div className="relative w-64 h-128 bg-gradient-to-br from-gray-800 to-black rounded-[2.5rem] border-8 border-gray-800 overflow-hidden shadow-2xl">
+                <div className="absolute inset-2 bg-gradient-to-br from-white/10 to-transparent rounded-[1.75rem] z-20 pointer-events-none"></div>
+
+                {/* Thay thế AnimatePresence mode="wait" bằng mode="popLayout" */}
+                <AnimatePresence mode="popLayout">
+                  <motion.img
+                    key={currentImage}
+                    src={images[currentImage]}
+                    alt={`Screenshot ${currentImage + 1}`}
+                    className="absolute inset-2 w-[calc(100%-16px)] h-[calc(100%-16px)] object-cover rounded-[1.75rem]" // Thêm rounded corners và adjust kích thước
+                    // Hiệu ứng fade + slide mượt mà hơn
+                    variants={isInitialLoad ? initialLoadVariants : {
+                      initial: {
+                        x: "100%",
+                        opacity: 0,
+                        scale: 1.05
+                      },
+                      animate: {
+                        x: 0,
+                        opacity: 1,
+                        scale: 1,
+                        transition: {
+                          x: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] },
+                          opacity: { duration: 0.4, ease: "easeOut" },
+                          scale: { duration: 0.6, ease: "easeOut" }
+                        }
+                      },
+                      exit: {
+                        x: "-50%", // Giảm khoảng cách slide ra
+                        opacity: 0,
+                        scale: 0.95,
+                        transition: {
+                          x: { duration: 0.4, ease: "easeIn" },
+                          opacity: { duration: 0.3, ease: "easeIn" },
+                          scale: { duration: 0.4, ease: "easeIn" }
+                        }
+                      }
+                    }}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                  />
+                </AnimatePresence>
+
+                {/* Glowing border effect - Disabled on mobile */}
+                {!isMobile && <motion.div
+                  className="absolute inset-0 rounded-[2.5rem]"
+                  animate={{ boxShadow: ["0 0 20px rgba(147, 51, 234, 0.3)", "0 0 40px rgba(59, 130, 246, 0.4)", "0 0 20px rgba(147, 51, 234, 0.3)"] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                />}
+              </div>
+              {/* Floating icons around phone - Disabled on mobile */}
+              {!isMobile && [Camera, Heart, Star, Zap].map((Icon, index) => (
+                <motion.div
+                  key={index}
+                  className="absolute w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white shadow-lg"
+                  style={{ top: `${20 + index * 20}%`, left: index % 2 === 0 ? '-15%' : '95%' }}
+                  animate={{ y: [0, -20, 0], rotate: [0, 360], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 3 + index, repeat: Infinity, delay: index * 0.5, ease: "linear" }}
+                >
+                  <Icon className="w-6 h-6" />
+                </motion.div>
+              ))}
+            </motion.div>
           </motion.div>
-        </motion.div>
 
           {/* Enhanced Hero Content (không thay đổi) */}
           <motion.div

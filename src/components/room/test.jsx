@@ -30,6 +30,7 @@ const QuizRoom = () => {
     location: { lat: 35.6895, lng: 139.6917 } // Example coordinates for Tokyo
   });
   const [progress, setProgress] = useState(0); // State to track quiz progress (you might fetch this)
+  const [progressAll, setProgressAll] = useState(null); // State to track overall progress (if needed)
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalQuestions, setTotalQuestions] = useState(5); // State to hold total questions (if needed)
@@ -39,6 +40,7 @@ const QuizRoom = () => {
 
   const [showUserReward, setShowUserReward] = useState(false);
   const [hasRewards, setHasRewards] = useState(false);
+  const [voucher, setVoucher] = useState(null);
 
   // Thêm state cho image submissions
   const [userSubmissions, setUserSubmissions] = useState([]);
@@ -84,6 +86,7 @@ const QuizRoom = () => {
         if (data.success) {
           setShowUserReward(data.allCorrect);
           setCorrectQuestionIds(data.correctQuestionIds);
+          setProgressAll(data);
         }
         if (currentUsername) {
           setProgress(data.correct)
@@ -130,6 +133,7 @@ const QuizRoom = () => {
         const response = await fetch(`${apiUrl}/get/vouchers/room/${roomId}`);
         const data = await response.json();
         setHasRewards(data.length > 0);
+        setVoucher(data);
       } catch (error) {
         console.error('Error checking rewards:', error);
       }
@@ -600,6 +604,8 @@ const QuizRoom = () => {
             username={username}
             room_id={roomId}
             room_title={roomInfo.title}
+            voucher={voucher}
+            progress={progressAll}
             onClose={() => setShowUserReward(false)}
           />
         )}
