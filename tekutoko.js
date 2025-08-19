@@ -5133,7 +5133,7 @@ app.get("/api/room/search/nearby", (req, res) => {
           r.city,
           r.country,
           u.fullname as admin_fullname,
-          up.avatarImage as admin_avatar,
+          up.avatarImage,
           ST_Distance_Sphere(r.location, ST_GeomFromText(?, 4326)) AS distance_m
         FROM room r
         LEFT JOIN users u ON r.admin_username = u.username
