@@ -10,6 +10,7 @@ import UserRewardView from './UserRewardView'; // Adjust the import path as need
 import LocationModal from './LocationModal';
 import ViewLocationModal from './ViewLocationModal';
 import Leaderboard from './Leaderboard';
+import ReportForm from '../report/ReportForm'; // Import ReportForm component
 const QuizRoom = () => {
   const apiUrl = process.env.REACT_APP_API_URL
   const { t } = useTranslation(); // Uncomment if using i18n
@@ -59,11 +60,13 @@ const QuizRoom = () => {
   const [questions, setQuestions] = useState([]); // State to hold quiz questions
   const [correctQuestionIds, setCorrectQuestionIds] = useState([]);
 
+  // show report form
+  const [showReportModal, setShowReportModal] = useState(false);
   const handleLocationSave = (location) => {
     setShowLocationModal(false);
   };
 
-    // Helper function to check if a question is answered correctly
+  // Helper function to check if a question is answered correctly
   const isQuestionCorrect = (questionNumber) => {
     const question = questions.find(q => q.number === questionNumber);
     return question && correctQuestionIds.includes(question.questionId);
@@ -291,6 +294,23 @@ const QuizRoom = () => {
       {/* Header với gradient */}
       <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 shadow-lg">
         <div className="flex items-center justify-between">
+          {/* Report button - Left side */}
+          {username && !isAdmin && (
+            <button
+              className="text-white hover:text-gray-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
+              onClick={() => setShowReportModal(true)}
+              title="Report room"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg"
+                className="w-6 h-6"
+                fill='white'
+                viewBox="0 0 24 24"
+              >
+
+                <path d="M12 5.177l8.631 15.823h-17.262l8.631-15.823zm0-4.177l-12 22h24l-12-22zm-1 9h2v6h-2v-6zm1 9.75c-.689 0-1.25-.56-1.25-1.25s.561-1.25 1.25-1.25 1.25.56 1.25 1.25-.561 1.25-1.25 1.25z" />
+              </svg>
+            </button>
+          )}
           <div className="flex-1">
             <h1 className="text-xl font-bold text-white text-center">
               {roomInfo.title}
@@ -421,11 +441,10 @@ const QuizRoom = () => {
               return (
                 <div
                   key={question.id}
-                  className={`group rounded-xl shadow-lg border cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col justify-center items-center h-32 text-center hover:scale-[1.02] relative ${
-                    isCorrect 
-                      ? 'bg-gray-300/80 backdrop-blur-sm border-gray-400/30 hover:bg-gray-400/80' 
-                      : 'bg-white/90 backdrop-blur-sm border-white/20 hover:bg-white'
-                  }`}
+                  className={`group rounded-xl shadow-lg border cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col justify-center items-center h-32 text-center hover:scale-[1.02] relative ${isCorrect
+                    ? 'bg-gray-300/80 backdrop-blur-sm border-gray-400/30 hover:bg-gray-400/80'
+                    : 'bg-white/90 backdrop-blur-sm border-white/20 hover:bg-white'
+                    }`}
                   onClick={() => handleQuestionClick(question.number)}
                   role="button"
                   tabIndex={0}
@@ -439,17 +458,15 @@ const QuizRoom = () => {
                       </svg>
                     </div>
                   )}
-                  
-                  <div className={`font-bold mb-2 transition-colors duration-200 ${
-                    isCorrect 
-                      ? 'text-gray-600 group-hover:text-gray-700' 
-                      : 'text-violet-600 group-hover:text-indigo-600'
-                  }`}>
+
+                  <div className={`font-bold mb-2 transition-colors duration-200 ${isCorrect
+                    ? 'text-gray-600 group-hover:text-gray-700'
+                    : 'text-violet-600 group-hover:text-indigo-600'
+                    }`}>
                     {question.id}
                   </div>
-                  <p className={`text-sm line-clamp-3 px-2 leading-relaxed ${
-                    isCorrect ? 'text-gray-700' : 'text-slate-800'
-                  }`}>
+                  <p className={`text-sm line-clamp-3 px-2 leading-relaxed ${isCorrect ? 'text-gray-700' : 'text-slate-800'
+                    }`}>
                     {question.text}
                   </p>
                 </div>
@@ -465,7 +482,7 @@ const QuizRoom = () => {
                 <p className="text-slate-500 text-sm">(Locked)</p>
               </div>
             ))}
-            
+
           </div>
         </div>
         {/* Leaderboard Section - Only show for admin */}
@@ -572,6 +589,20 @@ const QuizRoom = () => {
           </div>
         )}
 
+        {/* Report Modal */}
+        {showReportModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[80vh] overflow-auto">
+              <ReportForm
+                roomId={roomId}
+                username={roomInfo.hostUsername}
+                onClose={() => setShowReportModal(false)}
+                reporter={username}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Image Modal */}
         {showImageModal && selectedImage && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={closeImageModal}>
@@ -640,14 +671,14 @@ const QuizRoom = () => {
             </button>
           </div>
         </div>
-      {/* Leaderboard Modal */}
-      <Leaderboard
-        isOpen={showLeaderboard}
-        onClose={() => setShowLeaderboard(false)}
-        roomId={roomId}
-        apiUrl={apiUrl}
-        isAdmin={isAdmin}
-      />
+        {/* Leaderboard Modal */}
+        <Leaderboard
+          isOpen={showLeaderboard}
+          onClose={() => setShowLeaderboard(false)}
+          roomId={roomId}
+          apiUrl={apiUrl}
+          isAdmin={isAdmin}
+        />
         {/* QR Code popup với glassmorphism */}
         {isQrCodeClicked && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-[51] cursor-pointer" onClick={() => setIsQrCodeClicked(false)}>

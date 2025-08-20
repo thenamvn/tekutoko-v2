@@ -450,6 +450,56 @@ const verifyToken = (req, res, next) => {
   return next();
 };
 
+const verifyAdminToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  
+  if (!token) {
+    return res.status(403).json({
+      message: "Access denied",
+    });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    const username = decoded.username;
+    
+    // Kiểm tra username có trong bảng admin_account không
+    pool.query(
+      "SELECT username, fullname FROM admin_account WHERE username = ?",
+      [username],
+      (err, results) => {
+        if (err) {
+          console.error("Database query error:", err);
+          return res.status(500).json({
+            message: "Database error",
+          });
+        }
+        
+        if (results.length === 0) {
+          return res.status(403).json({
+            message: "Admin access required",
+          });
+        }
+        
+        // Lưu thông tin admin vào req.user
+        req.user = {
+          username: results[0].username,
+          fullname: results[0].fullname,
+          role: 'admin'
+        };
+        
+        return next();
+      }
+    );
+  } catch (err) {
+    console.error("Token verification error:", err);
+    return res.status(401).json({
+      message: "Invalid Token",
+    });
+  }
+};
+
 // upload image
 app.post("/upload", verifyToken, (req, res) => {
   const { room_id, uploader_username, fileUrls } = req.body;
@@ -3653,9 +3703,13 @@ app.post("/api/cleanup-expired-vouchers", verifyToken, async (req, res) => {
 });
 
 //api report
-app.post("/report", (req, res) => {
-  const { roomId, username, reason, additionalInfo } = req.body;
-
+app.post("/report", verifyToken, (req, res) => {
+  const { roomId, username, reason, additionalInfo, reporter } = req.body;
+  if (req.user.username !== reporter) {
+    return res
+      .status(403)
+      .json({ success: false, message: "alert.report.notAuthorized" });
+  }
   // Validate input
   if (!roomId || !username || !reason || reason.trim() === "") {
     return res
@@ -3663,12 +3717,12 @@ app.post("/report", (req, res) => {
       .json({ success: false, message: "alert.report.reportFailed" });
   }
 
-  // SQL query to check if the report already exists
+  // SQL query to check if the report already exists - check by room_id, username AND reporter
   const checkQuery = `
-      SELECT * FROM reports WHERE room_id = ? AND username = ?
+      SELECT * FROM reports WHERE room_id = ? AND username = ? AND reporter = ?
   `;
 
-  const checkValues = [roomId, username, reason];
+  const checkValues = [roomId, username, reporter];
 
   pool.query(checkQuery, checkValues, (err, results) => {
     if (err) {
@@ -3687,11 +3741,11 @@ app.post("/report", (req, res) => {
 
     // If report doesn't exist, insert new report
     const insertQuery = `
-          INSERT INTO reports (room_id, username, reason, additional_info)
-          VALUES (?, ?, ?, ?)
+          INSERT INTO reports (room_id, username, reason, additional_info, reporter)
+          VALUES (?, ?, ?, ?, ?)
       `;
 
-    const insertValues = [roomId, username, reason, additionalInfo];
+    const insertValues = [roomId, username, reason, additionalInfo, reporter];
 
     pool.query(insertQuery, insertValues, (err, results) => {
       if (err) {
@@ -3709,13 +3763,7 @@ app.post("/report", (req, res) => {
 });
 
 //api report admin
-app.get("/admin/reports", verifyToken, (req, res) => {
-  if (req.user.username !== "admin") {
-    return res
-      .status(403)
-      .send("You are not authorized to perform this action");
-  }
-
+app.get("/admin/reports", verifyAdminToken, (req, res) => {
   const query = `
     SELECT 
       r.*, 
@@ -3736,15 +3784,8 @@ app.get("/admin/reports", verifyToken, (req, res) => {
   });
 });
 //api delete report
-app.delete("/admin/reports/:id", verifyToken, (req, res) => {
+app.delete("/admin/reports/:id", verifyAdminToken, (req, res) => {
   const reportId = req.params.id;
-
-  if (req.user.username !== "admin") {
-    return res
-      .status(403)
-      .send("You are not authorized to perform this action");
-  }
-
   const query = "DELETE FROM reports WHERE id = ?";
   pool.query(query, [reportId], (err, results) => {
     if (err) {

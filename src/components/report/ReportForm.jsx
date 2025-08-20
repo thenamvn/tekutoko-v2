@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styles from './ReportForm.module.css'; // Giả sử bạn có một file CSS cho styles
 import { Button, TextField, Select, MenuItem } from '@mui/material'; // Sử dụng Material-UI cho giao diện
 import { useTranslation } from 'react-i18next';
-const ReportForm = ({ handleReportForAdmin, onClose, roomId, username }) => {
+const ReportForm = ({ handleReportForAdmin, onClose, roomId, username, reporter }) => {
     const { t } = useTranslation();
     const [reason, setReason] = useState('');
     const [additionalInfo, setAdditionalInfo] = useState('');
@@ -15,8 +15,9 @@ const ReportForm = ({ handleReportForAdmin, onClose, roomId, username }) => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ roomId, username, reason, additionalInfo })
+                body: JSON.stringify({ roomId, username, reason, additionalInfo, reporter })
             });
     
             const data = await response.json();
