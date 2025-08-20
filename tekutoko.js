@@ -5310,7 +5310,6 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // ✅ API tạo câu hỏi tự động bằng AI
-// ✅ API tạo câu hỏi tự động bằng AI
 app.post('/api/ai/generate-questions', async (req, res) => {
   try {
     const { topic, numQuestions = 5, difficulty = 'medium', questionTypes = ['text', 'multiple-choice'] } = req.body;
@@ -5360,13 +5359,19 @@ app.post('/api/ai/generate-questions', async (req, res) => {
     }
 
     // Validate và format câu hỏi
-    const formattedQuestions = formatGeneratedQuestions(generatedQuestions.questions || []);
-
+    const formattedQuestions = formatGeneratedQuestions(generatedQuestions.questions || [], questionTypes);
+    // ✅ Thêm check nếu không có câu hỏi hợp lệ nào
+    if (formattedQuestions.length === 0) {
+      return res.status(500).json({ 
+        error: `AI không tạo được câu hỏi phù hợp với loại: ${questionTypes.join(', ')}. Vui lòng thử lại!` 
+      });
+    }
     res.json({ 
       success: true,
       questions: formattedQuestions,
       topic: topic,
       difficulty: difficulty,
+      requestedTypes: questionTypes,
       estimatedTime: `${Math.round(timeoutMs / 1000)}s`,
       actualQuestions: formattedQuestions.length,
       requestedQuestions: validNumQuestions,
@@ -5397,34 +5402,36 @@ function buildQuestionGenerationPrompt(topic, numQuestions, difficulty, question
 
   return `Bạn là một chuyên gia giáo dục. Tạo ${numQuestions} câu hỏi về chủ đề "${topic}" với độ khó ${difficultyDesc[difficulty] || 'trung bình'}.
 
-**Yêu cầu:**
-1. Tạo câu hỏi đa dạng với các loại: ${questionTypes.map(type => typeDesc[type]).join(', ')}
-2. Phân bố đều các loại câu hỏi
-3. Câu hỏi phải phù hợp với độ khó ${difficulty}
-4. Đối với multiple-choice: tạo 4 lựa chọn, chỉ 1 đúng
-5. Đối với text: cung cấp nhiều đáp án đúng có thể (cách nhau bằng |)
-6. Đối với upload: tạo câu hỏi yêu cầu upload ảnh/file
+**YÊU CẦU QUAN TRỌNG:**
+1. CHỈ tạo câu hỏi với các loại được chỉ định: ${questionTypes.map(type => typeDesc[type]).join(', ')}
+2. KHÔNG được tạo loại câu hỏi khác ngoài: ${questionTypes.join(', ')}
+3. Tất cả ${numQuestions} câu hỏi phải thuộc loại: ${questionTypes.join(' HOẶC ')}
+4. Câu hỏi phải phù hợp với độ khó ${difficulty}
+
+**CHI TIẾT THEO LOẠI:**
+${questionTypes.includes('multiple-choice') ? `
+- MULTIPLE-CHOICE: Tạo 4 lựa chọn A,B,C,D với chỉ 1 đáp án đúng
+` : ''}
+${questionTypes.includes('text') ? `
+- TEXT: Cung cấp nhiều đáp án đúng có thể (cách nhau bằng |)
+` : ''}
+${questionTypes.includes('upload') ? `
+- UPLOAD: Tạo câu hỏi yêu cầu upload ảnh/file (không cần đáp án cụ thể)
+` : ''}
 
 **Format JSON trả về:**
 {
   "questions": [
     {
       "question_text": "Nội dung câu hỏi",
-      "question_type": "text|multiple-choice|upload",
+      "question_type": "${questionTypes.length === 1 ? questionTypes[0] : 'CHỈ một trong: ' + questionTypes.join('|')}",
       "hint": "Gợi ý (tùy chọn)",
-      "explanation": "Giải thích đáp án",
-      "correct_text_answer": "đáp án 1|đáp án 2|đáp án 3" (chỉ cho type text),
-      "options": [
-        {"option_text": "Lựa chọn A", "is_correct": false},
-        {"option_text": "Lựa chọn B", "is_correct": true},
-        {"option_text": "Lựa chọn C", "is_correct": false},
-        {"option_text": "Lựa chọn D", "is_correct": false}
-      ] (chỉ cho type multiple-choice)
+      "explanation": "Giải thích đáp án"${questionTypes.includes('text') ? ',\n      "correct_text_answer": "đáp án 1|đáp án 2|đáp án 3" (chỉ cho type text)' : ''}${questionTypes.includes('multiple-choice') ? ',\n      "options": [\n        {"option_text": "Lựa chọn A", "is_correct": false},\n        {"option_text": "Lựa chọn B", "is_correct": true},\n        {"option_text": "Lựa chọn C", "is_correct": false},\n        {"option_text": "Lựa chọn D", "is_correct": false}\n      ] (chỉ cho type multiple-choice)' : ''}
     }
   ]
 }
 
-Chỉ trả về JSON, không thêm text khác.`;
+**LƯU Ý:** Chỉ trả về JSON thuần, không thêm text khác. Tất cả câu hỏi phải thuộc loại: ${questionTypes.join(' hoặc ')}.`;
 }
 
 // Hàm format và validate câu hỏi được tạo

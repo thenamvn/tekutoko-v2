@@ -5,7 +5,7 @@ import NavigationComponent from '../NavigationBar/NavigationBar';
 const TermsModal = () => {
     const { t } = useTranslation();
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100 max-w-md mx-auto shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+        <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-violet-50 max-w-md mx-auto shadow-[0_0_10px_rgba(0,0,0,0.5)]">
             <div className="flex-1 overflow-y-auto p-4 scrollbar-hide pb-20">
                 <div className={modalStyles.modal}>
                     <article>
