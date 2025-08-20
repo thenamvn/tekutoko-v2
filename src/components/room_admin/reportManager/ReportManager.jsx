@@ -11,29 +11,7 @@ const ReportManager = () => {
     const { t } = useTranslation();
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedUserImages, setSelectedUserImages] = useState([]);
-    const [viewImages, setViewImages] = useState(false);
     const apiUrl = process.env.REACT_APP_API_URL;
-
-    async function handleGetReportImages(roomId, userId) {
-        const room_id = roomId;
-
-        try {
-            const response = await fetch(
-                `${apiUrl}/room/host/${room_id}/userimages/${userId}`
-            );
-            const imagesData = await response.json();
-            console.log(imagesData);
-            setSelectedUserImages(imagesData);
-            setViewImages(true);
-        } catch (error) {
-            console.error("Error fetching user images:", error);
-        }
-    }
-    const handleCloseCarousel = () => {
-        setViewImages(false);
-        setSelectedUserImages([]);
-    };
     // Fetch reports from the API
     const fetchReports = async () => {
         try {
@@ -180,8 +158,12 @@ const ReportManager = () => {
                                                 <div>{report.additional_info}</div>
                                             </td>
                                             <td>
-                                                <button className={styles.button} onClick={() => handleGetReportImages(report.room_id, report.username)} title={t('reportManager.view')}>
-                                                    <VisibilityIcon className={styles.icon} />
+                                                <button 
+                                                className={styles.button} 
+                                                onClick={() => window.open(`/quiz/room/${report.room_id}`, '_blank')} 
+                                                title={t('reportManager.view')}
+                                                >
+                                                <VisibilityIcon className={styles.icon} />
                                                 </button>
                                                 <button className={styles.button} onClick={() => handleBanUser(report.username)} title={t('reportManager.ban')}>
                                                     <DoNotDisturbIcon className={styles.icon} />
@@ -202,14 +184,6 @@ const ReportManager = () => {
                         </div>
                     </div>
                 </div>
-                {viewImages && (
-                    <div className={styles.carouselContainer}>
-                        <button className={styles.closeButton} onClick={handleCloseCarousel} title={t('reportManager.close')}>
-                            <CloseIcon />
-                        </button>
-                        <Carousel data={selectedUserImages} />
-                    </div>
-                )}
             </main>
         </div>
     );
