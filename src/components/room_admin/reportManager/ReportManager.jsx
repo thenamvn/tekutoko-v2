@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
-  Eye, Ban, Trash2, X, AlertTriangle, 
-  RefreshCw, ExternalLink, User, Calendar,
-  CheckCircle, XCircle, Shield
+  Ban, Trash2, X, AlertTriangle, 
+  RefreshCw, ExternalLink, User,
+  CheckCircle, Shield
 } from 'lucide-react';
 import Navigation from '../dashboardadmin/negative';
 

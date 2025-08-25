@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Lock, Eye, EyeOff, User, Shield, CheckCircle, 
+  Lock, Eye, EyeOff, Shield, CheckCircle, 
   AlertCircle, ArrowLeft, Key
 } from 'lucide-react';
 import Navigation from '../dashboardadmin/negative';

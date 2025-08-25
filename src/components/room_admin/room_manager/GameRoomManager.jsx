@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   Calendar, Search, Trash2, ChevronLeft, ChevronRight,
-  Filter, RefreshCw, Users, Crown, ExternalLink,
-  AlertTriangle, User, Eye, Settings
+  Filter, RefreshCw, Users, ExternalLink,
+  AlertTriangle, Eye, Settings
 } from 'lucide-react';
 import Navigation from '../dashboardadmin/negative';
 

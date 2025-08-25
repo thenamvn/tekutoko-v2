@@ -383,48 +383,8 @@ const RoomSetup = () => {
         setCurrentQuestion({ ...initialQuestionState, tempId: Date.now() });
     };
 
-    const printPayload = () => {
-        // --- Prepare Payload ---
-        // Map client-side question structure to potential backend structure
-        const payloadQuestions = questions.map((q, index) => {
-            const backendQuestion = {
-                question_number: index + 1,
-                question_text: q.question_text,
-                question_type: q.question_type,
-                hint: q.hint || null, // Send null if empty
-                explanation: q.explanation || null, // Add explanation to payload
-                correct_text_answer: q.question_type === 'text' ? q.correct_text_answer : null,
-                options: q.question_type === 'multiple-choice' ? q.options.map(opt => ({
-                    option_text: opt.option_text,
-                    is_correct: opt.is_correct
-                })) : null
-            };
-            // Remove null option/answer fields if not relevant
-            if (backendQuestion.correct_text_answer === null) delete backendQuestion.correct_text_answer;
-            if (backendQuestion.options === null) delete backendQuestion.options;
-            if (backendQuestion.hint === null) delete backendQuestion.hint;
-
-            return backendQuestion;
-        });
-
-        const payload = {
-            room_details: {
-                room_id: roomDetails.room_id,
-                room_title: roomDetails.room_title,
-                admin_username: roomDetails.admin_username,
-                description: roomDetails.description || null, // Send null if empty
-                thumbnail: roomDetails.thumbnail || null, // Uncomment if thumbnail is used
-                how2play: roomDetails.how2play || null, // Uncomment if how2play is used
-                // host_username: 'current_logged_in_user' // Add if needed
-            },
-            questions: payloadQuestions,
-        };
-        console.log("Payload to be sent:", JSON.stringify(payload, null, 2));
-    };
-
     const handleAddQuestionToList = () => {
         handleAddQuestion(); // Call the function to add the question to the list
-        // printPayload(); // Call the function to print the payload
     };
 
     // Remove a question from the main list
