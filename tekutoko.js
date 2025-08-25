@@ -3841,8 +3841,8 @@ app.post("/api/rooms/create", verifyToken, async (req, res) => {
       // Insert questions
       for (const question of questions) {
         const questionQuery = `
-          INSERT INTO Questions (room_id, question_number, question_text, question_type, hint, correct_text_answer, explanation)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO Questions (room_id, question_number, question_text, question_type, hint, correct_text_answer, explanation, is_survey)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const [questionResult] = await connection.query(questionQuery, [
@@ -3853,6 +3853,7 @@ app.post("/api/rooms/create", verifyToken, async (req, res) => {
           question.hint || null,
           question.correct_text_answer || null,
           question.explanation || null,
+          question.is_survey ? 1 : 0,
         ]);
 
         const questionId = questionResult.insertId;
@@ -4038,14 +4039,15 @@ app.post("/api/room/:roomId/submit-answer", async (req, res) => {
         .json({ success: false, error: "Invalid question ID format" });
     }
 
-    // Tìm câu hỏi trong database
+    // Tìm câu hỏi trong database, lấy thêm is_survey
     const [questions] = await pool.promise().query(
       `SELECT 
         q.question_id, 
         q.question_type, 
         q.correct_text_answer,
         q.explanation,
-        q.room_id
+        q.room_id,
+        q.is_survey
       FROM Questions q
       WHERE q.room_id = ? AND q.question_number = ?`,
       [roomId, questionNumber]
@@ -4061,12 +4063,14 @@ app.post("/api/room/:roomId/submit-answer", async (req, res) => {
     let isCorrect = false;
     let correctAnswer = null;
 
-    // Xác nhận đáp án dựa trên loại câu hỏi
-    if (question.question_type === "text") {
+    // Nếu là survey thì luôn đúng
+    if (question.is_survey === 1 || question.is_survey === true) {
+      isCorrect = true;
+    } else if (question.question_type === "text") {
       const correctAnswers = question.correct_text_answer
-        .split("|")
-        .map((ans) => ans.trim());
-      correctAnswer = correctAnswers[0]; // Lấy đáp án đầu tiên làm chuẩn
+        ? question.correct_text_answer.split("|").map((ans) => ans.trim())
+        : [];
+      correctAnswer = correctAnswers[0] || null;
 
       // So sánh với enhanced normalization
       const normalizedUser = normalizeText(answer);

@@ -83,6 +83,7 @@ const initialQuestionState = {
         { option_text: '', is_correct: false },
         { option_text: '', is_correct: false },
     ],
+    is_survey: false
 };
 
 const initialRewardState = {
@@ -385,6 +386,49 @@ const RoomSetup = () => {
 
     const handleAddQuestionToList = () => {
         handleAddQuestion(); // Call the function to add the question to the list
+        printPayload(); // Print the payload to console
+    };
+
+
+
+    const printPayload = () => {
+        // --- Prepare Payload ---
+        // Map client-side question structure to potential backend structure
+        const payloadQuestions = questions.map((q, index) => {
+            const backendQuestion = {
+                question_number: index + 1,
+                question_text: q.question_text,
+                question_type: q.question_type,
+                hint: q.hint || null, // Send null if empty
+                explanation: q.explanation || null, // Add explanation to payload
+                correct_text_answer: q.question_type === 'text' ? q.correct_text_answer : null,
+                options: q.question_type === 'multiple-choice' ? q.options.map(opt => ({
+                    option_text: opt.option_text,
+                    is_correct: opt.is_correct
+                })) : null,
+                is_survey: !!q.is_survey
+            };
+            // Remove null option/answer fields if not relevant
+            if (backendQuestion.correct_text_answer === null) delete backendQuestion.correct_text_answer;
+            if (backendQuestion.options === null) delete backendQuestion.options;
+            if (backendQuestion.hint === null) delete backendQuestion.hint;
+
+            return backendQuestion;
+        });
+
+        const payload = {
+            room_details: {
+                room_id: roomDetails.room_id,
+                room_title: roomDetails.room_title,
+                admin_username: roomDetails.admin_username,
+                description: roomDetails.description || null, // Send null if empty
+                thumbnail: roomDetails.thumbnail || null, // Uncomment if thumbnail is used
+                how2play: roomDetails.how2play || null, // Uncomment if how2play is used
+                // host_username: 'current_logged_in_user' // Add if needed
+            },
+            questions: payloadQuestions,
+        };
+        console.log("Payload to be sent:", JSON.stringify(payload, null, 2));
     };
 
     // Remove a question from the main list
@@ -486,7 +530,8 @@ const RoomSetup = () => {
                     options: q.question_type === 'multiple-choice' ? q.options.map(opt => ({
                         option_text: opt.option_text,
                         is_correct: opt.is_correct
-                    })) : null
+                    })) : null,
+                    is_survey: !!q.is_survey,
                 };
                 // Remove null option/answer fields if not relevant
                 if (backendQuestion.correct_text_answer === null) delete backendQuestion.correct_text_answer;
@@ -966,7 +1011,24 @@ const RoomSetup = () => {
                                 <option value="upload">{t('setupRoom.fileUpload')}</option>
                             </select>
                         </div>
-
+                        {/* Survey Switch */}
+                        <div className="flex items-center space-x-3">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                {t('setupRoom.isSurveyQuestion', 'Là câu hỏi khảo sát (survey)?')}
+                            </label>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={currentQuestion.is_survey}
+                                    onChange={e => setCurrentQuestion(prev => ({ ...prev, is_survey: e.target.checked }))}
+                                    className="sr-only"
+                                />
+                                <div className={`w-11 h-6 rounded-full transition-colors duration-300 ${currentQuestion.is_survey ? 'bg-gradient-to-r from-amber-400 to-yellow-400' : 'bg-slate-300'}`}>
+                                    <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform duration-300 ${currentQuestion.is_survey ? 'translate-x-5' : 'translate-x-0'} mt-0.5 ml-0.5`}></div>
+                                </div>
+                            </label>
+                            <span className="text-xs text-slate-500">{currentQuestion.is_survey ? t('setupRoom.surveyOn', 'Survey') : t('setupRoom.surveyOff', 'Chấm điểm')}</span>
+                        </div>
                         {/* Hint */}
                         <div>
                             <label htmlFor="hint" className="block text-sm font-medium text-slate-700 mb-1">{t('setupRoom.hint')}</label>
