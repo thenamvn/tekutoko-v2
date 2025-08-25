@@ -326,35 +326,35 @@ const RoomSetup = () => {
 
         // --- Validation ---
         if (!currentQuestion.question_text.trim()) {
-            setError("Question text cannot be empty.");
+            setError(t('setupRoom.validation.questionTextRequired'));
             return;
         }
 
         if (currentQuestion.question_type === 'text') {
             if (!currentQuestion.correct_text_answer.trim()) {
-                setError("Please provide at least one correct answer for the text question.");
+                setError(t('setupRoom.validation.correctAnswerRequired'));
                 return;
             }
 
             // Check for empty additional answers
             const hasEmptyAdditional = currentQuestion.additional_correct_answers.some(answer => answer.trim() === '');
             if (hasEmptyAdditional) {
-                setError("Please fill in all additional correct answers or remove empty ones.");
+                setError(t('setupRoom.validation.fillAdditionalAnswers'));
                 return;
             }
         }
 
         if (currentQuestion.question_type === 'multiple-choice') {
             if (currentQuestion.options.length < 2) {
-                setError("Multiple choice questions need at least 2 options.");
+                setError(t('setupRoom.validation.multipleChoiceMinOptions'));
                 return;
             }
             if (currentQuestion.options.some(opt => !opt.option_text.trim())) {
-                setError("Please fill in all option texts.");
+                setError(t('setupRoom.validation.fillAllOptions'));
                 return;
             }
             if (!currentQuestion.options.some(opt => opt.is_correct)) {
-                setError("Please mark one option as correct for multiple choice.");
+                setError(t('setupRoom.validation.markCorrectOption'));
                 return;
             }
         }
