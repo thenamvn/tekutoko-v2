@@ -9,12 +9,13 @@ import { getUsernameFromToken, isTokenValid } from '../../utils/jwt_decode';
 import UserRewardView from './UserRewardView'; // Adjust the import path as needed
 import LocationModal from './LocationModal';
 import ViewLocationModal from './ViewLocationModal';
+import Leaderboard from './Leaderboard';
+import ReportForm from '../report/ReportForm'; // Import ReportForm component
 const QuizRoom = () => {
   const apiUrl = process.env.REACT_APP_API_URL
   const { t } = useTranslation(); // Uncomment if using i18n
   const { roomId } = useParams(); // Get room ID from URL
   const navigate = useNavigate(); // Hook for navigation
-  const [questions, setQuestions] = useState([]); // State to hold quiz questions
   const [roomInfo, setRoomInfo] = useState({ // Example state for room details
     room_id: "sampleRoomId",
     title: "Classroom Quiz",
@@ -30,6 +31,7 @@ const QuizRoom = () => {
     location: { lat: 35.6895, lng: 139.6917 } // Example coordinates for Tokyo
   });
   const [progress, setProgress] = useState(0); // State to track quiz progress (you might fetch this)
+  const [progressAll, setProgressAll] = useState(null); // State to track overall progress (if needed)
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalQuestions, setTotalQuestions] = useState(5); // State to hold total questions (if needed)
@@ -39,6 +41,7 @@ const QuizRoom = () => {
 
   const [showUserReward, setShowUserReward] = useState(false);
   const [hasRewards, setHasRewards] = useState(false);
+  const [voucher, setVoucher] = useState(null);
 
   // Thêm state cho image submissions
   const [userSubmissions, setUserSubmissions] = useState([]);
@@ -51,8 +54,22 @@ const QuizRoom = () => {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showViewLocationModal, setShowViewLocationModal] = useState(false);
 
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+
+  //for gray correct answered
+  const [questions, setQuestions] = useState([]); // State to hold quiz questions
+  const [correctQuestionIds, setCorrectQuestionIds] = useState([]);
+
+  // show report form
+  const [showReportModal, setShowReportModal] = useState(false);
   const handleLocationSave = (location) => {
     setShowLocationModal(false);
+  };
+
+  // Helper function to check if a question is answered correctly
+  const isQuestionCorrect = (questionNumber) => {
+    const question = questions.find(q => q.number === questionNumber);
+    return question && correctQuestionIds.includes(question.questionId);
   };
 
   // --- Mock Data Fetching ---
@@ -71,7 +88,13 @@ const QuizRoom = () => {
         const data = await response.json();
         if (data.success) {
           setShowUserReward(data.allCorrect);
-          // console.log("All answers correct:", data.allCorrect);
+          setCorrectQuestionIds(data.correctQuestionIds);
+          setProgressAll(data);
+        }
+        if (currentUsername) {
+          setProgress(data.correct)
+        } else {
+          setProgress(0);
         }
       } catch (error) {
         console.error('Error checking correct answers:', error);
@@ -113,6 +136,7 @@ const QuizRoom = () => {
         const response = await fetch(`${apiUrl}/get/vouchers/room/${roomId}`);
         const data = await response.json();
         setHasRewards(data.length > 0);
+        setVoucher(data);
       } catch (error) {
         console.error('Error checking rewards:', error);
       }
@@ -173,6 +197,7 @@ const QuizRoom = () => {
           // Transform API data to match the expected format in your component
           const formattedQuestions = questionsData.map(q => ({
             id: `Q${q.number}`,
+            questionId: q.id,
             number: q.number,
             text: q.text,
             type: q.type,
@@ -183,20 +208,6 @@ const QuizRoom = () => {
           setTotalQuestions(questionsData.length); // Set total questions based on fetched data
           const hasUpload = questionsData.some(q => q.type === 'upload'); // Check if any question is of type 'upload'
           setHasUploadQuestions(hasUpload);
-        }
-        // Fetch user progress if username is available
-        if (currentUsername) {
-          const progressResponse = await fetch(`${apiUrl}/api/room/${roomId}/user/${currentUsername}/progress`);
-
-          if (progressResponse.ok) {
-            const progressData = await progressResponse.json();
-            if (progressData.success) {
-              setProgress(progressData.progress.answered);
-              // console.log("User progress:", progressData.progress.answered);
-            }
-          }
-        } else {
-          setProgress(0); // Default progress if no username found
         }
 
       } catch (err) {
@@ -283,6 +294,23 @@ const QuizRoom = () => {
       {/* Header với gradient */}
       <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 shadow-lg">
         <div className="flex items-center justify-between">
+          {/* Report button - Left side */}
+          {username && !isAdmin && (
+            <button
+              className="text-white hover:text-gray-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
+              onClick={() => setShowReportModal(true)}
+              title="Report room"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg"
+                className="w-6 h-6"
+                fill='white'
+                viewBox="0 0 24 24"
+              >
+
+                <path d="M12 5.177l8.631 15.823h-17.262l8.631-15.823zm0-4.177l-12 22h24l-12-22zm-1 9h2v6h-2v-6zm1 9.75c-.689 0-1.25-.56-1.25-1.25s.561-1.25 1.25-1.25 1.25.56 1.25 1.25-.561 1.25-1.25 1.25z" />
+              </svg>
+            </button>
+          )}
           <div className="flex-1">
             <h1 className="text-xl font-bold text-white text-center">
               {roomInfo.title}
@@ -408,23 +436,42 @@ const QuizRoom = () => {
             {t('room.questions')}
           </h2>
           <div className="grid grid-cols-2 gap-4">
-            {questions.map((question) => (
-              <div
-                key={question.id}
-                className="group bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/20 cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col justify-center items-center h-32 text-center hover:scale-[1.02] hover:bg-white"
-                onClick={() => handleQuestionClick(question.number)}
-                role="button"
-                tabIndex={0}
-                onKeyPress={(e) => e.key === 'Enter' && handleQuestionClick(question.number)}
-              >
-                <div className="font-bold text-violet-600 mb-2 group-hover:text-indigo-600 transition-colors duration-200">
-                  {question.id}
+            {questions.map((question) => {
+              const isCorrect = isQuestionCorrect(question.number);
+              return (
+                <div
+                  key={question.id}
+                  className={`group rounded-xl shadow-lg border cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col justify-center items-center h-32 text-center hover:scale-[1.02] relative ${isCorrect
+                    ? 'bg-gray-300/80 backdrop-blur-sm border-gray-400/30 hover:bg-gray-400/80'
+                    : 'bg-white/90 backdrop-blur-sm border-white/20 hover:bg-white'
+                    }`}
+                  onClick={() => handleQuestionClick(question.number)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyPress={(e) => e.key === 'Enter' && handleQuestionClick(question.number)}
+                >
+                  {/* Add check icon for completed questions */}
+                  {isCorrect && (
+                    <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+
+                  <div className={`font-bold mb-2 transition-colors duration-200 ${isCorrect
+                    ? 'text-gray-600 group-hover:text-gray-700'
+                    : 'text-violet-600 group-hover:text-indigo-600'
+                    }`}>
+                    {question.id}
+                  </div>
+                  <p className={`text-sm line-clamp-3 px-2 leading-relaxed ${isCorrect ? 'text-gray-700' : 'text-slate-800'
+                    }`}>
+                    {question.text}
+                  </p>
                 </div>
-                <p className="text-slate-800 text-sm line-clamp-3 px-2 leading-relaxed">
-                  {question.text}
-                </p>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Placeholder for locked questions */}
             {questions.length < totalQuestions && Array.from({ length: totalQuestions - questions.length }).map((_, index) => (
@@ -435,8 +482,29 @@ const QuizRoom = () => {
                 <p className="text-slate-500 text-sm">(Locked)</p>
               </div>
             ))}
+
           </div>
         </div>
+        {/* Leaderboard Section - Only show for admin */}
+        {isAdmin && (
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-slate-800 flex items-center">
+              <svg className="w-5 h-5 text-violet-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Bảng thành tích
+            </h2>
+            <p className="text-slate-600 text-sm mb-4 leading-relaxed">
+              Xem kết quả và thành tích của tất cả người tham gia
+            </p>
+            <button
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-4 rounded-xl font-semibold shadow-lg transition-all duration-200 hover:scale-[1.02]"
+              onClick={() => setShowLeaderboard(true)}
+            >
+              Xem bảng thành tích
+            </button>
+          </div>
+        )}
         {/* User Submissions Section - Only show for admin and if there are upload questions */}
         {isAdmin && hasUploadQuestions && userSubmissions.length > 0 && (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 mb-6">
@@ -521,6 +589,20 @@ const QuizRoom = () => {
           </div>
         )}
 
+        {/* Report Modal */}
+        {showReportModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[80vh] overflow-auto">
+              <ReportForm
+                roomId={roomId}
+                username={roomInfo.hostUsername}
+                onClose={() => setShowReportModal(false)}
+                reporter={username}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Image Modal */}
         {showImageModal && selectedImage && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={closeImageModal}>
@@ -553,6 +635,8 @@ const QuizRoom = () => {
             username={username}
             room_id={roomId}
             room_title={roomInfo.title}
+            voucher={voucher}
+            progress={progressAll}
             onClose={() => setShowUserReward(false)}
           />
         )}
@@ -587,7 +671,14 @@ const QuizRoom = () => {
             </button>
           </div>
         </div>
-
+        {/* Leaderboard Modal */}
+        <Leaderboard
+          isOpen={showLeaderboard}
+          onClose={() => setShowLeaderboard(false)}
+          roomId={roomId}
+          apiUrl={apiUrl}
+          isAdmin={isAdmin}
+        />
         {/* QR Code popup với glassmorphism */}
         {isQrCodeClicked && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-[51] cursor-pointer" onClick={() => setIsQrCodeClicked(false)}>

@@ -1,12 +1,14 @@
 import React from 'react';
 import Navigation from './negative';
-import Main from './dashboardAdmin';
+import ModernDashboardAdmin from './dashboardAdmin';
 
 const Panel = () => {
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <Main />
+      <div className="pt-16"> {/* Padding to account for fixed nav */}
+        <ModernDashboardAdmin />
+      </div>
     </div>
   );
 };

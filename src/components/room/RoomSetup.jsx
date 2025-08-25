@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'; // Uncomment for i18n
 import useFirebaseUpload from "../../utils/upload"; // Import the upload function
 import { processImages } from '../../utils/imageProcessing';
 import imageCompression from 'browser-image-compression'; // Add this import
+import AIQuestionGenerator from './AIQuestionGenerator';
 const apiUrl = process.env.REACT_APP_API_URL;
 // --- Mock API Function (Replace with actual API call) ---
 const saveRoomConfiguration = async (roomData) => {
@@ -104,8 +105,7 @@ const RoomSetup = () => {
     const navigate = useNavigate();
     const newRoomId = Math.random().toString(36).substring(2, 7); // Generate a unique room ID
     const { uploading, error: uploadError, uploadFiles } = useFirebaseUpload();
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:9999';
-
+    const [showAIGenerator, setShowAIGenerator] = useState(false);
     // --- State Variables ---
     const [roomDetails, setRoomDetails] = useState({
         room_id: newRoomId,
@@ -383,48 +383,8 @@ const RoomSetup = () => {
         setCurrentQuestion({ ...initialQuestionState, tempId: Date.now() });
     };
 
-    const printPayload = () => {
-        // --- Prepare Payload ---
-        // Map client-side question structure to potential backend structure
-        const payloadQuestions = questions.map((q, index) => {
-            const backendQuestion = {
-                question_number: index + 1,
-                question_text: q.question_text,
-                question_type: q.question_type,
-                hint: q.hint || null, // Send null if empty
-                explanation: q.explanation || null, // Add explanation to payload
-                correct_text_answer: q.question_type === 'text' ? q.correct_text_answer : null,
-                options: q.question_type === 'multiple-choice' ? q.options.map(opt => ({
-                    option_text: opt.option_text,
-                    is_correct: opt.is_correct
-                })) : null
-            };
-            // Remove null option/answer fields if not relevant
-            if (backendQuestion.correct_text_answer === null) delete backendQuestion.correct_text_answer;
-            if (backendQuestion.options === null) delete backendQuestion.options;
-            if (backendQuestion.hint === null) delete backendQuestion.hint;
-
-            return backendQuestion;
-        });
-
-        const payload = {
-            room_details: {
-                room_id: roomDetails.room_id,
-                room_title: roomDetails.room_title,
-                admin_username: roomDetails.admin_username,
-                description: roomDetails.description || null, // Send null if empty
-                thumbnail: roomDetails.thumbnail || null, // Uncomment if thumbnail is used
-                how2play: roomDetails.how2play || null, // Uncomment if how2play is used
-                // host_username: 'current_logged_in_user' // Add if needed
-            },
-            questions: payloadQuestions,
-        };
-        console.log("Payload to be sent:", JSON.stringify(payload, null, 2));
-    };
-
     const handleAddQuestionToList = () => {
         handleAddQuestion(); // Call the function to add the question to the list
-        // printPayload(); // Call the function to print the payload
     };
 
     // Remove a question from the main list
@@ -621,6 +581,13 @@ const RoomSetup = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    // Thêm hàm xử lý khi AI tạo câu hỏi xong
+    const handleAIQuestionsGenerated = (aiQuestions) => {
+        // Thêm các câu hỏi AI vào danh sách hiện tại
+        setQuestions(prev => [...prev, ...aiQuestions]);
+        setShowAIGenerator(false);
     };
 
     // --- JSX Render ---
@@ -1169,15 +1136,26 @@ const RoomSetup = () => {
 
                         {/* Add Question Button */}
                         <div className="text-right">
-                            <button
-                                type="button"
-                                onClick={handleAddQuestionToList}
-                                className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white py-3 px-6 rounded-xl shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02]"
-                            >
-                                {t('setupRoom.addThisQuestion')}
-                            </button>
+                            {/* Thêm button AI Generator trước button Add Question */}
+                            <div className="flex space-x-3 justify-end">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAIGenerator(true)}
+                                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-3 px-6 rounded-xl shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02] flex items-center"
+                                >
+                                    <span className="mr-2">🤖</span>
+                                    {t('aiGenerator.title', 'Tạo bằng AI')}
+                                </button>
+                                
+                                <button
+                                    type="button"
+                                    onClick={handleAddQuestionToList}
+                                    className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white py-3 px-6 rounded-xl shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02]"
+                                >
+                                    {t('setupRoom.addThisQuestion')}
+                                </button>
+                            </div>
                         </div>
-
                         {/* Display error for adding question */}
                         {error && !isLoading && (
                             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
@@ -1216,6 +1194,13 @@ const RoomSetup = () => {
                 </section>
 
             </div>
+            {/* AI Question Generator Modal */}
+            {showAIGenerator && (
+                <AIQuestionGenerator
+                    onQuestionsGenerated={handleAIQuestionsGenerated}
+                    onClose={() => setShowAIGenerator(false)}
+                />
+            )}
 
             {/* Footer Navigation với glassmorphism */}
             <div className="fixed w-full max-w-md bottom-0 z-50">

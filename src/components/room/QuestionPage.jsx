@@ -32,7 +32,7 @@ const QuestionPage = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          setTotalQuestions(data.progress.total);
+          setTotalQuestions(data.total);
         }
       }
     } catch (error) {
@@ -321,7 +321,12 @@ const QuestionPage = () => {
   };
 
   const handleNavigateAfterFeedback = () => {
-    navigate(-1); // Go back to the previous page
+    navigate(`/quiz/room/${roomId}/question/${parseInt(questionNumber) + 1}`);
+    if (questionNumber < totalQuestions) {
+      navigate(`/quiz/room/${roomId}/question/${parseInt(questionNumber) + 1}`);
+    } else {
+      navigate(`/quiz/room/${roomId}`);
+    }
   };
 
   // Reset to try again

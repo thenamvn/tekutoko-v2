@@ -450,6 +450,56 @@ const verifyToken = (req, res, next) => {
   return next();
 };
 
+const verifyAdminToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  
+  if (!token) {
+    return res.status(403).json({
+      message: "Access denied",
+    });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    const username = decoded.username;
+    
+    // Kiểm tra username có trong bảng admin_account không
+    pool.query(
+      "SELECT username, fullname FROM admin_account WHERE username = ?",
+      [username],
+      (err, results) => {
+        if (err) {
+          console.error("Database query error:", err);
+          return res.status(500).json({
+            message: "Database error",
+          });
+        }
+        
+        if (results.length === 0) {
+          return res.status(403).json({
+            message: "Admin access required",
+          });
+        }
+        
+        // Lưu thông tin admin vào req.user
+        req.user = {
+          username: results[0].username,
+          fullname: results[0].fullname,
+          role: 'admin'
+        };
+        
+        return next();
+      }
+    );
+  } catch (err) {
+    console.error("Token verification error:", err);
+    return res.status(401).json({
+      message: "Invalid Token",
+    });
+  }
+};
+
 // upload image
 app.post("/upload", verifyToken, (req, res) => {
   const { room_id, uploader_username, fileUrls } = req.body;
@@ -3392,7 +3442,6 @@ app.delete("/api/delete/vouchers/:roomId/:hostId", verifyToken, (req, res) => {
 
 // Cron job để xoá các voucher hết hạn
 cron.schedule("0 0 * * *", async () => {
-  // Lịch trình: hàng ngày lúc 00:00
   console.log("Checking for expired vouchers to delete...");
 
   const query =
@@ -3404,60 +3453,263 @@ cron.schedule("0 0 * * *", async () => {
       return;
     }
 
+    if (results.length === 0) {
+      console.log("No expired vouchers found.");
+      return;
+    }
+
+    console.log(`Found ${results.length} expired vouchers to delete.`);
+
     for (const row of results) {
       const voucherId = row.id;
-      const ticketImageUrl = row.ticket_image_url; // Lấy link ảnh
+      const ticketImageUrl = row.ticket_image_url;
 
-      // Xoá ảnh khỏi Firebase Storage
-      if (ticketImageUrl) {
-        const fileRef = ref(storage, ticketImageUrl);
-        try {
-          await deleteObject(fileRef);
-          console.log(`Image deleted from Firebase Storage: ${ticketImageUrl}`);
-        } catch (error) {
-          if (error.code === "storage/object-not-found") {
-            console.warn(
-              `Image not found in Firebase Storage: ${ticketImageUrl}`
-            );
-          } else {
-            console.error("Error deleting image:", error);
-          }
+      // Sử dụng transaction để đảm bảo tính nhất quán
+      pool.getConnection((err, connection) => {
+        if (err) {
+          console.error("Error getting database connection:", err);
+          return;
         }
-      }
 
-      // Xoá các dòng dữ liệu `images` liên quan
-      const deleteImagesQuery = "DELETE FROM images WHERE image_path = ?";
-      await new Promise((resolve, reject) => {
-        pool.query(deleteImagesQuery, [ticketImageUrl], (err, results) => {
+        connection.beginTransaction(async (err) => {
           if (err) {
-            console.error("Error deleting images:", err);
-            reject(err);
-          } else {
-            console.log(
-              `Images deleted successfully for voucher: ${voucherId}`
-            );
-            resolve();
+            console.error("Error starting transaction:", err);
+            connection.release();
+            return;
+          }
+
+          try {
+            // 1. Xoá voucher trước (quan trọng nhất)
+            await new Promise((resolve, reject) => {
+              connection.query("DELETE FROM vouchers WHERE id = ?", [voucherId], (err, results) => {
+                if (err) {
+                  reject(err);
+                } else {
+                  console.log(`Voucher deleted successfully: ${voucherId}`);
+                  resolve(results);
+                }
+              });
+            });
+
+            // 2. Xoá dữ liệu liên quan trong bảng images (nếu có)
+            if (ticketImageUrl) {
+              await new Promise((resolve, reject) => {
+                connection.query("DELETE FROM images WHERE image_path = ?", [ticketImageUrl], (err, results) => {
+                  if (err) {
+                    console.error("Error deleting from images table:", err);
+                    // Không reject ở đây vì không quan trọng bằng việc xóa voucher
+                  } else {
+                    console.log(`Images table cleaned for voucher: ${voucherId}`);
+                  }
+                  resolve(results);
+                });
+              });
+
+              // 3. Cuối cùng mới xoá ảnh từ Firebase Storage
+              try {
+                const fileRef = ref(storage, ticketImageUrl);
+                await deleteObject(fileRef);
+                console.log(`Image deleted from Firebase Storage: ${ticketImageUrl}`);
+              } catch (error) {
+                if (error.code === "storage/object-not-found") {
+                  console.warn(`Image not found in Firebase Storage: ${ticketImageUrl}`);
+                } else {
+                  console.error("Error deleting image from Firebase:", error);
+                  // Không throw error vì việc xóa voucher đã thành công
+                }
+              }
+            }
+
+            // Commit transaction
+            connection.commit((err) => {
+              if (err) {
+                console.error("Error committing transaction:", err);
+                connection.rollback(() => {
+                  connection.release();
+                });
+              } else {
+                console.log(`Successfully processed expired voucher: ${voucherId}`);
+                connection.release();
+              }
+            });
+
+          } catch (error) {
+            console.error(`Error processing voucher ${voucherId}:`, error);
+            connection.rollback(() => {
+              connection.release();
+            });
           }
         });
-      });
-
-      // Xoá voucher
-      const deleteQuery = "DELETE FROM vouchers WHERE id = ?";
-      pool.query(deleteQuery, [voucherId], (err, results) => {
-        if (err) {
-          console.error("Error deleting voucher:", err);
-        } else {
-          console.log(`Voucher deleted successfully: ${voucherId}`);
-        }
       });
     }
   });
 });
 
-//api report
-app.post("/report", (req, res) => {
-  const { roomId, username, reason, additionalInfo } = req.body;
+app.post("/api/cleanup-expired-vouchers", verifyToken, async (req, res) => {
+  try {
+    console.log("Starting manual cleanup of expired vouchers...");
 
+    const query = "SELECT id, ticket_image_url FROM vouchers WHERE expiration_date < CURDATE()";
+
+    pool.query(query, async (err, results) => {
+      if (err) {
+        console.error("Error checking expired vouchers:", err);
+        return res.status(500).json({ 
+          success: false, 
+          error: "Database error",
+          details: err.message 
+        });
+      }
+
+      if (results.length === 0) {
+        console.log("No expired vouchers found.");
+        return res.json({ 
+          success: true,
+          message: "No expired vouchers found",
+          deleted: 0,
+          total: 0
+        });
+      }
+
+      console.log(`Found ${results.length} expired vouchers to delete.`);
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors = [];
+
+      // Process each voucher
+      for (const row of results) {
+        const voucherId = row.id;
+        const ticketImageUrl = row.ticket_image_url;
+
+        try {
+          // Use promise-based approach for better control
+          await new Promise((resolve, reject) => {
+            pool.getConnection((err, connection) => {
+              if (err) {
+                reject(new Error(`Database connection error: ${err.message}`));
+                return;
+              }
+
+              connection.beginTransaction(async (err) => {
+                if (err) {
+                  connection.release();
+                  reject(new Error(`Transaction start error: ${err.message}`));
+                  return;
+                }
+
+                try {
+                  // 1. Delete voucher first (most important)
+                  await new Promise((resolveDelete, rejectDelete) => {
+                    connection.query("DELETE FROM vouchers WHERE id = ?", [voucherId], (err, results) => {
+                      if (err) {
+                        rejectDelete(err);
+                      } else {
+                        console.log(`Voucher deleted successfully: ${voucherId}`);
+                        resolveDelete(results);
+                      }
+                    });
+                  });
+
+                  // 2. Clean related data in images table (if exists)
+                  if (ticketImageUrl) {
+                    await new Promise((resolveImage, rejectImage) => {
+                      connection.query("DELETE FROM images WHERE image_path = ?", [ticketImageUrl], (err, results) => {
+                        if (err) {
+                          console.error("Error deleting from images table:", err);
+                          // Don't reject here as it's not as critical as voucher deletion
+                        } else {
+                          console.log(`Images table cleaned for voucher: ${voucherId}`);
+                        }
+                        resolveImage(results);
+                      });
+                    });
+
+                    // 3. Finally delete image from Firebase Storage
+                    try {
+                      const fileRef = ref(storage, ticketImageUrl);
+                      await deleteObject(fileRef);
+                      console.log(`Image deleted from Firebase Storage: ${ticketImageUrl}`);
+                    } catch (error) {
+                      if (error.code === "storage/object-not-found") {
+                        console.warn(`Image not found in Firebase Storage: ${ticketImageUrl}`);
+                      } else {
+                        console.error("Error deleting image from Firebase:", error);
+                        // Don't throw error as voucher deletion was successful
+                      }
+                    }
+                  }
+
+                  // Commit transaction
+                  connection.commit((err) => {
+                    if (err) {
+                      connection.rollback(() => {
+                        connection.release();
+                        reject(new Error(`Transaction commit error: ${err.message}`));
+                      });
+                    } else {
+                      console.log(`Successfully processed expired voucher: ${voucherId}`);
+                      connection.release();
+                      resolve();
+                    }
+                  });
+
+                } catch (error) {
+                  connection.rollback(() => {
+                    connection.release();
+                    reject(error);
+                  });
+                }
+              });
+            });
+          });
+
+          successCount++;
+          
+        } catch (error) {
+          console.error(`Error processing voucher ${voucherId}:`, error);
+          errorCount++;
+          errors.push({
+            voucherId: voucherId,
+            error: error.message
+          });
+        }
+      }
+
+      // Return comprehensive results
+      res.json({
+        success: true,
+        message: "Cleanup completed",
+        total: results.length,
+        deleted: successCount,
+        errors: errorCount,
+        details: {
+          successfulDeletions: successCount,
+          failedDeletions: errorCount,
+          errorDetails: errors.length > 0 ? errors : null
+        },
+        timestamp: new Date().toISOString()
+      });
+    });
+
+  } catch (error) {
+    console.error("Unexpected error in cleanup:", error);
+    res.status(500).json({
+      success: false,
+      error: "Unexpected error occurred",
+      details: error.message
+    });
+  }
+});
+
+//api report
+app.post("/report", verifyToken, (req, res) => {
+  const { roomId, username, reason, additionalInfo, reporter } = req.body;
+  if (req.user.username !== reporter) {
+    return res
+      .status(403)
+      .json({ success: false, message: "alert.report.notAuthorized" });
+  }
   // Validate input
   if (!roomId || !username || !reason || reason.trim() === "") {
     return res
@@ -3465,12 +3717,12 @@ app.post("/report", (req, res) => {
       .json({ success: false, message: "alert.report.reportFailed" });
   }
 
-  // SQL query to check if the report already exists
+  // SQL query to check if the report already exists - check by room_id, username AND reporter
   const checkQuery = `
-      SELECT * FROM reports WHERE room_id = ? AND username = ?
+      SELECT * FROM reports WHERE room_id = ? AND username = ? AND reporter = ?
   `;
 
-  const checkValues = [roomId, username, reason];
+  const checkValues = [roomId, username, reporter];
 
   pool.query(checkQuery, checkValues, (err, results) => {
     if (err) {
@@ -3489,11 +3741,11 @@ app.post("/report", (req, res) => {
 
     // If report doesn't exist, insert new report
     const insertQuery = `
-          INSERT INTO reports (room_id, username, reason, additional_info)
-          VALUES (?, ?, ?, ?)
+          INSERT INTO reports (room_id, username, reason, additional_info, reporter)
+          VALUES (?, ?, ?, ?, ?)
       `;
 
-    const insertValues = [roomId, username, reason, additionalInfo];
+    const insertValues = [roomId, username, reason, additionalInfo, reporter];
 
     pool.query(insertQuery, insertValues, (err, results) => {
       if (err) {
@@ -3511,13 +3763,7 @@ app.post("/report", (req, res) => {
 });
 
 //api report admin
-app.get("/admin/reports", verifyToken, (req, res) => {
-  if (req.user.username !== "admin") {
-    return res
-      .status(403)
-      .send("You are not authorized to perform this action");
-  }
-
+app.get("/admin/reports", verifyAdminToken, (req, res) => {
   const query = `
     SELECT 
       r.*, 
@@ -3538,15 +3784,8 @@ app.get("/admin/reports", verifyToken, (req, res) => {
   });
 });
 //api delete report
-app.delete("/admin/reports/:id", verifyToken, (req, res) => {
+app.delete("/admin/reports/:id", verifyAdminToken, (req, res) => {
   const reportId = req.params.id;
-
-  if (req.user.username !== "admin") {
-    return res
-      .status(403)
-      .send("You are not authorized to perform this action");
-  }
-
   const query = "DELETE FROM reports WHERE id = ?";
   pool.query(query, [reportId], (err, results) => {
     if (err) {
@@ -4067,59 +4306,6 @@ app.get(
   }
 );
 
-// Endpoint to get user's quiz progress (answered questions count) in a room
-app.get("/api/room/:roomId/user/:username/progress", async (req, res) => {
-  try {
-    const { roomId, username } = req.params;
-
-    // Validate input
-    if (!roomId || !username) {
-      return res.status(400).json({
-        success: false,
-        error: "Room ID and username are required",
-      });
-    }
-
-    // First get the total number of questions in the room
-    const [totalResult] = await pool
-      .promise()
-      .query("SELECT COUNT(*) as total FROM Questions WHERE room_id = ?", [
-        roomId,
-      ]);
-
-    const totalQuestions = totalResult[0].total;
-
-    // Then get the count of unique questions the user has answered
-    const [answeredResult] = await pool.promise().query(
-      `SELECT COUNT(DISTINCT question_id) as answered 
-       FROM User_Submissions 
-       WHERE room_id = ? AND user_id = ?`,
-      [roomId, username]
-    );
-
-    const answeredQuestions = answeredResult[0].answered;
-
-    // Return the progress data
-    return res.json({
-      success: true,
-      progress: {
-        answered: answeredQuestions,
-        total: totalQuestions,
-        completion:
-          totalQuestions > 0
-            ? Math.round((answeredQuestions / totalQuestions) * 100)
-            : 0,
-      },
-    });
-  } catch (err) {
-    console.error("Error fetching user progress:", err);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to fetch progress",
-      details: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
-  }
-});
 
 app.get("/user/:userId/hosted-rooms", async (req, res) => {
   const { userId } = req.params;
@@ -4584,6 +4770,43 @@ app.get("/user/:username/following", async (req, res) => {
   }
 });
 
+// Endpoint to get total number of questions in a room
+app.get("/api/room/:roomId/user/:username/progress", async (req, res) => {
+  try {
+    const { roomId, username } = req.params;
+
+    // Validate input
+    if (!roomId || !username) {
+      return res.status(400).json({
+        success: false,
+        error: "Room ID and username are required",
+      });
+    }
+
+    // Get the total number of questions in the room
+    const [totalResult] = await pool
+      .promise()
+      .query("SELECT COUNT(*) as total FROM Questions WHERE room_id = ?", [
+        roomId,
+      ]);
+
+    const totalQuestions = totalResult[0].total;
+
+    // Return only the total count
+    return res.json({
+      success: true,
+      total: totalQuestions,
+    });
+  } catch (err) {
+    console.error("Error fetching question count:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to fetch question count",
+      details: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+});
+
 // API endpoint để kiểm tra xem user có trả lời đúng tất cả câu hỏi không
 app.get(
   "/api/room/:roomId/user/:username/correct-answers",
@@ -4598,23 +4821,27 @@ app.get(
           roomId,
         ]);
 
-      // Đếm số câu trả lời đúng của user
+      // Đếm số câu trả lời đúng của user và lấy danh sách question_id
       const [correctAnswers] = await pool.promise().query(
-        `SELECT COUNT(*) as correct 
-       FROM User_Submissions us
-       JOIN Questions q ON us.question_id = q.question_id
-       WHERE us.user_id = ? AND q.room_id = ? AND us.is_correct = 1`,
+        `SELECT COUNT(*) as correct, GROUP_CONCAT(q.question_id) as correct_question_ids
+         FROM User_Submissions us
+         JOIN Questions q ON us.question_id = q.question_id
+         WHERE us.user_id = ? AND q.room_id = ? AND us.is_correct = 1`,
         [username, roomId]
       );
 
       const total = totalQuestions[0].total;
       const correct = correctAnswers[0].correct;
+      const correctQuestionIds = correctAnswers[0].correct_question_ids 
+        ? correctAnswers[0].correct_question_ids.split(',').map(id => parseInt(id))
+        : [];
 
       res.json({
         success: true,
         allCorrect: total > 0 && correct === total,
         correct: correct,
         total: total,
+        correctQuestionIds: correctQuestionIds
       });
     } catch (err) {
       console.error("Error checking correct answers:", err);
@@ -4625,6 +4852,83 @@ app.get(
     }
   }
 );
+
+app.get("/api/room/:roomId/all-users-results", async (req, res) => {
+  try {
+    const { roomId } = req.params;
+
+    // Đếm tổng số câu hỏi trong room
+    const [totalQuestions] = await pool
+      .promise()
+      .query("SELECT COUNT(*) as total FROM Questions WHERE room_id = ?", [
+        roomId,
+      ]);
+
+    const totalQuestionsCount = totalQuestions[0].total;
+
+    if (totalQuestionsCount === 0) {
+      return res.json({
+        success: true,
+        message: "No questions found in this room",
+        totalQuestions: 0,
+        users: []
+      });
+    }
+
+    // Lấy kết quả của tất cả user đã submit trong room
+    const [userResults] = await pool.promise().query(
+      `SELECT 
+        us.user_id as username,
+        u.fullname,
+        COALESCE(up.avatarImage, 'https://www.svgrepo.com/show/341256/user-avatar-filled.svg') AS avatarImage,
+        COUNT(DISTINCT us.question_id) as answered_questions,
+        COUNT(CASE WHEN us.is_correct = 1 THEN 1 END) as correct_answers,
+        ROUND((COUNT(CASE WHEN us.is_correct = 1 THEN 1 END) / ?) * 100, 2) as score_percentage,
+        MAX(us.submitted_at) as last_submission
+      FROM User_Submissions us
+      JOIN Questions q ON us.question_id = q.question_id
+      JOIN users u ON us.user_id = u.username
+      LEFT JOIN UserProfile up ON u.username = up.username
+      WHERE q.room_id = ?
+      GROUP BY us.user_id, u.fullname, up.avatarImage
+      ORDER BY score_percentage DESC, correct_answers DESC, last_submission ASC`,
+      [totalQuestionsCount, roomId]
+    );
+
+    // Thêm thông tin về việc hoàn thành tất cả câu hỏi
+    const processedResults = userResults.map(user => ({
+      ...user,
+      allCorrect: user.correct_answers === totalQuestionsCount,
+      allAnswered: user.answered_questions === totalQuestionsCount,
+      completion_status: user.answered_questions === totalQuestionsCount ? 
+        (user.correct_answers === totalQuestionsCount ? 'perfect' : 'completed') : 
+        'incomplete'
+    }));
+
+    // Thống kê tổng quan
+    const stats = {
+      totalUsers: processedResults.length,
+      perfectScores: processedResults.filter(u => u.allCorrect).length,
+      completedUsers: processedResults.filter(u => u.allAnswered).length,
+      averageScore: processedResults.length > 0 ? 
+        (processedResults.reduce((sum, u) => sum + u.score_percentage, 0) / processedResults.length).toFixed(2) : 0
+    };
+
+    res.json({
+      success: true,
+      totalQuestions: totalQuestionsCount,
+      stats: stats,
+      users: processedResults
+    });
+
+  } catch (err) {
+    console.error("Error checking all users results:", err);
+    res.status(500).json({
+      success: false,
+      error: "Failed to check all users results",
+    });
+  }
+});
 
 app.get("/api/room/:roomId/user-submissions-upload", async (req, res) => {
   try {
@@ -4870,7 +5174,7 @@ app.get("/api/room/search/nearby", (req, res) => {
           r.city,
           r.country,
           u.fullname as admin_fullname,
-          up.avatarImage as admin_avatar,
+          up.avatarImage,
           ST_Distance_Sphere(r.location, ST_GeomFromText(?, 4326)) AS distance_m
         FROM room r
         LEFT JOIN users u ON r.admin_username = u.username
@@ -5004,6 +5308,159 @@ app.post('/api/chat', async (req, res) => {
     });
   }
 });
+
+// ✅ API tạo câu hỏi tự động bằng AI
+app.post('/api/ai/generate-questions', async (req, res) => {
+  try {
+    const { topic, numQuestions = 5, difficulty = 'medium', questionTypes = ['text', 'multiple-choice'] } = req.body;
+    
+    if (!topic) {
+      return res.status(400).json({ 
+        error: 'Vui lòng nhập chủ đề để tạo câu hỏi' 
+      });
+    }
+
+    // Validate số lượng câu hỏi - Tăng từ 10 lên 25
+    const validNumQuestions = Math.min(Math.max(parseInt(numQuestions), 1), 25);
+    
+    // ✅ Timeout tối ưu hơn: min 30s, với 10 câu = 15s thêm, 25 câu = 37.5s thêm
+    const timeoutMs = Math.max(30000, Math.round(validNumQuestions * 1500)); // 1.5s mỗi câu thay vì 15s
+    req.setTimeout(timeoutMs);
+    
+    console.log(`Generating ${validNumQuestions} questions with ${timeoutMs}ms timeout`);
+    
+    // Tạo prompt cho AI
+    const prompt = buildQuestionGenerationPrompt(topic, validNumQuestions, difficulty, questionTypes);
+    
+    // Gọi AI để tạo câu hỏi
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: prompt,
+    });
+
+    // Parse JSON response từ AI
+    let generatedQuestions;
+    try {
+      // Lấy text từ response và parse JSON
+      const responseText = response.text || response.response?.text || '';
+      
+      // Tìm JSON trong response text
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        generatedQuestions = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('Không tìm thấy JSON trong response');
+      }
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+      return res.status(500).json({ 
+        error: 'Lỗi xử lý phản hồi từ AI. Vui lòng thử lại!' 
+      });
+    }
+
+    // Validate và format câu hỏi
+    const formattedQuestions = formatGeneratedQuestions(generatedQuestions.questions || [], questionTypes);
+    // ✅ Thêm check nếu không có câu hỏi hợp lệ nào
+    if (formattedQuestions.length === 0) {
+      return res.status(500).json({ 
+        error: `AI không tạo được câu hỏi phù hợp với loại: ${questionTypes.join(', ')}. Vui lòng thử lại!` 
+      });
+    }
+    res.json({ 
+      success: true,
+      questions: formattedQuestions,
+      topic: topic,
+      difficulty: difficulty,
+      requestedTypes: questionTypes,
+      estimatedTime: `${Math.round(timeoutMs / 1000)}s`,
+      actualQuestions: formattedQuestions.length,
+      requestedQuestions: validNumQuestions,
+      timestamp: new Date().toISOString() 
+    });
+
+  } catch (error) {
+    console.error('AI Question Generation error:', error);
+    res.status(500).json({ 
+      error: 'Xin lỗi, có lỗi xảy ra khi tạo câu hỏi. Vui lòng thử lại sau!' 
+    });
+  }
+});
+
+// Hàm tạo prompt cho AI
+function buildQuestionGenerationPrompt(topic, numQuestions, difficulty, questionTypes) {
+  const difficultyDesc = {
+    easy: 'dễ (cơ bản)',
+    medium: 'trung bình',
+    hard: 'khó (nâng cao)'
+  };
+
+  const typeDesc = {
+    text: 'Câu hỏi văn bản (người dùng nhập đáp án)',
+    'multiple-choice': 'Câu hỏi trắc nghiệm (4 lựa chọn)',
+    upload: 'Câu hỏi upload ảnh (không cần đáp án cụ thể)'
+  };
+
+  return `Bạn là một chuyên gia giáo dục. Tạo ${numQuestions} câu hỏi về chủ đề "${topic}" với độ khó ${difficultyDesc[difficulty] || 'trung bình'}.
+
+**YÊU CẦU QUAN TRỌNG:**
+1. CHỈ tạo câu hỏi với các loại được chỉ định: ${questionTypes.map(type => typeDesc[type]).join(', ')}
+2. KHÔNG được tạo loại câu hỏi khác ngoài: ${questionTypes.join(', ')}
+3. Tất cả ${numQuestions} câu hỏi phải thuộc loại: ${questionTypes.join(' HOẶC ')}
+4. Câu hỏi phải phù hợp với độ khó ${difficulty}
+
+**CHI TIẾT THEO LOẠI:**
+${questionTypes.includes('multiple-choice') ? `
+- MULTIPLE-CHOICE: Tạo 4 lựa chọn A,B,C,D với chỉ 1 đáp án đúng
+` : ''}
+${questionTypes.includes('text') ? `
+- TEXT: Cung cấp nhiều đáp án đúng có thể (cách nhau bằng |)
+` : ''}
+${questionTypes.includes('upload') ? `
+- UPLOAD: Tạo câu hỏi yêu cầu upload ảnh/file (không cần đáp án cụ thể)
+` : ''}
+
+**Format JSON trả về:**
+{
+  "questions": [
+    {
+      "question_text": "Nội dung câu hỏi",
+      "question_type": "${questionTypes.length === 1 ? questionTypes[0] : 'CHỈ một trong: ' + questionTypes.join('|')}",
+      "hint": "Gợi ý (tùy chọn)",
+      "explanation": "Giải thích đáp án"${questionTypes.includes('text') ? ',\n      "correct_text_answer": "đáp án 1|đáp án 2|đáp án 3" (chỉ cho type text)' : ''}${questionTypes.includes('multiple-choice') ? ',\n      "options": [\n        {"option_text": "Lựa chọn A", "is_correct": false},\n        {"option_text": "Lựa chọn B", "is_correct": true},\n        {"option_text": "Lựa chọn C", "is_correct": false},\n        {"option_text": "Lựa chọn D", "is_correct": false}\n      ] (chỉ cho type multiple-choice)' : ''}
+    }
+  ]
+}
+
+**LƯU Ý:** Chỉ trả về JSON thuần, không thêm text khác. Tất cả câu hỏi phải thuộc loại: ${questionTypes.join(' hoặc ')}.`;
+}
+
+// Hàm format và validate câu hỏi được tạo
+function formatGeneratedQuestions(questions) {
+  return questions.map((q, index) => {
+    const formattedQuestion = {
+      tempId: Date.now() + index,
+      question_text: q.question_text || '',
+      question_type: q.question_type || 'text',
+      hint: q.hint || '',
+      explanation: q.explanation || '',
+    };
+
+    // Xử lý theo loại câu hỏi
+    if (q.question_type === 'text') {
+      formattedQuestion.correct_text_answer = q.correct_text_answer || '';
+    } else if (q.question_type === 'multiple-choice') {
+      formattedQuestion.options = q.options || [
+        { option_text: '', is_correct: false },
+        { option_text: '', is_correct: false },
+        { option_text: '', is_correct: false },
+        { option_text: '', is_correct: false }
+      ];
+    }
+    // upload type không cần thêm gì
+
+    return formattedQuestion;
+  }).filter(q => q.question_text.trim() !== ''); // Loại bỏ câu hỏi rỗng
+}
 
 app.listen(PORT, () => {
   console.log("Server is running on port 9999");

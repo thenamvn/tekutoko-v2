@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useParams } from 'react-router-dom';
 import Discovery from './components/discovery/Discovery';
 import PrivateRouteAdmin from './components/room_admin/login/PrivateRouteAdmin';
 import PrivateRoute from './components/login/PrivateRoute';
@@ -47,6 +47,16 @@ const App = () => {
     }
   }, [i18n]);
 
+    // Wrapper cho PrivateRoute + QuestionPage
+  const PrivateQuestionPageWrapper = () => {
+    const { roomId, questionNumber } = useParams();
+    return (
+      <PrivateRoute 
+        component={() => <QuestionPage key={`${roomId}-${questionNumber}`} />} 
+      />
+    );
+  };
+
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Suspense fallback={<Spinner />}>
@@ -75,7 +85,7 @@ const App = () => {
           {/*404 Not Found*/}
           <Route path="*" element={<NotFound />} />
           <Route path="/quiz/room/:roomId" element={<QuizRoom />} />
-          <Route path="/quiz/room/:roomId/question/:questionNumber" element={<PrivateRoute component={QuestionPage} />} />
+          <Route path="/quiz/room/:roomId/question/:questionNumber" element={<PrivateQuestionPageWrapper />} />
           {/* <Route path="/quiz/room/:roomId/results" element={<QuizResults />} /> */}
           
           <Route path="/create-room" element={<RoomSetup />} />
