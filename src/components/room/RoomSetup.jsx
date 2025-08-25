@@ -1141,7 +1141,7 @@ const RoomSetup = () => {
                                 <button
                                     type="button"
                                     onClick={() => setShowAIGenerator(true)}
-                                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-3 px-6 rounded-xl shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02] flex items-center"
+                                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-1 px-2 rounded-xl shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02] flex items-center"
                                 >
                                     <span className="mr-2">🤖</span>
                                     {t('aiGenerator.title', 'Tạo bằng AI')}
@@ -1150,7 +1150,7 @@ const RoomSetup = () => {
                                 <button
                                     type="button"
                                     onClick={handleAddQuestionToList}
-                                    className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white py-3 px-6 rounded-xl shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02]"
+                                    className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white py-1 px-2 rounded-xl shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02]"
                                 >
                                     {t('setupRoom.addThisQuestion')}
                                 </button>
@@ -1204,7 +1204,7 @@ const RoomSetup = () => {
 
             {/* Footer Navigation với glassmorphism */}
             <div className="fixed w-full max-w-md bottom-0 z-50">
-                <div className="bg-white/90 backdrop-blur-lg border-t border-white/20">
+                <div className="">
                     <NavigationComponent />
                 </div>
             </div>

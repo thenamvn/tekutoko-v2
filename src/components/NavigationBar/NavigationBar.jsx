@@ -30,10 +30,7 @@ const NavigationComponent = () => {
   return shouldShowBottomNavigation() ? (
     <BottomNavigation
       value={value}
-      style={{
-        backgroundColor: 'rgb(243, 244, 246)',
-        '--tw-bg-opacity': '1',
-      }}
+      className='bg-gradient-to-br from-slate-50 to-violet-50'
       onChange={(event, newValue) => {
         setValue(newValue);
       }}
