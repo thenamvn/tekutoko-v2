@@ -109,12 +109,10 @@ const QuestionPage = () => {
             setUserSubmission(submission);
             
             // Pre-fill the user's previous answer only if they got it wrong
-            if (!submission.isCorrect) {
-              if (submission.type === 'text') {
-                setUserAnswer(submission.answer);
-              } else if (submission.type === 'multiple-choice') {
-                setSelectedOption(submission.answer);
-              }
+            if (submission.type === 'text') {
+              setUserAnswer(submission.answer);
+            } else if (submission.type === 'multiple-choice') {
+              setSelectedOption(submission.answer);
             }
           }
         }

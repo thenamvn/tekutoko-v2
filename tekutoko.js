@@ -4243,6 +4243,120 @@ app.post("/api/room/:roomId/submit-file-answer", async (req, res) => {
     });
   }
 });
+// leaderboard
+app.get("/api/room/:roomId/answers-table", async (req, res) => {
+  try {
+    const { roomId } = req.params;
+
+    // 1. Lấy danh sách câu hỏi
+    const [questions] = await pool.promise().query(
+      `SELECT question_id, question_number, question_text, question_type 
+       FROM Questions WHERE room_id = ? ORDER BY question_number ASC`,
+      [roomId]
+    );
+
+    // 2. Lấy danh sách user đã nộp bài (có submission)
+    const [users] = await pool.promise().query(
+      `SELECT DISTINCT us.user_id AS username, u.fullname
+       FROM User_Submissions us
+       JOIN users u ON us.user_id = u.username
+       WHERE us.room_id = ?
+       ORDER BY u.fullname ASC`,
+      [roomId]
+    );
+
+    // 3. Lấy tất cả đáp án
+    const [submissions] = await pool.promise().query(
+      `SELECT us.user_id, us.question_id, us.submitted_answer_text, us.submitted_option_id, us.submitted_file_url, us.is_correct
+       FROM User_Submissions us
+       WHERE us.room_id = ?`,
+      [roomId]
+    );
+
+    // 4. Build bảng: rows = users, columns = questions
+    const table = users.map(user => {
+      const row = {
+        username: user.username,
+        fullname: user.fullname,
+        answers: questions.map(q => {
+          const sub = submissions.find(
+            s => s.user_id === user.username && s.question_id === q.question_id
+          );
+          return sub
+            ? {
+                value: sub.submitted_answer_text || sub.submitted_option_id || sub.submitted_file_url || "",
+                isCorrect: !!sub.is_correct,
+                type: q.question_type
+              }
+            : null;
+        })
+      };
+      return row;
+    });
+
+    res.json({
+      success: true,
+      questions: questions.map(q => ({
+        id: q.question_id,
+        number: q.question_number,
+        text: q.question_text,
+        type: q.question_type
+      })),
+      users: users,
+      table: table
+    });
+  } catch (err) {
+    console.error("Error building answers table:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+app.get("/api/room/:roomId/answers-table/:username", async (req, res) => {
+  try {
+    const { roomId, username } = req.params;
+
+    // 1. Lấy danh sách câu hỏi
+    const [questions] = await pool.promise().query(
+      `SELECT question_id, question_number, question_text, question_type 
+       FROM Questions WHERE room_id = ? ORDER BY question_number ASC`,
+      [roomId]
+    );
+
+    // 2. Lấy đáp án của user
+    const [submissions] = await pool.promise().query(
+      `SELECT question_id, submitted_answer_text, submitted_option_id, submitted_file_url, is_correct
+       FROM User_Submissions
+       WHERE room_id = ? AND user_id = ?`,
+      [roomId, username]
+    );
+
+    // 3. Build answers theo thứ tự câu hỏi
+    const answers = questions.map(q => {
+      const sub = submissions.find(s => s.question_id === q.question_id);
+      return sub
+        ? {
+            value: sub.submitted_answer_text || sub.submitted_option_id || sub.submitted_file_url || "",
+            isCorrect: !!sub.is_correct,
+            type: q.question_type
+          }
+        : null;
+    });
+
+    res.json({
+      success: true,
+      questions: questions.map(q => ({
+        id: q.question_id,
+        number: q.question_number,
+        text: q.question_text,
+        type: q.question_type
+      })),
+      answers: answers
+    });
+  } catch (err) {
+    console.error("Error building user answers table:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
 
 // GET user's submission for a specific question
 app.get(
