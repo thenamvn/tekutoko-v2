@@ -5445,14 +5445,14 @@ app.post('/api/ai/generate-questions', async (req, res) => {
     const timeoutMs = Math.max(30000, Math.round(validNumQuestions * 1500)); // 1.5s mỗi câu thay vì 15s
     req.setTimeout(timeoutMs);
     
-    console.log(`Generating ${validNumQuestions} questions with ${timeoutMs}ms timeout`);
+    // console.log(`Generating ${validNumQuestions} questions with ${timeoutMs}ms timeout`);
     
     // Tạo prompt cho AI
     const prompt = buildQuestionGenerationPrompt(topic, validNumQuestions, difficulty, questionTypes);
     
     // Gọi AI để tạo câu hỏi
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.0-flash',
       contents: prompt,
     });
 
