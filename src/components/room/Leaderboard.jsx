@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-
+import UserAnswersTable from './UserAnswersTable';
+import AnswersMatrixTable from './AnswersMatrixTable';
 const Leaderboard = ({ 
   isOpen, 
   onClose, 
@@ -11,6 +12,8 @@ const Leaderboard = ({
   const { t } = useTranslation();
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showMatrix, setShowMatrix] = useState(false);
 
   // Fetch leaderboard data
   const fetchLeaderboard = async () => {
@@ -182,6 +185,13 @@ const Leaderboard = ({
                         <div className="text-xs text-slate-500 truncate">
                           @{user.username}
                         </div>
+                        <button
+                          className="text-xs text-violet-600 underline mt-1"
+                          onClick={() => setSelectedUser(user)}
+                          type="button"
+                        >
+                          Xem đáp án
+                        </button>
                       </div>
 
                       {/* Score Info */}
@@ -216,6 +226,31 @@ const Leaderboard = ({
                       </div>
                     </div>
                   ))}
+                <div className="mt-6 text-center">
+                  <button
+                    className="inline-block px-6 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-lg hover:scale-105 transition-all"
+                    onClick={() => setShowMatrix(true)}
+                    type="button"
+                  >
+                    Xem đáp án toàn bộ user
+                  </button>
+                </div>
+                {selectedUser && (
+                  <UserAnswersTable
+                    user={selectedUser}
+                    roomId={roomId}
+                    apiUrl={apiUrl}
+                    onClose={() => setSelectedUser(null)}
+                  />
+                )}
+                {showMatrix && (
+                  <AnswersMatrixTable
+                    users={leaderboardData.users}
+                    roomId={roomId}
+                    apiUrl={apiUrl}
+                    onClose={() => setShowMatrix(false)}
+                  />
+                )}
               </div>
             </>
           ) : (

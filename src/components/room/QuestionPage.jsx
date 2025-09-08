@@ -109,12 +109,10 @@ const QuestionPage = () => {
             setUserSubmission(submission);
             
             // Pre-fill the user's previous answer only if they got it wrong
-            if (!submission.isCorrect) {
-              if (submission.type === 'text') {
-                setUserAnswer(submission.answer);
-              } else if (submission.type === 'multiple-choice') {
-                setSelectedOption(submission.answer);
-              }
+            if (submission.type === 'text') {
+              setUserAnswer(submission.answer);
+            } else if (submission.type === 'multiple-choice') {
+              setSelectedOption(submission.answer);
             }
           }
         }
@@ -427,7 +425,7 @@ const QuestionPage = () => {
           </div>
         </div>
         <div className="fixed w-full max-w-md bottom-0 z-50">
-          <div className="bg-white/90 backdrop-blur-lg border-t border-white/20">
+          <div className="">
             <NavigationComponent />
           </div>
         </div>
@@ -452,7 +450,7 @@ const QuestionPage = () => {
           </div>
         </div>
         <div className="fixed w-full max-w-md bottom-0 z-50">
-          <div className="bg-white/90 backdrop-blur-lg border-t border-white/20">
+          <div className="">
             <NavigationComponent />
           </div>
         </div>
@@ -625,7 +623,7 @@ const QuestionPage = () => {
 
       {/* Footer Navigation */}
       <div className="fixed w-full max-w-md bottom-0 z-50">
-        <div className="bg-white/90 backdrop-blur-lg border-t border-white/20">
+        <div className="">
           <NavigationComponent />
         </div>
       </div>

@@ -388,6 +388,7 @@ const Discovery = () => {
                                 >
                                     <div className="relative w-full h-32 sm:h-40 overflow-hidden">
                                         <img
+                                            referrerPolicy="no-referrer"
                                             src={room.thumbnail || room.avatarImage || "https://via.placeholder.com/300x200.png?text=No+Image"}
                                             alt={room.room_title || "Room Image"}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
@@ -413,8 +414,9 @@ const Discovery = () => {
                                         {activeTab === 'nearby' && room.admin_info && (
                                             <div className="mt-2 flex items-center space-x-2">
                                                 <img
-                                                    src={room.admin_info.avatar || 'https://via.placeholder.com/24x24.png?text=A'}
+                                                    src={room.admin_info.avatar}
                                                     alt={room.admin_info.fullname}
+                                                    referrerPolicy="no-referrer"
                                                     className="w-4 h-4 rounded-full object-cover"
                                                 />
                                                 <span className="text-xs text-slate-400 truncate">
@@ -497,7 +499,7 @@ const Discovery = () => {
 
             {/* Bottom Navigation với glassmorphism */}
             <div className="fixed w-full max-w-md bottom-0 z-50">
-                <div className="bg-white/90 backdrop-blur-lg border-t border-white/20">
+                <div className="">
                     <NavigationComponent />
                 </div>
             </div>
