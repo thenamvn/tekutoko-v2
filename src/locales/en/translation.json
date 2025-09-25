@@ -484,10 +484,14 @@
     },
     "adminLogin": {
         "adminPanel": "ADMIN DASHBOARD",
+        "welcomeBack": "Welcome Back, Admin!",
+        "usernamePlaceholder": "Username",
+        "passwordPlaceholder": "Password",
         "username": "Username",
         "password": "Password",
         "loginButton": "Login",
-        "forgotPassword": "Forgot Password?"
+        "forgotPassword": "Forgot Password?",
+        "allRightsReserved": " All rights reserved."
     },
     "profileForm": {
         "passwordUpdate": "UPDATE PASSWORD",

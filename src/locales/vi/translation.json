@@ -486,9 +486,13 @@
     "adminLogin": {
         "adminPanel": "BẢNG ĐIỀU KHIỂN QUẢN TRỊ",
         "username": "Tên đăng nhập",
+        "usernamePlaceholder": "Nhập tên đăng nhập",
+        "welcomeBack": "Chào mừng trở lại!",
         "password": "Mật khẩu",
+        "passwordPlaceholder": "Nhập mật khẩu",
         "loginButton": "Đăng nhập",
-        "forgotPassword": "Quên mật khẩu?"
+        "forgotPassword": "Quên mật khẩu?",
+        "allRightsReserved": " All rights reserved."
     },
     "profileForm": {
         "passwordUpdate": "CẬP NHẬT MẬT KHẨU",

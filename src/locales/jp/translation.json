@@ -484,10 +484,14 @@
     },
     "adminLogin": {
         "adminPanel": "管理ダッシュボード",
+        "welcomeBack": "お帰りなさい！",
+        "usernamePlaceholder": "ユーザー名",
+        "passwordPlaceholder": "パスワード",
         "username": "ユーザー名",
         "password": "パスワード",
         "loginButton": "ログイン",
-        "forgotPassword": "パスワードを忘れましたか？"
+        "forgotPassword": "パスワードを忘れましたか？",
+        "allRightsReserved": " All rights reserved。"
     },
     "profileForm": {
         "passwordUpdate": "パスワードを更新",
