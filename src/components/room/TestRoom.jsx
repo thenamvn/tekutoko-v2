@@ -14,6 +14,7 @@ const TestRoom = () => {
   const [answers, setAnswers] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [enlargedImage, setEnlargedImage] = useState(null);
 
   // Fetch test data from API
   useEffect(() => {
@@ -46,33 +47,87 @@ const TestRoom = () => {
   const cleanTextContent = (text) => {
     if (!text) return '';
     
-    // Remove all pandoc and LaTeX markers step by step
     let cleaned = text
-      // First, handle specific patterns
-      .replace(/\\pandocbounded\{/g, '') // Remove pandoc opening markers
-      .replace(/\}\.\s*\\end\{quote\}/g, '') // Remove }. \end{quote} patterns
-      .replace(/\}\s*\\end\{quote\}/g, '') // Remove } \end{quote} patterns  
-      .replace(/\\end\{quote\}/g, '') // Remove remaining \end{quote}
-      .replace(/\\begin\{quote\}/g, '') // Remove \begin{quote}
-      .replace(/\\end\{[^}]*\}/g, '') // Remove other \end{...} markers
-      .replace(/\\begin\{[^}]*\}/g, '') // Remove other \begin{...} markers
-      .replace(/\\\w+\{[^}]*\}/g, '') // Remove other LaTeX commands
-      // Clean up remaining brackets and punctuation
-      .replace(/^\}\s*/g, '') // Remove leading }
-      .replace(/\}\s*$/g, '') // Remove trailing }
-      .replace(/^\.\s*/g, '') // Remove leading period
-      .replace(/\s*\.\s*$/g, '') // Remove trailing period with spaces
-      // Normalize whitespace
-      .replace(/\n+/g, ' ') // Replace newlines with spaces
-      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-      .trim(); // Remove leading/trailing whitespace
+      .replace(/\\pandocbounded\{/g, '')
+      .replace(/\}\.\s*\\end\{quote\}/g, '')
+      .replace(/\}\s*\\end\{quote\}/g, '')
+      .replace(/\\end\{quote\}/g, '')
+      .replace(/\\begin\{quote\}/g, '')
+      .replace(/\\end\{[^}]*\}/g, '')
+      .replace(/\\begin\{[^}]*\}/g, '')
+      .replace(/\\\w+\{[^}]*\}/g, '')
+      .replace(/^\}\s*/g, '')
+      .replace(/\}\s*$/g, '')
+      .replace(/^\.\s*/g, '')
+      .replace(/\s*\.\s*$/g, '')
+      .replace(/\n+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     
     return cleaned;
   };
 
-  // Render question blocks (text + images)
+  // Check if image is likely a mathematical formula/diagram
+  const isMathImage = (src, text) => {
+    if (!src) return false;
+    
+    // Check if it's in a mathematical context
+    const mathKeywords = ['hàm số', 'biến thiên', 'đạo hàm', 'tích phân', 'vector', 'ma trận', 'phương trình', 'bất phương trình'];
+    const hasText = text && mathKeywords.some(keyword => 
+      text.toLowerCase().includes(keyword)
+    );
+    
+    // Check filename patterns
+    const hasMathFilename = src.includes('image') && (
+      src.includes('table') || 
+      src.includes('chart') || 
+      src.includes('graph') ||
+      hasText
+    );
+    
+    return hasText || hasMathFilename;
+  };
+
+  // Enhanced image rendering with size optimization
+  const renderImage = (src, alt, isInQuestion = false, questionText = '') => {
+    const isMath = isMathImage(src, questionText);
+    
+    // Different sizes based on context and content type
+    let sizeClasses;
+    if (isInQuestion) {
+      // Question images - larger for math content
+      sizeClasses = isMath 
+        ? 'max-h-32 max-w-full cursor-pointer hover:scale-105 transition-transform' 
+        : 'max-h-8 max-w-16';
+    } else {
+      // Option images - moderate size
+      sizeClasses = isMath 
+        ? 'max-h-20 max-w-full cursor-pointer hover:scale-105 transition-transform'
+        : 'max-h-8 max-w-16';
+    }
+
+    return (
+      <img 
+        src={src} 
+        alt={alt}
+        className={`inline-block mx-1 object-contain rounded shadow-sm ${sizeClasses}`}
+        onClick={() => isMath && setEnlargedImage(src)}
+        onError={(e) => {
+          e.target.style.display = 'none';
+        }}
+      />
+    );
+  };
+
+  // Render question blocks with enhanced image handling
   const renderQuestionBlocks = (blocks) => {
     if (!blocks || !Array.isArray(blocks)) return null;
+    
+    // Get all text content for context
+    const allText = blocks
+      .filter(block => block.type === 'text' && block.content)
+      .map(block => cleanTextContent(block.content))
+      .join(' ');
     
     return (
       <div className="flex flex-wrap items-center gap-2">
@@ -90,15 +145,9 @@ const TestRoom = () => {
           
           if (block.type === 'image' && block.src) {
             return (
-              <img 
-                key={index}
-                src={block.src} 
-                alt={`Question image ${index}`}
-                className="inline-block mx-1 max-h-12 max-w-28 object-contain rounded shadow-sm"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+              <div key={index} className="inline-block">
+                {renderImage(block.src, `Question image ${index}`, true, allText)}
+              </div>
             );
           }
           
@@ -108,9 +157,14 @@ const TestRoom = () => {
     );
   };
 
-  // Render option blocks (text + images)  
+  // Render option blocks with enhanced image handling
   const renderOptionBlocks = (blocks) => {
     if (!blocks || !Array.isArray(blocks)) return null;
+    
+    const allText = blocks
+      .filter(block => block.type === 'text' && block.content)
+      .map(block => cleanTextContent(block.content))
+      .join(' ');
     
     return (
       <div className="flex flex-wrap items-center gap-2">
@@ -128,15 +182,9 @@ const TestRoom = () => {
           
           if (block.type === 'image' && block.src) {
             return (
-              <img 
-                key={index}
-                src={block.src} 
-                alt={`Option image ${index}`}
-                className="inline-block mx-1 max-h-10 max-w-24 object-contain rounded shadow-sm"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
+              <div key={index} className="inline-block">
+                {renderImage(block.src, `Option image ${index}`, false, allText)}
+              </div>
             );
           }
           
@@ -169,10 +217,42 @@ const TestRoom = () => {
   };
 
   const handleSubmitTest = () => {
-    // Handle test submission
     console.log('Test answers:', answers);
     alert(t('test.submitSuccess'));
     navigate('/dashboard');
+  };
+
+  // Image enlargement modal
+  const ImageModal = () => {
+    if (!enlargedImage) return null;
+
+    return (
+      <div 
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+        onClick={() => setEnlargedImage(null)}
+      >
+        <div className="relative max-w-full max-h-full">
+          <button
+            onClick={() => setEnlargedImage(null)}
+            className="absolute -top-12 right-0 text-white hover:text-gray-300 bg-black/50 rounded-full p-2 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <img 
+            src={enlargedImage} 
+            alt="Enlarged view"
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+          />
+          <div className="absolute -bottom-12 left-0 right-0 text-center">
+            <p className="text-white text-sm bg-black/50 rounded px-3 py-1 inline-block">
+              {t('test.tapToClose')}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -355,6 +435,9 @@ const TestRoom = () => {
       <div className="fixed w-full max-w-md bottom-0 z-50">
         <NavigationComponent />
       </div>
+
+      {/* Image Modal */}
+      <ImageModal />
     </div>
   );
 };
