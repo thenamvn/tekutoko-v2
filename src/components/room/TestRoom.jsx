@@ -73,14 +73,14 @@ const TestRoom = () => {
   // Enhanced image rendering - all images small by default, clickable to enlarge
   const renderImage = (src, alt, isInQuestion = false) => {
     const sizeClasses = isInQuestion 
-      ? 'h-8 md:h-12 max-w-20 md:max-w-24 cursor-pointer hover:scale-110 transition-transform duration-200' 
-      : 'h-6 md:h-8 max-w-16 md:max-w-20 cursor-pointer hover:scale-110 transition-transform duration-200';
+      ? 'h-8 md:h-12 cursor-pointer hover:scale-110 transition-transform duration-200' 
+      : 'h-6 md:h-8 cursor-pointer hover:scale-110 transition-transform duration-200';
 
     return (
       <img 
         src={src} 
         alt={alt}
-        className={`inline-block mx-1 object-contain rounded shadow-sm ${sizeClasses}`}
+        className={`inline-block mx-1 object-contain ${sizeClasses}`}
         onClick={() => setEnlargedImage(src)}
         onError={(e) => {
           e.target.style.display = 'none';
@@ -218,7 +218,6 @@ const TestRoom = () => {
       setSubmitting(false);
     }
   };
-
 
   // Image enlargement modal
   const ImageModal = () => {
@@ -371,9 +370,9 @@ const TestRoom = () => {
   const totalQuestions = testData.questions.length;
 
   return (
-    <div className="h-screen max-h-screen bg-gradient-to-br from-slate-50 to-violet-50 flex flex-col">
+    <div className="h-screen max-h-screen bg-gradient-to-br from-slate-50 to-violet-50 flex flex-col overflow-hidden">
       <div className="container mx-auto max-w-7xl flex flex-col h-full">
-        {/* Header */}
+        {/* Header - Fixed */}
         <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 md:p-6 shadow-lg flex-shrink-0">
           <div className="flex items-center justify-between">
             <button
@@ -391,7 +390,7 @@ const TestRoom = () => {
           </div>
         </header>
 
-        {/* Progress Bar */}
+        {/* Progress Bar - Fixed */}
         <div className="bg-white/90 backdrop-blur-xl shadow-lg border-b border-white/30 p-4 md:p-6 flex-shrink-0">
           <div className="flex justify-between items-center mb-3">
             <span className="text-sm md:text-base font-semibold text-slate-700">{t('test.progress')}</span>
@@ -407,20 +406,21 @@ const TestRoom = () => {
           </div>
         </div>
 
-        {/* Main Content - 2/3 and 1/3 Layout */}
-        <div className="flex flex-col lg:flex-row flex-1 min-h-0 justify-between">
+        {/* Main Content - Fixed height with scroll */}
+        <div className="flex flex-col lg:flex-row flex-1 min-h-0">
           {/* Left Column - Question (2/3) */}
-          <div className="lg:w-2/3 p-4 md:p-6 lg:p-8 flex flex-col">
-            <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 flex flex-col flex-1">
-              <div className="p-6 md:p-8 flex flex-col h-full">
+          <div className="lg:w-2/3 p-4 md:p-6 lg:p-8 flex flex-col min-h-0">
+            <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 flex flex-col h-full min-h-0">
+              <div className="p-6 md:p-8 flex flex-col h-full min-h-0">
                 <div className="mb-6 flex-shrink-0">
                   <span className="inline-block bg-gradient-to-r from-violet-100 to-indigo-100 text-violet-700 px-4 py-2 rounded-lg text-sm md:text-base font-semibold mb-4">
                     {t('test.question')} {currentQuestion.id}
                   </span>
                 </div>
                 
-                <div className="flex-1 flex items-center justify-center overflow-y-auto min-h-0">
-                  <div className="text-lg md:text-xl lg:text-2xl font-semibold text-slate-800 leading-relaxed text-center w-full py-4">
+                {/* Scrollable question content */}
+                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
+                  <div className="text-lg md:text-xl lg:text-2xl font-semibold text-slate-800 leading-relaxed p-4">
                     {renderQuestionBlocks(currentQuestion.blocks)}
                   </div>
                 </div>
@@ -429,44 +429,47 @@ const TestRoom = () => {
           </div>
 
           {/* Right Column - Answer Options (1/3) */}
-          <div className="lg:w-1/3 p-4 md:p-6 lg:p-8 flex flex-col">
-            <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 flex flex-col flex-1">
-              <div className="p-6 md:p-8 flex flex-col h-full">
+          <div className="lg:w-1/3 p-4 md:p-6 lg:p-8 flex flex-col min-h-0">
+            <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 flex flex-col h-full min-h-0">
+              <div className="p-6 md:p-8 flex flex-col h-full min-h-0">
                 <h3 className="text-lg md:text-xl font-semibold text-slate-700 mb-6 flex-shrink-0">{t('test.chooseAnswer')}</h3>
                 
-                <div className="flex-1 flex flex-col space-y-4 overflow-y-auto min-h-0">
-                  {currentQuestion.options.map((option) => (
-                    <label
-                      key={option.label}
-                      className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.01] ${
-                        selectedAnswer === option.label
-                          ? 'border-violet-400 bg-gradient-to-r from-violet-50 to-indigo-50 shadow-xl'
-                          : 'border-slate-200 bg-white/70 hover:border-violet-200 hover:bg-white/90'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name={`question-${currentQuestionIndex}`}
-                        value={option.label}
-                        checked={selectedAnswer === option.label}
-                        onChange={() => handleAnswerSelect(option.label)}
-                        className="w-5 h-5 text-violet-600 border-slate-300 focus:ring-violet-500 focus:ring-2 mt-1 mr-4 flex-shrink-0"
-                      />
-                      <div className="flex-1">
-                        <span className="font-bold text-violet-600 mr-3 text-lg">{option.label}.</span>
-                        <div className="text-slate-700 text-base">
-                          {renderOptionBlocks(option.blocks)}
+                {/* Scrollable options */}
+                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 pr-2">
+                  <div className="space-y-4">
+                    {currentQuestion.options.map((option) => (
+                      <label
+                        key={option.label}
+                        className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.01] ${
+                          selectedAnswer === option.label
+                            ? 'border-violet-400 bg-gradient-to-r from-violet-50 to-indigo-50 shadow-xl'
+                            : 'border-slate-200 bg-white/70 hover:border-violet-200 hover:bg-white/90'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name={`question-${currentQuestionIndex}`}
+                          value={option.label}
+                          checked={selectedAnswer === option.label}
+                          onChange={() => handleAnswerSelect(option.label)}
+                          className="w-5 h-5 text-violet-600 border-slate-300 focus:ring-violet-500 focus:ring-2 mt-1 mr-4 flex-shrink-0"
+                        />
+                        <div className="flex-1">
+                          <span className="font-bold text-violet-600 mr-3 text-lg">{option.label}.</span>
+                          <div className="text-slate-700 text-base">
+                            {renderOptionBlocks(option.blocks)}
+                          </div>
                         </div>
-                      </div>
-                    </label>
-                  ))}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Navigation */}
+        {/* Bottom Navigation - Fixed */}
         <div className="bg-white/90 backdrop-blur-xl shadow-lg border-t border-white/30 p-4 md:p-6 flex-shrink-0 rounded-lg mb-2">
           <div className="flex items-center justify-between gap-4">
             {/* Previous Button */}
@@ -482,9 +485,9 @@ const TestRoom = () => {
               Trước
             </button>
 
-            {/* Question Navigation */}
+            {/* Question Navigation - Scrollable */}
             <div className="flex-1 text-center px-4">
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-wrap justify-center gap-2 max-h-16 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
                 {testData.questions.map((_, index) => (
                   <button
                     key={index}
@@ -492,7 +495,7 @@ const TestRoom = () => {
                       setCurrentQuestionIndex(index);
                       setSelectedAnswer(answers[index] || '');
                     }}
-                    className={`w-6 h-6 rounded-lg text-sm font-bold transition-all duration-200 ${
+                    className={`w-6 h-6 rounded-lg text-sm font-bold transition-all duration-200 flex-shrink-0 ${
                       index === currentQuestionIndex
                         ? 'bg-gradient-to-r from-violet-500 to-indigo-500 text-white shadow-lg scale-110'
                         : answers[index]
