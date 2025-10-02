@@ -51,6 +51,27 @@ const TestRoom = () => {
     if (!text) return '';
     
     let cleaned = text
+      // Handle LaTeX superscript
+      .replace(/\\textsuperscript\{([^}]*)\}/g, '^$1')
+      // Handle LaTeX subscript
+      .replace(/\\textsubscript\{([^}]*)\}/g, '_$1')
+      // Handle LaTeX bold
+      .replace(/\\textbf\{([^}]*)\}/g, '$1')
+      // Handle LaTeX italic
+      .replace(/\\textit\{([^}]*)\}/g, '$1')
+      // Handle LaTeX emphasis
+      .replace(/\\emph\{([^}]*)\}/g, '$1')
+      // Handle math mode symbols
+      .replace(/\$([^$]*)\$/g, '$1')
+      // Handle LaTeX fractions
+      .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '$1/$2')
+      // Handle LaTeX square root
+      .replace(/\\sqrt\{([^}]*)\}/g, '√($1)')
+      // Handle LaTeX degree symbol
+      .replace(/\\degree/g, '°')
+      // Handle LaTeX percent
+      .replace(/\\%/g, '%')
+      // Original cleaning patterns
       .replace(/\\pandocbounded\{/g, '')
       .replace(/\}\.\s*\\end\{quote\}/g, '')
       .replace(/\}\s*\\end\{quote\}/g, '')
@@ -58,7 +79,9 @@ const TestRoom = () => {
       .replace(/\\begin\{quote\}/g, '')
       .replace(/\\end\{[^}]*\}/g, '')
       .replace(/\\begin\{[^}]*\}/g, '')
+      // Generic LaTeX command cleanup (after specific replacements)
       .replace(/\\\w+\{[^}]*\}/g, '')
+      .replace(/\\[a-zA-Z]+/g, '') // Remove remaining LaTeX commands
       .replace(/^\}\s*/g, '')
       .replace(/\}\s*$/g, '')
       .replace(/^\.\s*/g, '')
@@ -70,11 +93,42 @@ const TestRoom = () => {
     return cleaned;
   };
 
+  const renderTextContent = (text) => {
+    if (!text) return '';
+    
+    const cleanedText = cleanTextContent(text);
+    
+    // Create a mapping for common superscript/subscript characters
+    const superscriptMap = {
+      '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', 
+      '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+      '+': '⁺', '-': '⁻', '=': '⁼', '(': '⁽', ')': '⁾'
+    };
+    
+    const subscriptMap = {
+      '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+      '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+      '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎'
+    };
+    
+    // Convert ^text to superscript Unicode characters
+    let formattedText = cleanedText.replace(/\^([^\s]+)/g, (match, content) => {
+      return content.split('').map(char => superscriptMap[char] || char).join('');
+    });
+    
+    // Convert _text to subscript Unicode characters
+    formattedText = formattedText.replace(/_([^\s]+)/g, (match, content) => {
+      return content.split('').map(char => subscriptMap[char] || char).join('');
+    });
+    
+    return formattedText;
+  };
+
   // Enhanced image rendering - all images small by default, clickable to enlarge
   const renderImage = (src, alt, isInQuestion = false) => {
     const sizeClasses = isInQuestion 
-      ? 'h-8 md:h-12 cursor-pointer hover:scale-110 transition-transform duration-200' 
-      : 'h-6 md:h-8 cursor-pointer hover:scale-110 transition-transform duration-200';
+      ? 'h-12 md:h-16 cursor-pointer hover:scale-110 transition-transform duration-200' 
+      : 'h-10 md:h-12 cursor-pointer hover:scale-110 transition-transform duration-200';
 
     return (
       <img 
@@ -98,12 +152,12 @@ const TestRoom = () => {
       <div className="flex flex-wrap items-center gap-2">
         {blocks.map((block, index) => {
           if (block.type === 'text' && block.content) {
-            const cleanedText = cleanTextContent(block.content);
-            if (!cleanedText) return null;
+            const formattedText = renderTextContent(block.content);
+            if (!formattedText) return null;
             
             return (
               <span key={index} className="text-slate-800">
-                {cleanedText}
+                {formattedText}
               </span>
             );
           }
@@ -130,12 +184,12 @@ const TestRoom = () => {
       <div className="flex flex-wrap items-center gap-2">
         {blocks.map((block, index) => {
           if (block.type === 'text' && block.content) {
-            const cleanedText = cleanTextContent(block.content);
-            if (!cleanedText) return null;
+            const formattedText = renderTextContent(block.content);
+            if (!formattedText) return null;
             
             return (
               <span key={index} className="text-slate-700">
-                {cleanedText}
+                {formattedText}
               </span>
             );
           }
@@ -371,7 +425,7 @@ const TestRoom = () => {
 
   return (
     <div className="h-screen max-h-screen bg-gradient-to-br from-slate-50 to-violet-50 flex flex-col overflow-hidden">
-      <div className="container mx-auto max-w-7xl flex flex-col h-full">
+      <div className="container mx-auto max-w-full flex flex-col h-full">
         {/* Header - Fixed */}
         <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 md:p-6 shadow-lg flex-shrink-0">
           <div className="flex items-center justify-between">
