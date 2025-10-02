@@ -15,6 +15,9 @@ const TestRoom = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [enlargedImage, setEnlargedImage] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [results, setResults] = useState(null);
 
   // Fetch test data from API
   useEffect(() => {
@@ -173,11 +176,49 @@ const TestRoom = () => {
     }
   };
 
-  const handleSubmitTest = () => {
-    console.log('Test answers:', answers);
-    alert(t('test.submitSuccess'));
-    navigate('/dashboard');
+  const handleSubmitTest = async () => {
+    // nếu chưa trả lời hết
+    if (Object.keys(answers).length !== testData.questions.length) {
+      const confirmSubmit = window.confirm('Bạn chưa trả lời hết các câu hỏi. Bạn có chắc chắn muốn nộp bài?');
+      if (!confirmSubmit) {
+        return; // user chọn No
+      }
+    }
+
+    try {
+      setSubmitting(true);
+      setSubmitError(null);
+
+      const payload = {
+        quiz_uuid: testId,
+        answers: testData.questions.map((question, index) => ({
+          question_id: question.id,
+          selected_option: answers[index] || ''
+        }))
+      };
+
+      const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit answers');
+      }
+
+      const data = await response.json();
+      setResults(data);
+    } catch (err) {
+      console.error('Error submitting test:', err);
+      setSubmitError(t('test.submitError'));
+    } finally {
+      setSubmitting(false);
+    }
   };
+
 
   // Image enlargement modal
   const ImageModal = () => {
@@ -206,6 +247,79 @@ const TestRoom = () => {
             <p className="text-white text-sm bg-black/50 rounded px-3 py-1 inline-block">
               {t('test.tapToClose')}
             </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Results Modal
+  const ResultsModal = () => {
+    if (!results) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin border border-white/30">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white rounded-t-2xl">
+            <h2 className="text-2xl font-bold text-center">{t('test.resultsTitle')}</h2>
+          </div>
+          
+          {/* Score Summary */}
+          <div className="p-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-green-700">{results.correct_answers}</div>
+                <div className="text-sm text-green-600">{t('test.correctAnswers')}</div>
+              </div>
+              <div className="bg-gradient-to-r from-red-100 to-red-200 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-red-700">{results.incorrect_answers}</div>
+                <div className="text-sm text-red-600">{t('test.incorrectAnswers')}</div>
+              </div>
+              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-blue-700">{results.total_questions}</div>
+                <div className="text-sm text-blue-600">{t('test.totalQuestions')}</div>
+              </div>
+              <div className="bg-gradient-to-r from-violet-100 to-indigo-100 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-violet-700">{results.score_percentage.toFixed(1)}%</div>
+                <div className="text-sm text-violet-600">{t('test.scorePercentage')}</div>
+              </div>
+            </div>
+
+            {/* Detailed Results */}
+            <h3 className="text-xl font-semibold text-slate-800 mb-4">{t('test.detailedResults')}</h3>
+            <div className="space-y-3">
+              {results.results.map((result, index) => (
+                <div key={result.question_id} className={`p-4 rounded-xl border-2 ${result.is_correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-700">{t('test.question')} {index + 1}</span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${result.is_correct ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+                      {result.is_correct ? t('test.correct') : t('test.incorrect')}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-sm text-slate-600">
+                    <span>{t('test.yourAnswer')}: {result.user_answer}</span>
+                    {!result.is_correct && <span className="ml-4">{t('test.correctAnswer')}: {result.correct_answer}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-center gap-4 mt-6">
+              <button
+                onClick={() => setResults(null)}
+                className="bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02]"
+              >
+                {t('test.reviewAnswers')}
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02]"
+              >
+                {t('test.backToDashboard')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -396,9 +510,10 @@ const TestRoom = () => {
             {currentQuestionIndex === totalQuestions - 1 ? (
               <button
                 onClick={handleSubmitTest}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02] flex-shrink-0"
+                disabled={submitting}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02] flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {t('test.submit')}
+                {submitting ? t('test.submitting') : t('test.submit')}
               </button>
             ) : (
               <button
@@ -409,6 +524,11 @@ const TestRoom = () => {
               </button>
             )}
           </div>
+          {submitError && (
+            <div className="mt-4 p-4 bg-red-100 border border-red-300 rounded-xl text-red-700 text-center">
+              {submitError}
+            </div>
+          )}
         </div>
       </div>
 
@@ -419,6 +539,9 @@ const TestRoom = () => {
 
       {/* Image Modal */}
       <ImageModal />
+
+      {/* Results Modal */}
+      <ResultsModal />
     </div>
   );
 };
