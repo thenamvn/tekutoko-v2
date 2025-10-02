@@ -353,7 +353,7 @@ const TestRoom = () => {
         </div>
 
         {/* Bottom Navigation */}
-        <div className="bg-white/90 backdrop-blur-xl shadow-lg border-t border-white/30 p-4 md:p-6 flex-shrink-0">
+        <div className="bg-white/90 backdrop-blur-xl shadow-lg border-t border-white/30 p-4 md:p-6 flex-shrink-0 rounded-lg mb-2">
           <div className="flex items-center justify-between gap-4">
             {/* Previous Button */}
             <button
