@@ -200,7 +200,7 @@ const TestRoom = () => {
           <img 
             src={enlargedImage} 
             alt="Enlarged view"
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
           />
           <div className="absolute -bottom-12 left-0 right-0 text-center">
             <p className="text-white text-sm bg-black/50 rounded px-3 py-1 inline-block">
