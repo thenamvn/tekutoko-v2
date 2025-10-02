@@ -407,10 +407,10 @@ const TestRoom = () => {
           </div>
         </div>
 
-        {/* Main Content - Two Column Layout with Full Height */}
+        {/* Main Content - 2/3 and 1/3 Layout */}
         <div className="flex flex-col lg:flex-row flex-1 min-h-0 justify-between">
-          {/* Left Column - Question */}
-          <div className="lg:w-3/5 p-4 md:p-6 lg:p-8 flex flex-col">
+          {/* Left Column - Question (2/3) */}
+          <div className="lg:w-2/3 p-4 md:p-6 lg:p-8 flex flex-col">
             <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 flex flex-col flex-1">
               <div className="p-6 md:p-8 flex flex-col h-full">
                 <div className="mb-6 flex-shrink-0">
@@ -428,8 +428,8 @@ const TestRoom = () => {
             </div>
           </div>
 
-          {/* Right Column - Answer Options */}
-          <div className="lg:w-2/5 p-4 md:p-6 lg:p-8 flex flex-col">
+          {/* Right Column - Answer Options (1/3) */}
+          <div className="lg:w-1/3 p-4 md:p-6 lg:p-8 flex flex-col">
             <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 flex flex-col flex-1">
               <div className="p-6 md:p-8 flex flex-col h-full">
                 <h3 className="text-lg md:text-xl font-semibold text-slate-700 mb-6 flex-shrink-0">{t('test.chooseAnswer')}</h3>
