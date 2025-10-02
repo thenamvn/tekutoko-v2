@@ -6,6 +6,7 @@ import PrivateRoute from './components/login/PrivateRoute';
 // Language
 import { useTranslation } from 'react-i18next';
 import Spinner from './components/spinner/Spinner';
+import TestRoom from './components/room/TestRoom';
 //Lazy component
 const LoginForm = React.lazy(() => import('./components/login/LoginForm'));
 const LineCallback = React.lazy(() => import('./components/login/LineCallback'));
@@ -37,6 +38,7 @@ const Terms = React.lazy(() => import('./components/termsConditions/Terms'));
 
 const HomePage = React.lazy(() => import('./components/homepage/HomePage'));
 const NotFound = React.lazy(() => import('./components/404/404'));
+
 const App = () => {
   const { i18n } = useTranslation();
 
@@ -89,6 +91,7 @@ const App = () => {
           {/* <Route path="/quiz/room/:roomId/results" element={<QuizResults />} /> */}
           
           <Route path="/create-room" element={<RoomSetup />} />
+          <Route path="/test/:testId" element={<TestRoom />} />
 
 
         </Routes>
