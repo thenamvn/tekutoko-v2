@@ -498,7 +498,13 @@
         "backToDashboard": "Quay về Dashboard",
         "submit": "Nộp bài",
         "questionTitle": "Câu hỏi: ",
-        "resultsTitle": "Kết quả bài thi"
+        "resultsTitle": "Kết quả bài thi",
+        "cancel": "Hủy",
+        "confirmSubmit": "Xác nhận",
+        "incompleteWarningTitle": "Cảnh báo bài thi chưa hoàn thành",
+        "reviewAnswers": "Xem lại câu trả lời",
+        "loadingData": "Đang tải dữ liệu...",
+        "tapToClose": "Chạm để đóng"
     },
     "dashboardAdmin": {
         "roomsStatistics": "Thống kê phòng",

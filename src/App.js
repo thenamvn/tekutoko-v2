@@ -6,7 +6,6 @@ import PrivateRoute from './components/login/PrivateRoute';
 // Language
 import { useTranslation } from 'react-i18next';
 import Spinner from './components/spinner/Spinner';
-import TestRoom from './components/room/TestRoom';
 //Lazy component
 const LoginForm = React.lazy(() => import('./components/login/LoginForm'));
 const LineCallback = React.lazy(() => import('./components/login/LineCallback'));
@@ -20,9 +19,9 @@ const UserProfileFormCreator = React.lazy(() => import('./components/introProfil
 const UserProfileFormModify = React.lazy(() => import('./components/introProfile/UserProfileCardModify'));
 const CouponCard = React.lazy(() => import('./components/coupon/CouponCard'));
 
-const QuizRoom = React.lazy(() => import('./components/room/test'));
+const QuizRoom = React.lazy(() => import('./components/room/QuizRoom'));
 const QuestionPage = React.lazy(() => import('./components/room/QuestionPage.jsx'));
-// const QuizResults = React.lazy(() => import('./components/room/QuizResults'));
+const TestRoom = React.lazy(() => import('./components/room/TestRoom'));
 const RoomSetup = React.lazy(() => import('./components/room/RoomSetup'));
 
 
