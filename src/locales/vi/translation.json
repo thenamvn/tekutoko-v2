@@ -497,7 +497,8 @@
         "correctAnswer": "Đáp án đúng",
         "backToDashboard": "Quay về Dashboard",
         "submit": "Nộp bài",
-        "questionTitle": "Câu hỏi: "
+        "questionTitle": "Câu hỏi: ",
+        "resultsTitle": "Kết quả bài thi"
     },
     "dashboardAdmin": {
         "roomsStatistics": "Thống kê phòng",

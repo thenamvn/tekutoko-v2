@@ -37,6 +37,9 @@ const TestRoom = () => {
   const activityLogRef = useRef([]);
   const warningTimeoutRef = useRef(null);
 
+  // Add new state for the incomplete warning modal
+  const [showIncompleteWarningModal, setShowIncompleteWarningModal] = useState(false);
+
   // Log suspicious activity
   const logSuspiciousActivity = useCallback((type, details = '') => {
     const timestamp = new Date().toISOString();
@@ -454,10 +457,9 @@ const TestRoom = () => {
 
   const handleSubmitTest = async () => {
     if (Object.keys(answers).length !== testData.questions.length) {
-      const confirmSubmit = window.confirm(t('test.incompleteWarning'));
-      if (!confirmSubmit) {
-        return;
-      }
+      // Replace window.confirm with custom modal to avoid anti-cheat triggers
+      setShowIncompleteWarningModal(true);
+      return;
     }
 
     try {
@@ -494,6 +496,82 @@ const TestRoom = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // New component for the incomplete warning modal
+  const IncompleteWarningModal = () => {
+    if (!showIncompleteWarningModal) return null;
+
+    const handleConfirmSubmit = async () => {
+      setShowIncompleteWarningModal(false);
+      // Proceed with submission
+      try {
+        setSubmitting(true);
+        setSubmitError(null);
+
+        const payload = {
+          quiz_uuid: testId,
+          answers: testData.questions.map((question, index) => ({
+            question_id: question.id,
+            selected_option: answers[index] || ''
+          })),
+          activity_log: activityLogRef.current,
+          suspicious_activity: suspiciousActivity
+        };
+
+        const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to submit answers');
+        }
+
+        const data = await response.json();
+        setResults(data);
+      } catch (err) {
+        console.error('Error submitting test:', err);
+        setSubmitError(t('test.submitError'));
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
+    const handleCancelSubmit = () => {
+      setShowIncompleteWarningModal(false);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full border border-white/30">
+          <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 text-white rounded-t-2xl">
+            <h2 className="text-xl font-bold">{t('test.incompleteWarningTitle')}</h2>
+          </div>
+          <div className="p-6">
+            <p className="text-slate-700 mb-6">{t('test.incompleteWarning')}</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleCancelSubmit}
+                className="bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white py-2 px-6 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02]"
+              >
+                {t('test.cancel')}
+              </button>
+              <button
+                onClick={handleConfirmSubmit}
+                disabled={submitting}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-2 px-6 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? t('test.submitting') : t('test.confirmSubmit')}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Anti-cheat warning modal
@@ -924,6 +1002,9 @@ const TestRoom = () => {
           )}
         </div>
       </div>
+
+      {/* Add the new modal before the closing div */}
+      <IncompleteWarningModal />
 
       {/* Anti-cheat Warning Modal */}
       <AntiCheatWarning />
