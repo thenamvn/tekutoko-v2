@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import NavigationComponent from '../NavigationBar/NavigationBar';
 import { useTranslation } from 'react-i18next';
 
 const TestRoom = () => {
   const { t } = useTranslation();
   const { testId } = useParams();
   const navigate = useNavigate();
-  
+  const [isTestSubmitted, setIsTestSubmitted] = useState(false);
   const [testData, setTestData] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState('');
@@ -42,6 +41,7 @@ const TestRoom = () => {
 
   // Log suspicious activity
   const logSuspiciousActivity = useCallback((type, details = '') => {
+    if (isTestSubmitted) return;
     const timestamp = new Date().toISOString();
     const logEntry = { type, details, timestamp, questionIndex: currentQuestionIndex };
     
@@ -90,11 +90,13 @@ const TestRoom = () => {
       setBlockedForCheating(true);
       handleAutoSubmit('Quá nhiều hành vi gian lận được phát hiện');
     }
-  }, [currentQuestionIndex, suspiciousActivity, t]);
+  }, [currentQuestionIndex, suspiciousActivity, t, isTestSubmitted]);
 
   // Auto-submit test due to cheating
   const handleAutoSubmit = useCallback(async (reason) => {
+    if (isTestSubmitted) return;
     try {
+      setIsTestSubmitted(true);
       const payload = {
         quiz_uuid: testId,
         answers: testData?.questions.map((question, index) => ({
@@ -120,10 +122,18 @@ const TestRoom = () => {
     } catch (err) {
       console.error('Error auto-submitting test:', err);
     }
-  }, [testId, testData, answers, suspiciousActivity]);
+  }, [testId, testData, answers, suspiciousActivity, isTestSubmitted]);
 
-  // ...existing useEffect for anti-cheating...
+  // Anti-cheating effects
   useEffect(() => {
+    if (isTestSubmitted) return;
+    const handleBeforeUnload = (e) => {
+      if (!isTestSubmitted) {
+        logSuspiciousActivity('tabSwitches', 'Page refresh/reload attempt');
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
     // Disable right-click context menu
     const handleContextMenu = (e) => {
       e.preventDefault();
@@ -197,6 +207,7 @@ const TestRoom = () => {
     document.addEventListener('keyup', handleKeyUp);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     // Check for DevTools every 1 second
     const devToolsInterval = setInterval(detectDevTools, 1000);
@@ -255,10 +266,11 @@ const TestRoom = () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       clearInterval(devToolsInterval);
       if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
     };
-  }, [logSuspiciousActivity, testData, isFullscreen]);
+  }, [logSuspiciousActivity, testData, isFullscreen, isTestSubmitted]);
 
   // Fetch test data from API
   useEffect(() => {
@@ -457,7 +469,6 @@ const TestRoom = () => {
 
   const handleSubmitTest = async () => {
     if (Object.keys(answers).length !== testData.questions.length) {
-      // Replace window.confirm with custom modal to avoid anti-cheat triggers
       setShowIncompleteWarningModal(true);
       return;
     }
@@ -490,6 +501,7 @@ const TestRoom = () => {
 
       const data = await response.json();
       setResults(data);
+      setIsTestSubmitted(true); // Đánh dấu đã submit
     } catch (err) {
       console.error('Error submitting test:', err);
       setSubmitError(t('test.submitError'));
@@ -533,6 +545,7 @@ const TestRoom = () => {
 
         const data = await response.json();
         setResults(data);
+        setIsTestSubmitted(true); // Đánh dấu đã submit
       } catch (err) {
         console.error('Error submitting test:', err);
         setSubmitError(t('test.submitError'));
