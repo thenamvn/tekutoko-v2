@@ -445,7 +445,7 @@ const TestRoom = () => {
         </header>
 
         {/* Progress Bar - Fixed */}
-        <div className="bg-white/90 backdrop-blur-xl shadow-lg border-b border-white/30 p-4 md:p-6 flex-shrink-0">
+        <div className="bg-white/90 backdrop-blur-xl shadow-lg border-b border-white/30 p-2 md:p-4 flex-shrink-0">
           <div className="flex justify-between items-center mb-3">
             <span className="text-sm md:text-base font-semibold text-slate-700">{t('test.progress')}</span>
             <span className="text-sm md:text-base font-semibold text-slate-700">
@@ -524,7 +524,7 @@ const TestRoom = () => {
         </div>
 
         {/* Bottom Navigation - Fixed */}
-        <div className="bg-white/90 backdrop-blur-xl shadow-lg border-t border-white/30 p-4 md:p-6 flex-shrink-0 rounded-lg mb-2">
+        <div className="bg-white/90 backdrop-blur-xl shadow-lg border-t border-white/30 p-2 flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
             {/* Previous Button */}
             <button
@@ -590,9 +590,9 @@ const TestRoom = () => {
       </div>
 
       {/* Footer Navigation - Only show on mobile */}
-      <div className="fixed w-full bottom-0 z-50 lg:hidden">
+      {/* <div className="fixed w-full bottom-0 z-50 lg:hidden">
         <NavigationComponent />
-      </div>
+      </div> */}
 
       {/* Image Modal */}
       <ImageModal />
