@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import NavigationComponent from '../NavigationBar/NavigationBar';
 import { useTranslation } from 'react-i18next';
@@ -18,14 +18,246 @@ const TestRoom = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [results, setResults] = useState(null);
+  
+  // Anti-cheating states
+  const [suspiciousActivity, setSuspiciousActivity] = useState({
+    tabSwitches: 0,
+    devToolsAttempts: 0,
+    copyAttempts: 0,
+    screenshotAttempts: 0,
+    contextMenuAttempts: 0,
+    keyboardShortcuts: 0
+  });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
+  const [warningMessage, setWarningMessage] = useState('');
+  const [blockedForCheating, setBlockedForCheating] = useState(false);
+  
+  const activityLogRef = useRef([]);
+  const warningTimeoutRef = useRef(null);
+
+  // Log suspicious activity
+  const logSuspiciousActivity = useCallback((type, details = '') => {
+    const timestamp = new Date().toISOString();
+    const logEntry = { type, details, timestamp, questionIndex: currentQuestionIndex };
+    
+    activityLogRef.current.push(logEntry);
+    
+    setSuspiciousActivity(prev => ({
+      ...prev,
+      [type]: prev[type] + 1
+    }));
+
+    // Show warning based on activity type
+    let message = '';
+    switch (type) {
+      case 'tabSwitches':
+        message = t('antiCheat.tabSwitchWarning');
+        break;
+      case 'devToolsAttempts':
+        message = t('antiCheat.devToolsWarning');
+        break;
+      case 'copyAttempts':
+        message = t('antiCheat.copyWarning');
+        break;
+      case 'screenshotAttempts':
+        message = t('antiCheat.screenshotWarning');
+        break;
+      case 'contextMenuAttempts':
+        message = t('antiCheat.contextMenuWarning');
+        break;
+      case 'keyboardShortcuts':
+        message = t('antiCheat.shortcutWarning');
+        break;
+    }
+
+    setWarningMessage(message);
+    setShowWarning(true);
+
+    // Auto-hide warning after 3 seconds
+    if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+    warningTimeoutRef.current = setTimeout(() => {
+      setShowWarning(false);
+    }, 3000);
+
+    // Check if user should be blocked
+    const totalViolations = Object.values(suspiciousActivity).reduce((sum, count) => sum + count, 0);
+    if (totalViolations >= 5) {
+      setBlockedForCheating(true);
+      handleAutoSubmit('Quá nhiều hành vi gian lận được phát hiện');
+    }
+  }, [currentQuestionIndex, suspiciousActivity, t]);
+
+  // Auto-submit test due to cheating
+  const handleAutoSubmit = useCallback(async (reason) => {
+    try {
+      const payload = {
+        quiz_uuid: testId,
+        answers: testData?.questions.map((question, index) => ({
+          question_id: question.id,
+          selected_option: answers[index] || ''
+        })) || [],
+        cheating_detected: true,
+        cheating_reason: reason,
+        activity_log: activityLogRef.current,
+        suspicious_activity: suspiciousActivity
+      };
+
+      await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.error('Error auto-submitting test:', err);
+    }
+  }, [testId, testData, answers, suspiciousActivity, navigate, t]);
+
+  // Anti-cheating effects
+  useEffect(() => {
+    // Disable right-click context menu
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      logSuspiciousActivity('contextMenuAttempts');
+      return false;
+    };
+
+    // Disable text selection and copy
+    const handleSelectStart = (e) => {
+      e.preventDefault();
+      return false;
+    };
+
+    const handleCopy = (e) => {
+      e.preventDefault();
+      logSuspiciousActivity('copyAttempts');
+      return false;
+    };
+
+    // Disable keyboard shortcuts
+    const handleKeyDown = (e) => {
+      // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+S, Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+        (e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'a' || e.key === 'c' || e.key === 'v' || e.key === 'x')) ||
+        (e.metaKey && (e.key === 'u' || e.key === 's' || e.key === 'a' || e.key === 'c' || e.key === 'v' || e.key === 'x'))
+      ) {
+        e.preventDefault();
+        logSuspiciousActivity('keyboardShortcuts', `Attempted: ${e.key}`);
+        return false;
+      }
+    };
+
+    // Detect screenshot attempts (PrintScreen key)
+    const handleKeyUp = (e) => {
+      if (e.key === 'PrintScreen') {
+        logSuspiciousActivity('screenshotAttempts');
+      }
+    };
+
+    // Detect window focus/blur (tab switching)
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        logSuspiciousActivity('tabSwitches');
+      }
+    };
+
+    const handleWindowBlur = () => {
+      logSuspiciousActivity('tabSwitches');
+    };
+
+    // Detect DevTools opening
+    const detectDevTools = () => {
+      const threshold = 160;
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+      
+      if (widthThreshold || heightThreshold) {
+        logSuspiciousActivity('devToolsAttempts');
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('selectstart', handleSelectStart);
+    document.addEventListener('copy', handleCopy);
+    document.addEventListener('cut', handleCopy);
+    document.addEventListener('paste', handleCopy);
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+
+    // Check for DevTools every 1 second
+    const devToolsInterval = setInterval(detectDevTools, 1000);
+
+    // Force fullscreen mode
+    const enterFullscreen = async () => {
+      try {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          await document.documentElement.webkitRequestFullscreen();
+        } else if (document.documentElement.msRequestFullscreen) {
+          await document.documentElement.msRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } catch (err) {
+        console.error('Could not enter fullscreen:', err);
+      }
+    };
+
+    // Monitor fullscreen changes
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement
+      );
+      
+      setIsFullscreen(isCurrentlyFullscreen);
+      
+      if (!isCurrentlyFullscreen && testData) {
+        logSuspiciousActivity('tabSwitches', 'Exited fullscreen');
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+    // Enter fullscreen when test starts
+    if (testData && !isFullscreen) {
+      enterFullscreen();
+    }
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('selectstart', handleSelectStart);
+      document.removeEventListener('copy', handleCopy);
+      document.removeEventListener('cut', handleCopy);
+      document.removeEventListener('paste', handleCopy);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+      clearInterval(devToolsInterval);
+      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+    };
+  }, [logSuspiciousActivity, testData, isFullscreen]);
 
   // Fetch test data from API
   useEffect(() => {
     const fetchTestData = async () => {
       try {
         setIsLoading(true);
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-        const response = await fetch(`http://localhost:8000/api/v1/quiz/${testId}`);
+        const apiUrl = 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/api/v1/quiz/${testId}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch test data');
@@ -51,27 +283,16 @@ const TestRoom = () => {
     if (!text) return '';
     
     let cleaned = text
-      // Handle LaTeX superscript
       .replace(/\\textsuperscript\{([^}]*)\}/g, '^$1')
-      // Handle LaTeX subscript
       .replace(/\\textsubscript\{([^}]*)\}/g, '_$1')
-      // Handle LaTeX bold
       .replace(/\\textbf\{([^}]*)\}/g, '$1')
-      // Handle LaTeX italic
       .replace(/\\textit\{([^}]*)\}/g, '$1')
-      // Handle LaTeX emphasis
       .replace(/\\emph\{([^}]*)\}/g, '$1')
-      // Handle math mode symbols
       .replace(/\$([^$]*)\$/g, '$1')
-      // Handle LaTeX fractions
       .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '$1/$2')
-      // Handle LaTeX square root
       .replace(/\\sqrt\{([^}]*)\}/g, '√($1)')
-      // Handle LaTeX degree symbol
       .replace(/\\degree/g, '°')
-      // Handle LaTeX percent
       .replace(/\\%/g, '%')
-      // Original cleaning patterns
       .replace(/\\pandocbounded\{/g, '')
       .replace(/\}\.\s*\\end\{quote\}/g, '')
       .replace(/\}\s*\\end\{quote\}/g, '')
@@ -79,9 +300,8 @@ const TestRoom = () => {
       .replace(/\\begin\{quote\}/g, '')
       .replace(/\\end\{[^}]*\}/g, '')
       .replace(/\\begin\{[^}]*\}/g, '')
-      // Generic LaTeX command cleanup (after specific replacements)
       .replace(/\\\w+\{[^}]*\}/g, '')
-      .replace(/\\[a-zA-Z]+/g, '') // Remove remaining LaTeX commands
+      .replace(/\\[a-zA-Z]+/g, '')
       .replace(/^\}\s*/g, '')
       .replace(/\}\s*$/g, '')
       .replace(/^\.\s*/g, '')
@@ -98,7 +318,6 @@ const TestRoom = () => {
     
     const cleanedText = cleanTextContent(text);
     
-    // Create a mapping for common superscript/subscript characters
     const superscriptMap = {
       '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', 
       '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
@@ -111,12 +330,10 @@ const TestRoom = () => {
       '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎'
     };
     
-    // Convert ^text to superscript Unicode characters
     let formattedText = cleanedText.replace(/\^([^\s]+)/g, (match, content) => {
       return content.split('').map(char => superscriptMap[char] || char).join('');
     });
     
-    // Convert _text to subscript Unicode characters
     formattedText = formattedText.replace(/_([^\s]+)/g, (match, content) => {
       return content.split('').map(char => subscriptMap[char] || char).join('');
     });
@@ -124,7 +341,6 @@ const TestRoom = () => {
     return formattedText;
   };
 
-  // Enhanced image rendering - all images small by default, clickable to enlarge
   const renderImage = (src, alt, isInQuestion = false) => {
     const sizeClasses = isInQuestion 
       ? 'h-12 md:h-16 cursor-pointer hover:scale-110 transition-transform duration-200' 
@@ -134,29 +350,30 @@ const TestRoom = () => {
       <img 
         src={src} 
         alt={alt}
-        className={`inline-block mx-1 object-contain ${sizeClasses}`}
+        className={`inline-block mx-1 object-contain ${sizeClasses} select-none`}
         onClick={() => setEnlargedImage(src)}
         onError={(e) => {
           e.target.style.display = 'none';
         }}
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
         title={t('test.clickToEnlarge')}
       />
     );
   };
 
-  // Render question blocks with enhanced image handling
   const renderQuestionBlocks = (blocks) => {
     if (!blocks || !Array.isArray(blocks)) return null;
     
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 select-none">
         {blocks.map((block, index) => {
           if (block.type === 'text' && block.content) {
             const formattedText = renderTextContent(block.content);
             if (!formattedText) return null;
             
             return (
-              <span key={index} className="text-slate-800">
+              <span key={index} className="text-slate-800 select-none">
                 {formattedText}
               </span>
             );
@@ -176,19 +393,18 @@ const TestRoom = () => {
     );
   };
 
-  // Render option blocks with enhanced image handling
   const renderOptionBlocks = (blocks) => {
     if (!blocks || !Array.isArray(blocks)) return null;
     
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 select-none">
         {blocks.map((block, index) => {
           if (block.type === 'text' && block.content) {
             const formattedText = renderTextContent(block.content);
             if (!formattedText) return null;
             
             return (
-              <span key={index} className="text-slate-700">
+              <span key={index} className="text-slate-700 select-none">
                 {formattedText}
               </span>
             );
@@ -231,11 +447,10 @@ const TestRoom = () => {
   };
 
   const handleSubmitTest = async () => {
-    // nếu chưa trả lời hết
     if (Object.keys(answers).length !== testData.questions.length) {
-      const confirmSubmit = window.confirm('Bạn chưa trả lời hết các câu hỏi. Bạn có chắc chắn muốn nộp bài?');
+      const confirmSubmit = window.confirm(t('test.incompleteWarning'));
       if (!confirmSubmit) {
-        return; // user chọn No
+        return;
       }
     }
 
@@ -248,7 +463,9 @@ const TestRoom = () => {
         answers: testData.questions.map((question, index) => ({
           question_id: question.id,
           selected_option: answers[index] || ''
-        }))
+        })),
+        activity_log: activityLogRef.current,
+        suspicious_activity: suspiciousActivity
       };
 
       const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
@@ -273,111 +490,77 @@ const TestRoom = () => {
     }
   };
 
-  // Image enlargement modal
-  const ImageModal = () => {
-    if (!enlargedImage) return null;
+  // Anti-cheat warning modal
+  const AntiCheatWarning = () => {
+    if (!showWarning) return null;
+
+    const handleCloseWarning = () => {
+      setShowWarning(false);
+      if (warningTimeoutRef.current) {
+        clearTimeout(warningTimeoutRef.current);
+      }
+    };
 
     return (
-      <div 
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
-        onClick={() => setEnlargedImage(null)}
-      >
-        <div className="relative max-w-full max-h-full">
-          <button
-            onClick={() => setEnlargedImage(null)}
-            className="absolute -top-12 right-0 text-white hover:text-gray-300 bg-black/50 rounded-full p-2 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <img 
-            src={enlargedImage} 
-            alt="Enlarged view"
-            className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
-          />
-          <div className="absolute -bottom-12 left-0 right-0 text-center">
-            <p className="text-white text-sm bg-black/50 rounded px-3 py-1 inline-block">
-              {t('test.tapToClose')}
-            </p>
+      <div className="fixed inset-0 bg-red-900/80 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full border-2 border-red-500">
+          <div className="bg-gradient-to-r from-red-600 to-red-700 p-4 text-white rounded-t-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold flex items-center">
+                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                {t('antiCheat.warningTitle')}
+              </h2>
+              <button
+                onClick={handleCloseWarning}
+                className="text-white hover:text-red-200 p-1 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div className="p-6 text-center">
+            <p className="text-red-700 font-semibold mb-4">{warningMessage}</p>
+            <div className="text-sm text-slate-600">
+              <p>{t('antiCheat.violationCount')}: {Object.values(suspiciousActivity).reduce((sum, count) => sum + count, 0)}</p>
+              <p className="text-red-600 font-medium mt-2">{t('antiCheat.consequences')}</p>
+            </div>
+            <button
+              onClick={handleCloseWarning}
+              className="mt-4 bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white py-2 px-6 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02]"
+            >
+              {t('antiCheat.understood')}
+            </button>
           </div>
         </div>
       </div>
     );
   };
 
-  // Results Modal
-  const ResultsModal = () => {
-    if (!results) return null;
-
+  // Blocked screen
+  if (blockedForCheating) {
     return (
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin border border-white/30">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white rounded-t-2xl">
-            <h2 className="text-2xl font-bold text-center">{t('test.resultsTitle')}</h2>
+      <div className="h-screen bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center p-4">
+        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full border-2 border-red-500 text-center">
+          <div className="bg-gradient-to-r from-red-600 to-red-700 p-6 text-white rounded-t-2xl">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold">{t('antiCheat.testTerminated')}</h1>
           </div>
-          
-          {/* Score Summary */}
           <div className="p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-xl text-center">
-                <div className="text-2xl font-bold text-green-700">{results.correct_answers}</div>
-                <div className="text-sm text-green-600">{t('test.correctAnswers')}</div>
-              </div>
-              <div className="bg-gradient-to-r from-red-100 to-red-200 p-4 rounded-xl text-center">
-                <div className="text-2xl font-bold text-red-700">{results.incorrect_answers}</div>
-                <div className="text-sm text-red-600">{t('test.incorrectAnswers')}</div>
-              </div>
-              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 p-4 rounded-xl text-center">
-                <div className="text-2xl font-bold text-blue-700">{results.total_questions}</div>
-                <div className="text-sm text-blue-600">{t('test.totalQuestions')}</div>
-              </div>
-              <div className="bg-gradient-to-r from-violet-100 to-indigo-100 p-4 rounded-xl text-center">
-                <div className="text-2xl font-bold text-violet-700">{results.score_percentage.toFixed(1)}%</div>
-                <div className="text-sm text-violet-600">{t('test.scorePercentage')}</div>
-              </div>
-            </div>
-
-            {/* Detailed Results */}
-            <h3 className="text-xl font-semibold text-slate-800 mb-4">{t('test.detailedResults')}</h3>
-            <div className="space-y-3">
-              {results.results.map((result, index) => (
-                <div key={result.question_id} className={`p-4 rounded-xl border-2 ${result.is_correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-slate-700">{t('test.question')} {index + 1}</span>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${result.is_correct ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
-                      {result.is_correct ? t('test.correct') : t('test.incorrect')}
-                    </span>
-                  </div>
-                  <div className="mt-2 text-sm text-slate-600">
-                    <span>{t('test.yourAnswer')}: {result.user_answer}</span>
-                    {!result.is_correct && <span className="ml-4">{t('test.correctAnswer')}: {result.correct_answer}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-center gap-4 mt-6">
-              <button
-                onClick={() => setResults(null)}
-                className="bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02]"
-              >
-                {t('test.reviewAnswers')}
-              </button>
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02]"
-              >
-                {t('test.backToDashboard')}
-              </button>
-            </div>
+            <p className="text-red-700 font-semibold mb-4">{t('antiCheat.blockedMessage')}</p>
+            <p className="text-sm text-slate-600 mb-6">{t('antiCheat.contactSupport')}</p>
           </div>
         </div>
       </div>
     );
-  };
+  }
 
   if (isLoading) {
     return (
@@ -424,13 +607,18 @@ const TestRoom = () => {
   const totalQuestions = testData.questions.length;
 
   return (
-    <div className="h-screen max-h-screen bg-gradient-to-br from-slate-50 to-violet-50 flex flex-col overflow-hidden">
+    <div className="h-screen max-h-screen bg-gradient-to-br from-slate-50 to-violet-50 flex flex-col overflow-hidden select-none">
       <div className="container mx-auto max-w-full flex flex-col h-full">
         {/* Header - Fixed */}
         <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 md:p-6 shadow-lg flex-shrink-0">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                const confirmExit = window.confirm(t('test.confirmExit'));
+                if (confirmExit) {
+                  navigate(-1);
+                }
+              }}
               className="text-white hover:bg-white/20 p-2 md:p-3 rounded-xl transition-all duration-200 hover:scale-105"
             >
               <svg className="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -440,9 +628,42 @@ const TestRoom = () => {
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white text-center flex-1">
               {t('test.questionTitle')} {currentQuestionIndex + 1}/{totalQuestions}
             </h1>
-            <div className="w-10 md:w-12"></div>
+            <div className="w-10 md:w-12 flex items-center justify-end">
+              {!isFullscreen && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await document.documentElement.requestFullscreen();
+                    } catch (err) {
+                      console.error('Could not enter fullscreen:', err);
+                    }
+                  }}
+                  className="text-white hover:bg-white/20 p-2 rounded-xl transition-all duration-200"
+                  title={t('antiCheat.enterFullscreen')}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
         </header>
+
+        {/* Anti-cheat status bar */}
+        <div className="bg-gradient-to-r from-orange-100 to-red-100 border-b border-orange-200 p-2 flex-shrink-0">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center space-x-4">
+              <span className="text-orange-700 font-medium">{t('antiCheat.secureMode')}</span>
+              {!isFullscreen && (
+                <span className="text-red-600 font-medium">{t('antiCheat.fullscreenRequired')}</span>
+              )}
+            </div>
+            <div className="text-orange-600 text-xs">
+              {t('antiCheat.violations')}: {Object.values(suspiciousActivity).reduce((sum, count) => sum + count, 0)}
+            </div>
+          </div>
+        </div>
 
         {/* Progress Bar - Fixed */}
         <div className="bg-white/90 backdrop-blur-xl shadow-lg border-b border-white/30 p-2 md:p-4 flex-shrink-0">
@@ -472,7 +693,6 @@ const TestRoom = () => {
                   </span>
                 </div>
                 
-                {/* Scrollable question content */}
                 <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
                   <div className="text-lg md:text-xl lg:text-2xl font-semibold text-slate-800 leading-relaxed p-4">
                     {renderQuestionBlocks(currentQuestion.blocks)}
@@ -488,7 +708,6 @@ const TestRoom = () => {
               <div className="p-6 md:p-8 flex flex-col h-full min-h-0">
                 <h3 className="text-lg md:text-xl font-semibold text-slate-700 mb-6 flex-shrink-0">{t('test.chooseAnswer')}</h3>
                 
-                {/* Scrollable options */}
                 <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 pr-2">
                   <div className="space-y-4">
                     {currentQuestion.options.map((option) => (
@@ -526,7 +745,6 @@ const TestRoom = () => {
         {/* Bottom Navigation - Fixed */}
         <div className="bg-white/90 backdrop-blur-xl shadow-lg border-t border-white/30 p-2 flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
-            {/* Previous Button */}
             <button
               onClick={handlePrevQuestion}
               disabled={currentQuestionIndex === 0}
@@ -536,10 +754,9 @@ const TestRoom = () => {
                   : 'bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white shadow-xl hover:scale-[1.02]'
               }`}
             >
-              Trước
+              {t('test.previous')}
             </button>
 
-            {/* Question Navigation - Scrollable */}
             <div className="flex-1 text-center px-4">
               <div className="flex flex-wrap justify-center gap-2 max-h-16 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
                 {testData.questions.map((_, index) => (
@@ -563,7 +780,6 @@ const TestRoom = () => {
               </div>
             </div>
 
-            {/* Next/Submit Button */}
             {currentQuestionIndex === totalQuestions - 1 ? (
               <button
                 onClick={handleSubmitTest}
@@ -577,7 +793,7 @@ const TestRoom = () => {
                 onClick={handleNextQuestion}
                 className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02] flex-shrink-0"
               >
-                Sau
+                {t('test.next')}
               </button>
             )}
           </div>
@@ -589,16 +805,104 @@ const TestRoom = () => {
         </div>
       </div>
 
-      {/* Footer Navigation - Only show on mobile */}
-      {/* <div className="fixed w-full bottom-0 z-50 lg:hidden">
-        <NavigationComponent />
-      </div> */}
+      {/* Anti-cheat Warning Modal */}
+      <AntiCheatWarning />
 
       {/* Image Modal */}
-      <ImageModal />
+      {enlargedImage && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70] flex items-center justify-center p-4"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <div className="relative max-w-full max-h-full">
+            <button
+              onClick={() => setEnlargedImage(null)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 bg-black/50 rounded-full p-2 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img 
+              src={enlargedImage} 
+              alt="Enlarged view"
+              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl select-none"
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
+            />
+            <div className="absolute -bottom-12 left-0 right-0 text-center">
+              <p className="text-white text-sm bg-black/50 rounded px-3 py-1 inline-block">
+                {t('test.tapToClose')}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Results Modal */}
-      <ResultsModal />
+      {results && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin border border-white/30">
+            <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white rounded-t-2xl">
+              <h2 className="text-2xl font-bold text-center">{t('test.resultsTitle')}</h2>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-green-700">{results.correct_answers}</div>
+                  <div className="text-sm text-green-600">{t('test.correctAnswers')}</div>
+                </div>
+                <div className="bg-gradient-to-r from-red-100 to-red-200 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-red-700">{results.incorrect_answers}</div>
+                  <div className="text-sm text-red-600">{t('test.incorrectAnswers')}</div>
+                </div>
+                <div className="bg-gradient-to-r from-blue-100 to-indigo-100 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-blue-700">{results.total_questions}</div>
+                  <div className="text-sm text-blue-600">{t('test.totalQuestions')}</div>
+                </div>
+                <div className="bg-gradient-to-r from-violet-100 to-indigo-100 p-4 rounded-xl text-center">
+                  <div className="text-2xl font-bold text-violet-700">{results.score_percentage.toFixed(1)}%</div>
+                  <div className="text-sm text-violet-600">{t('test.scorePercentage')}</div>
+                </div>
+              </div>
+
+              <h3 className="text-xl font-semibold text-slate-800 mb-4">{t('test.detailedResults')}</h3>
+              <div className="space-y-3">
+                {results.results.map((result, index) => (
+                  <div key={result.question_id} className={`p-4 rounded-xl border-2 ${result.is_correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-slate-700">{t('test.question')} {index + 1}</span>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${result.is_correct ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+                        {result.is_correct ? t('test.correct') : t('test.incorrect')}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-sm text-slate-600">
+                      <span>{t('test.yourAnswer')}: {result.user_answer}</span>
+                      {!result.is_correct && <span className="ml-4">{t('test.correctAnswer')}: {result.correct_answer}</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-center gap-4 mt-6">
+                <button
+                  onClick={() => setResults(null)}
+                  className="bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                >
+                  {t('test.reviewAnswers')}
+                </button>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                >
+                  {t('test.backToDashboard')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

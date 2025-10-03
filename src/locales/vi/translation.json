@@ -458,6 +458,33 @@
         "needToComplete": "Bạn cần hoàn thành câu hỏi để nhận phần thưởng.",
         "requirementsNotMet": "Chưa đáp ứng yêu cầu"
     },
+    "antiCheat": {
+        "warningTitle": "Cảnh báo vi phạm",
+        "tabSwitchWarning": "Đã phát hiện chuyển tab/cửa sổ. Hành vi này bị nghiêm cấm!",
+        "devToolsWarning": "Đã phát hiện mở Developer Tools. Hành vi này bị nghiêm cấm!",
+        "copyWarning": "Đã phát hiện sao chép nội dung. Hành vi này bị nghiêm cấm!",
+        "screenshotWarning": "Đã phát hiện chụp màn hình. Hành vi này bị nghiêm cấm!",
+        "contextMenuWarning": "Đã phát hiện nhấp chuột phải. Hành vi này bị nghiêm cấm!",
+        "shortcutWarning": "Đã phát hiện sử dụng phím tắt bị cấm. Hành vi này bị nghiêm cấm!",
+        "violationCount": "Số lần vi phạm",
+        "consequences": "Quá 5 lần vi phạm sẽ bị chấm dứt bài thi!",
+        "understood": "Đã hiểu",
+        "testTerminated": "Bài thi đã bị chấm dứt",
+        "blockedMessage": "Bạn đã bị chấm dứt bài thi do có quá nhiều hành vi gian lận.",
+        "contactSupport": "Vui lòng liên hệ với bộ phận hỗ trợ nếu bạn cho rằng đây là lỗi.",
+        "returnDashboard": "Quay về Dashboard",
+        "secureMode": "Chế độ bảo mật đang bật",
+        "fullscreenRequired": "Yêu cầu chế độ toàn màn hình",
+        "violations": "Vi phạm",
+        "enterFullscreen": "Vào chế độ toàn màn hình"
+    },
+    "test": {
+        "confirmExit": "Bạn có chắc chắn muốn thoát khỏi bài thi?",
+        "incompleteWarning": "Bạn chưa trả lời hết các câu hỏi. Bạn có chắc chắn muốn nộp bài?",
+        "previous": "Trước",
+        "next": "Sau",
+        "progress": "Tiến độ"
+    },
     "dashboardAdmin": {
         "roomsStatistics": "Thống kê phòng",
         "usersStatistics": "Thống kê người dùng",
