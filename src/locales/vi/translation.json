@@ -476,14 +476,28 @@
         "secureMode": "Chế độ bảo mật đang bật",
         "fullscreenRequired": "Yêu cầu chế độ toàn màn hình",
         "violations": "Vi phạm",
-        "enterFullscreen": "Vào chế độ toàn màn hình"
+        "enterFullscreen": "Vào chế độ toàn màn hình",
+        "resultsMayBeInvalid": "Kết quả có thể không được ghi nhận",
+        "cheatingDetected": "Phát hiện gian lận",
+        "viewResults": "Xem kết quả"
     },
     "test": {
         "confirmExit": "Bạn có chắc chắn muốn thoát khỏi bài thi?",
         "incompleteWarning": "Bạn chưa trả lời hết các câu hỏi. Bạn có chắc chắn muốn nộp bài?",
         "previous": "Trước",
         "next": "Sau",
-        "progress": "Tiến độ"
+        "progress": "Tiến độ",
+        "correctAnswers": "Đáp án đúng",
+        "incorrectAnswers": "Đáp án sai",
+        "totalQuestions": "Tổng số câu hỏi",
+        "scorePercentage": "Tỷ lệ điểm",
+        "incorrect": "Sai",
+        "correct": "Đúng",
+        "yourAnswer": "Câu trả lời của bạn",
+        "correctAnswer": "Đáp án đúng",
+        "backToDashboard": "Quay về Dashboard",
+        "submit": "Nộp bài",
+        "questionTitle": "Câu hỏi: "
     },
     "dashboardAdmin": {
         "roomsStatistics": "Thống kê phòng",

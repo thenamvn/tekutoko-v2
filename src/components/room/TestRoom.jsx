@@ -32,6 +32,7 @@ const TestRoom = () => {
   const [showWarning, setShowWarning] = useState(false);
   const [warningMessage, setWarningMessage] = useState('');
   const [blockedForCheating, setBlockedForCheating] = useState(false);
+  const [showBlockedResults, setShowBlockedResults] = useState(false);
   
   const activityLogRef = useRef([]);
   const warningTimeoutRef = useRef(null);
@@ -103,17 +104,22 @@ const TestRoom = () => {
         suspicious_activity: suspiciousActivity
       };
 
-      await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
+      const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        setResults(data);
+      }
     } catch (err) {
       console.error('Error auto-submitting test:', err);
     }
-  }, [testId, testData, answers, suspiciousActivity, navigate, t]);
+  }, [testId, testData, answers, suspiciousActivity]);
 
-  // Anti-cheating effects
+  // ...existing useEffect for anti-cheating...
   useEffect(() => {
     // Disable right-click context menu
     const handleContextMenu = (e) => {
@@ -278,7 +284,7 @@ const TestRoom = () => {
     }
   }, [testId, t]);
 
-  // Enhanced text cleaning function
+  // ...existing helper functions (cleanTextContent, renderTextContent, etc.)...
   const cleanTextContent = (text) => {
     if (!text) return '';
     
@@ -540,22 +546,134 @@ const TestRoom = () => {
     );
   };
 
+  // Handle close blocked screen
+  const handleCloseBlockedScreen = () => {
+    if (results) {
+      setShowBlockedResults(true);
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
   // Blocked screen
-  if (blockedForCheating) {
+  if (blockedForCheating && !showBlockedResults) {
     return (
       <div className="h-screen bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center p-4">
         <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full border-2 border-red-500 text-center">
           <div className="bg-gradient-to-r from-red-600 to-red-700 p-6 text-white rounded-t-2xl">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636" />
-              </svg>
+            <div className="flex items-center justify-between">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              </div>
+              <button
+                onClick={handleCloseBlockedScreen}
+                className="absolute top-4 right-4 text-white hover:text-red-200 p-1 rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
             <h1 className="text-2xl font-bold">{t('antiCheat.testTerminated')}</h1>
           </div>
           <div className="p-6">
             <p className="text-red-700 font-semibold mb-4">{t('antiCheat.blockedMessage')}</p>
             <p className="text-sm text-slate-600 mb-6">{t('antiCheat.contactSupport')}</p>
+            <button
+              onClick={handleCloseBlockedScreen}
+              className="bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white py-2 px-6 rounded-xl font-semibold transition-all duration-200 hover:scale-[1.02]"
+            >
+              {results ? t('antiCheat.viewResults') : t('antiCheat.backToDashboard')}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Blocked background with results modal
+  if (blockedForCheating && showBlockedResults && results) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center p-4 relative">
+        {/* Background blur overlay */}
+        <div className="absolute inset-0 bg-red-900/40 backdrop-blur-sm"></div>
+        
+        {/* Results Modal */}
+        <div className="relative z-10 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin border border-white/30">
+          <div className="bg-gradient-to-r from-red-600 to-red-700 p-6 text-white rounded-t-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">{t('test.resultsTitle')} - {t('antiCheat.cheatingDetected')}</h2>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="text-white hover:text-red-200 p-1 rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            {/* Warning about cheating */}
+            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+              <div className="flex items-center mb-2">
+                <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <h3 className="text-lg font-bold text-red-700">{t('antiCheat.cheatingDetected')}</h3>
+              </div>
+              <p className="text-red-600 text-sm mb-2">{t('antiCheat.resultsMayBeInvalid')}</p>
+              <p className="text-red-600 text-sm">{t('antiCheat.violationCount')}: {Object.values(suspiciousActivity).reduce((sum, count) => sum + count, 0)}</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-green-700">{results.correct_answers}</div>
+                <div className="text-sm text-green-600">{t('test.correctAnswers')}</div>
+              </div>
+              <div className="bg-gradient-to-r from-red-100 to-red-200 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-red-700">{results.incorrect_answers}</div>
+                <div className="text-sm text-red-600">{t('test.incorrectAnswers')}</div>
+              </div>
+              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-blue-700">{results.total_questions}</div>
+                <div className="text-sm text-blue-600">{t('test.totalQuestions')}</div>
+              </div>
+              <div className="bg-gradient-to-r from-violet-100 to-indigo-100 p-4 rounded-xl text-center">
+                <div className="text-2xl font-bold text-violet-700">{results.score_percentage.toFixed(1)}%</div>
+                <div className="text-sm text-violet-600">{t('test.scorePercentage')}</div>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-semibold text-slate-800 mb-4">{t('test.detailedResults')}</h3>
+            <div className="space-y-3">
+              {results.results.map((result, index) => (
+                <div key={result.question_id} className={`p-4 rounded-xl border-2 ${result.is_correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-700">{t('test.question')} {index + 1}</span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${result.is_correct ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+                      {result.is_correct ? t('test.correct') : t('test.incorrect')}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-sm text-slate-600">
+                    <span>{t('test.yourAnswer')}: {result.user_answer}</span>
+                    {!result.is_correct && <span className="ml-4">{t('test.correctAnswer')}: {result.correct_answer}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02]"
+              >
+                {t('test.backToDashboard')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -608,6 +726,7 @@ const TestRoom = () => {
 
   return (
     <div className="h-screen max-h-screen bg-gradient-to-br from-slate-50 to-violet-50 flex flex-col overflow-hidden select-none">
+      {/* ...existing normal test interface... */}
       <div className="container mx-auto max-w-full flex flex-col h-full">
         {/* Header - Fixed */}
         <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 md:p-6 shadow-lg flex-shrink-0">
@@ -665,6 +784,7 @@ const TestRoom = () => {
           </div>
         </div>
 
+        {/* ...rest of the normal test interface... */}
         {/* Progress Bar - Fixed */}
         <div className="bg-white/90 backdrop-blur-xl shadow-lg border-b border-white/30 p-2 md:p-4 flex-shrink-0">
           <div className="flex justify-between items-center mb-3">
@@ -839,8 +959,8 @@ const TestRoom = () => {
         </div>
       )}
 
-      {/* Results Modal */}
-      {results && (
+      {/* Normal Results Modal */}
+      {results && !blockedForCheating && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
           <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto scrollbar-thin border border-white/30">
             <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white rounded-t-2xl">
