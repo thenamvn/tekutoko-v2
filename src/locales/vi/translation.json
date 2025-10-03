@@ -479,7 +479,8 @@
         "enterFullscreen": "Vào chế độ toàn màn hình",
         "resultsMayBeInvalid": "Kết quả có thể không được ghi nhận",
         "cheatingDetected": "Phát hiện gian lận",
-        "viewResults": "Xem kết quả"
+        "viewResults": "Xem kết quả",
+        "backToDashboard": "Quay về Dashboard"
     },
     "test": {
         "confirmExit": "Bạn có chắc chắn muốn thoát khỏi bài thi?",

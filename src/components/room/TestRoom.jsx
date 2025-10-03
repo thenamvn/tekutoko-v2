@@ -1,12 +1,106 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import secureStorage from '../../utils/secureStorage';
 
 const TestRoom = () => {
   const { t } = useTranslation();
   const { testId } = useParams();
   const navigate = useNavigate();
-  const [isTestSubmitted, setIsTestSubmitted] = useState(false);
+
+  // Helper functions for secure storage
+  const getSuspiciousActivityFromStorage = (testId) => {
+    try {
+      const stored = secureStorage.getSecureItem(`suspicious_activity_${testId}`, testId);
+      return stored || {
+        tabSwitches: 0,
+        devToolsAttempts: 0,
+        copyAttempts: 0,
+        screenshotAttempts: 0,
+        contextMenuAttempts: 0,
+        keyboardShortcuts: 0
+      };
+    } catch (error) {
+      console.warn('Failed to load suspicious activity from secure storage:', error.message);
+      // Fallback to regular localStorage for backward compatibility
+      try {
+        const fallback = localStorage.getItem(`suspicious_activity_${testId}`);
+        return fallback ? JSON.parse(fallback) : {
+          tabSwitches: 0,
+          devToolsAttempts: 0,
+          copyAttempts: 0,
+          screenshotAttempts: 0,
+          contextMenuAttempts: 0,
+          keyboardShortcuts: 0
+        };
+      } catch {
+        return {
+          tabSwitches: 0,
+          devToolsAttempts: 0,
+          copyAttempts: 0,
+          screenshotAttempts: 0,
+          contextMenuAttempts: 0,
+          keyboardShortcuts: 0
+        };
+      }
+    }
+  };
+
+  const getActivityLogFromStorage = (testId) => {
+    try {
+      const stored = secureStorage.getSecureItem(`activity_log_${testId}`, testId);
+      return stored || [];
+    } catch (error) {
+      console.warn('Failed to load activity log from secure storage:', error.message);
+      // Fallback to regular localStorage for backward compatibility
+      try {
+        const fallback = localStorage.getItem(`activity_log_${testId}`);
+        return fallback ? JSON.parse(fallback) : [];
+      } catch {
+        return [];
+      }
+    }
+  };
+
+  const getTestSubmittedFromStorage = (testId) => {
+    try {
+      const stored = secureStorage.getSecureItem(`test_submitted_${testId}`, testId);
+      return stored === true;
+    } catch (error) {
+      console.warn('Failed to load test submitted from secure storage:', error.message);
+      // Fallback to regular localStorage for backward compatibility
+      try {
+        const fallback = localStorage.getItem(`test_submitted_${testId}`);
+        return fallback === 'true';
+      } catch {
+        return false;
+      }
+    }
+  };
+
+  const getTestTerminatedFromStorage = (testId) => {
+    try {
+      const stored = secureStorage.getSecureItem(`test_terminated_${testId}`, testId);
+      return stored === true;
+    } catch (error) {
+      console.warn('Failed to load test terminated from secure storage:', error.message);
+      // Fallback to regular localStorage for backward compatibility
+      try {
+        const fallback = localStorage.getItem(`test_terminated_${testId}`);
+        return fallback === 'true';
+      } catch {
+        return false;
+      }
+    }
+  };
+
+  // Initialize states with secure storage
+  const [isTestSubmitted, setIsTestSubmitted] = useState(() => 
+    getTestSubmittedFromStorage(testId)
+  );
+  const [isTestTerminated, setIsTestTerminated] = useState(() => 
+    getTestTerminatedFromStorage(testId)
+  );
   const [testData, setTestData] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState('');
@@ -19,38 +113,150 @@ const TestRoom = () => {
   const [results, setResults] = useState(null);
   
   // Anti-cheating states
-  const [suspiciousActivity, setSuspiciousActivity] = useState({
-    tabSwitches: 0,
-    devToolsAttempts: 0,
-    copyAttempts: 0,
-    screenshotAttempts: 0,
-    contextMenuAttempts: 0,
-    keyboardShortcuts: 0
-  });
+  const [suspiciousActivity, setSuspiciousActivity] = useState(() => 
+    getSuspiciousActivityFromStorage(testId)
+  );
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [warningMessage, setWarningMessage] = useState('');
   const [blockedForCheating, setBlockedForCheating] = useState(false);
   const [showBlockedResults, setShowBlockedResults] = useState(false);
   
-  const activityLogRef = useRef([]);
+  const activityLogRef = useRef(getActivityLogFromStorage(testId));
   const warningTimeoutRef = useRef(null);
 
   // Add new state for the incomplete warning modal
   const [showIncompleteWarningModal, setShowIncompleteWarningModal] = useState(false);
 
+  // Security violation detection
+  const [securityViolationDetected, setSecurityViolationDetected] = useState(false);
+
+  // Check storage integrity on component mount
+  useEffect(() => {
+    if (testId) {
+      // Check if stored data was tampered with
+      const activityValid = secureStorage.validateStorageIntegrity(`suspicious_activity_${testId}`, testId);
+      const logValid = secureStorage.validateStorageIntegrity(`activity_log_${testId}`, testId);
+      const submittedValid = secureStorage.validateStorageIntegrity(`test_submitted_${testId}`, testId);
+
+      // If any storage is invalid, assume tampering
+      if (!activityValid && localStorage.getItem(`suspicious_activity_${testId}`) ||
+          !logValid && localStorage.getItem(`activity_log_${testId}`) ||
+          !submittedValid && localStorage.getItem(`test_submitted_${testId}`)) {
+        console.warn('Storage integrity check failed - possible tampering detected');
+        setSecurityViolationDetected(true);
+      }
+    }
+  }, [testId]);
+
+  // Save to secure storage when states change
+  useEffect(() => {
+    if (testId && !securityViolationDetected) {
+      secureStorage.setSecureItem(`suspicious_activity_${testId}`, suspiciousActivity, testId);
+    }
+  }, [suspiciousActivity, testId, securityViolationDetected]);
+
+  useEffect(() => {
+    if (testId && !securityViolationDetected) {
+      secureStorage.setSecureItem(`test_submitted_${testId}`, isTestSubmitted, testId);
+    }
+  }, [isTestSubmitted, testId, securityViolationDetected]);
+
+  useEffect(() => {
+    if (testId && !securityViolationDetected) {
+      secureStorage.setSecureItem(`test_terminated_${testId}`, isTestTerminated, testId);
+    }
+  }, [isTestTerminated, testId, securityViolationDetected]);
+
+  useEffect(() => {
+    if (testId && !securityViolationDetected) {
+      secureStorage.setSecureItem(`activity_log_${testId}`, activityLogRef.current, testId);
+    }
+  }, [testId, securityViolationDetected]);
+
+  // Helper function to clear storage
+  const clearSecureStorage = useCallback(() => {
+    if (testId) {
+      secureStorage.removeSecureItem(`suspicious_activity_${testId}`);
+      secureStorage.removeSecureItem(`activity_log_${testId}`);
+      secureStorage.removeSecureItem(`test_submitted_${testId}`);
+      // NOTE: We intentionally DON'T remove test_terminated flag
+      // This ensures the test remains blocked even after reload
+    }
+  }, [testId]);
+
+  // Auto-submit test due to cheating
+  const handleAutoSubmit = useCallback(async (reason) => {
+    if (isTestSubmitted) return;
+    
+    try {
+      setIsTestSubmitted(true);
+      setIsTestTerminated(true); // Mark test as terminated
+      
+      const payload = {
+        quiz_uuid: testId,
+        answers: testData?.questions.map((question, index) => ({
+          question_id: question.id,
+          selected_option: answers[index] || ''
+        })) || [],
+        cheating_detected: true,
+        cheating_reason: reason,
+        activity_log: activityLogRef.current,
+        suspicious_activity: suspiciousActivity,
+        security_violation_detected: securityViolationDetected
+      };
+
+      const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setResults(data);
+        
+        // Clear secure storage after auto-submit (but keep terminated flag)
+        clearSecureStorage();
+      }
+    } catch (err) {
+      console.error('Error auto-submitting test:', err);
+    }
+  }, [testId, testData, answers, suspiciousActivity, isTestSubmitted, securityViolationDetected, clearSecureStorage]);
+
   // Log suspicious activity
   const logSuspiciousActivity = useCallback((type, details = '') => {
-    if (isTestSubmitted) return;
+    if (isTestSubmitted || securityViolationDetected || blockedForCheating) return;
+    
     const timestamp = new Date().toISOString();
-    const logEntry = { type, details, timestamp, questionIndex: currentQuestionIndex };
+    const logEntry = { 
+      type, 
+      details, 
+      timestamp, 
+      questionIndex: currentQuestionIndex,
+      sessionId: secureStorage.getSessionId()
+    };
     
     activityLogRef.current.push(logEntry);
     
-    setSuspiciousActivity(prev => ({
-      ...prev,
-      [type]: prev[type] + 1
-    }));
+    // Save to secure storage immediately
+    if (testId) {
+      secureStorage.setSecureItem(`activity_log_${testId}`, activityLogRef.current, testId);
+    }
+    
+    setSuspiciousActivity(prev => {
+      const newActivity = {
+        ...prev,
+        [type]: prev[type] + 1
+      };
+      
+      // Save to secure storage immediately
+      if (testId) {
+        secureStorage.setSecureItem(`suspicious_activity_${testId}`, newActivity, testId);
+      }
+      
+      return newActivity;
+    });
 
     // Show warning based on activity type
     let message = '';
@@ -84,49 +290,21 @@ const TestRoom = () => {
       setShowWarning(false);
     }, 3000);
 
-    // Check if user should be blocked
-    const totalViolations = Object.values(suspiciousActivity).reduce((sum, count) => sum + count, 0);
+    // Check if user should be blocked - use current suspicious activity + 1 for the new violation
+    const currentViolations = Object.values(suspiciousActivity).reduce((sum, count) => sum + count, 0);
+    const totalViolations = currentViolations + 1; // +1 for the current violation
+    
     if (totalViolations >= 5) {
       setBlockedForCheating(true);
       handleAutoSubmit('Quá nhiều hành vi gian lận được phát hiện');
     }
-  }, [currentQuestionIndex, suspiciousActivity, t, isTestSubmitted]);
-
-  // Auto-submit test due to cheating
-  const handleAutoSubmit = useCallback(async (reason) => {
-    if (isTestSubmitted) return;
-    try {
-      setIsTestSubmitted(true);
-      const payload = {
-        quiz_uuid: testId,
-        answers: testData?.questions.map((question, index) => ({
-          question_id: question.id,
-          selected_option: answers[index] || ''
-        })) || [],
-        cheating_detected: true,
-        cheating_reason: reason,
-        activity_log: activityLogRef.current,
-        suspicious_activity: suspiciousActivity
-      };
-
-      const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setResults(data);
-      }
-    } catch (err) {
-      console.error('Error auto-submitting test:', err);
-    }
-  }, [testId, testData, answers, suspiciousActivity, isTestSubmitted]);
+  }, [currentQuestionIndex, suspiciousActivity, t, isTestSubmitted, testId, securityViolationDetected, blockedForCheating]);
 
   // Anti-cheating effects
   useEffect(() => {
-    if (isTestSubmitted) return;
+    // Nếu đã submit test hoặc đã bị blocked thì không cần theo dõi anti-cheat nữa
+    if (isTestSubmitted || blockedForCheating) return;
+    
     const handleBeforeUnload = (e) => {
       if (!isTestSubmitted) {
         logSuspiciousActivity('tabSwitches', 'Page refresh/reload attempt');
@@ -134,6 +312,7 @@ const TestRoom = () => {
         e.returnValue = '';
       }
     };
+    
     // Disable right-click context menu
     const handleContextMenu = (e) => {
       e.preventDefault();
@@ -175,15 +354,17 @@ const TestRoom = () => {
       }
     };
 
-    // Detect window focus/blur (tab switching)
+    // Detect window focus/blur (tab switching) - chỉ khi chưa submit
     const handleVisibilityChange = () => {
-      if (document.hidden) {
+      if (document.hidden && !isTestSubmitted) {
         logSuspiciousActivity('tabSwitches');
       }
     };
 
     const handleWindowBlur = () => {
-      logSuspiciousActivity('tabSwitches');
+      if (!isTestSubmitted) {
+        logSuspiciousActivity('tabSwitches');
+      }
     };
 
     // Detect DevTools opening
@@ -270,7 +451,31 @@ const TestRoom = () => {
       clearInterval(devToolsInterval);
       if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
     };
-  }, [logSuspiciousActivity, testData, isFullscreen, isTestSubmitted]);
+  }, [logSuspiciousActivity, testData, isFullscreen, isTestSubmitted, blockedForCheating]);
+
+  // Check violations after all functions are defined
+  useEffect(() => {
+    if (testId && !isTestSubmitted && testData) {
+      // If test was previously terminated, block immediately
+      if (isTestTerminated) {
+        setBlockedForCheating(true);
+        return;
+      }
+      
+      // Check if violations already exceeded limit on mount
+      const currentSuspiciousActivity = getSuspiciousActivityFromStorage(testId);
+      const totalViolations = Object.values(currentSuspiciousActivity).reduce((sum, count) => sum + count, 0);
+      
+      if (totalViolations >= 5) {
+        setBlockedForCheating(true);
+        
+        // Use setTimeout to ensure state is updated
+        setTimeout(() => {
+          handleAutoSubmit('Đã vượt quá giới hạn vi phạm cho phép');
+        }, 500);
+      }
+    }
+  }, [testId, isTestSubmitted, testData, isTestTerminated, handleAutoSubmit]);
 
   // Fetch test data from API
   useEffect(() => {
@@ -468,6 +673,9 @@ const TestRoom = () => {
   };
 
   const handleSubmitTest = async () => {
+    // Không cho phép submit nếu đã bị blocked
+    if (blockedForCheating) return;
+    
     if (Object.keys(answers).length !== testData.questions.length) {
       setShowIncompleteWarningModal(true);
       return;
@@ -484,7 +692,8 @@ const TestRoom = () => {
           selected_option: answers[index] || ''
         })),
         activity_log: activityLogRef.current,
-        suspicious_activity: suspiciousActivity
+        suspicious_activity: suspiciousActivity,
+        security_violation_detected: securityViolationDetected
       };
 
       const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
@@ -501,7 +710,11 @@ const TestRoom = () => {
 
       const data = await response.json();
       setResults(data);
-      setIsTestSubmitted(true); // Đánh dấu đã submit
+      setIsTestSubmitted(true);
+      
+      // Clear secure storage after successful submit
+      clearSecureStorage();
+      
     } catch (err) {
       console.error('Error submitting test:', err);
       setSubmitError(t('test.submitError'));
@@ -528,7 +741,8 @@ const TestRoom = () => {
             selected_option: answers[index] || ''
           })),
           activity_log: activityLogRef.current,
-          suspicious_activity: suspiciousActivity
+          suspicious_activity: suspiciousActivity,
+          security_violation_detected: securityViolationDetected
         };
 
         const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
@@ -545,7 +759,11 @@ const TestRoom = () => {
 
         const data = await response.json();
         setResults(data);
-        setIsTestSubmitted(true); // Đánh dấu đã submit
+        setIsTestSubmitted(true);
+        
+        // Clear secure storage
+        clearSecureStorage();
+        
       } catch (err) {
         console.error('Error submitting test:', err);
         setSubmitError(t('test.submitError'));
@@ -647,7 +865,7 @@ const TestRoom = () => {
   };
 
   // Blocked screen
-  if (blockedForCheating && !showBlockedResults) {
+  if ((blockedForCheating || isTestTerminated) && !showBlockedResults) {
     return (
       <div className="h-screen bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center p-4">
         <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full border-2 border-red-500 text-center">
@@ -685,7 +903,7 @@ const TestRoom = () => {
   }
 
   // Blocked background with results modal
-  if (blockedForCheating && showBlockedResults && results) {
+  if ((blockedForCheating || isTestTerminated) && showBlockedResults && results) {
     return (
       <div className="h-screen bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center p-4 relative">
         {/* Background blur overlay */}
@@ -994,15 +1212,16 @@ const TestRoom = () => {
             {currentQuestionIndex === totalQuestions - 1 ? (
               <button
                 onClick={handleSubmitTest}
-                disabled={submitting}
+                disabled={submitting || blockedForCheating}
                 className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02] flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? t('test.submitting') : t('test.submit')}
+                {submitting ? t('test.submitting') : blockedForCheating ? t('antiCheat.testTerminated') : t('test.submit')}
               </button>
             ) : (
               <button
                 onClick={handleNextQuestion}
-                className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02] flex-shrink-0"
+                disabled={blockedForCheating}
+                className="bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold shadow-xl transition-all duration-200 hover:scale-[1.02] flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('test.next')}
               </button>

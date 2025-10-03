@@ -478,7 +478,8 @@
         "enterFullscreen": "フルスクリーンモードに入る",
         "resultsMayBeInvalid": "結果が記録されない可能性があります",
         "cheatingDetected": "不正行為が検出されました",
-        "viewResults": "結果を表示"
+        "viewResults": "結果を表示",
+        "backToDashboard": "ダッシュボードに戻る"
     },
     "test": {
         "confirmExit": "テストを終了してもよろしいですか？",

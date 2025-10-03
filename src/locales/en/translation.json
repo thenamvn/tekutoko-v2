@@ -478,7 +478,8 @@
         "enterFullscreen": "Enter fullscreen mode",
         "resultsMayBeInvalid": "Results may not be recorded",
         "cheatingDetected": "Cheating detected",
-        "viewResults": "View results"
+        "viewResults": "View results",
+        "backToDashboard": "Back to Dashboard"
     },
     "test": {
         "confirmExit": "Are you sure you want to exit the test?",
