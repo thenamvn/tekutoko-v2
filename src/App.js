@@ -23,7 +23,7 @@ const QuizRoom = React.lazy(() => import('./components/room/QuizRoom'));
 const QuestionPage = React.lazy(() => import('./components/room/QuestionPage.jsx'));
 const TestRoom = React.lazy(() => import('./components/room/TestRoom'));
 const RoomSetup = React.lazy(() => import('./components/room/RoomSetup'));
-
+const CreateTestOnline = React.lazy(() => import('./components/test/CreateTestOnline'));
 
 // Admin Components
 const AdminLogin = React.lazy(() => import('./components/room_admin/login/adminLogin'));
@@ -90,6 +90,7 @@ const App = () => {
           {/* <Route path="/quiz/room/:roomId/results" element={<QuizResults />} /> */}
           
           <Route path="/create-room" element={<RoomSetup />} />
+          <Route path="/create-test" element={<CreateTestOnline />} />
           <Route path="/test/:testId" element={<TestRoom />} />
 
 

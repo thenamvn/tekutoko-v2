@@ -10,9 +10,20 @@ const DashBoard = () => {
     const apiUrl = process.env.REACT_APP_API_URL;
     const [hostRooms, setHostRooms] = useState([]);
     const [joinedRooms, setJoinedRooms] = useState([]);
+    const [showCreateOptions, setShowCreateOptions] = useState(false); // State for modal
 
     const handleCreateGame = () => {
+        setShowCreateOptions(true); // Show modal instead of direct navigation
+    };
+
+    const handleSelectRoomGame = () => {
+        setShowCreateOptions(false);
         navigate("/create-room");
+    };
+
+    const handleSelectTestOnline = () => {
+        setShowCreateOptions(false);
+        navigate("/create-test");
     };
 
     const handleJoinGameByCode = async () => {
@@ -93,6 +104,31 @@ const DashBoard = () => {
                     <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-4 border-violet-200 border-t-violet-600 mx-auto mb-3"></div>
                         <p className="text-sm text-slate-600 font-medium">Loading...</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal for Create Options */}
+            {showCreateOptions && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1000] flex items-center justify-center p-4">
+                    <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-sm w-full border border-white/30">
+                        <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 text-white rounded-t-2xl">
+                            <h2 className="text-xl font-bold text-center">{t("dashboard.createOptionsTitle")}</h2>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <button
+                                onClick={handleSelectRoomGame}
+                                className="w-full bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white py-3 px-4 rounded-xl font-semibold shadow-lg transition-all duration-200 hover:scale-[1.02]"
+                            >
+                                🏠 {t("dashboard.createRoomOption")}
+                            </button>
+                            <button
+                                onClick={handleSelectTestOnline}
+                                className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-3 px-4 rounded-xl font-semibold shadow-lg transition-all duration-200 hover:scale-[1.02]"
+                            >
+                                📝 {t("dashboard.createTestOption")}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
