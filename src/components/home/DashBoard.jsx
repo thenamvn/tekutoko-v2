@@ -10,10 +10,11 @@ const DashBoard = () => {
     const apiUrl = process.env.REACT_APP_API_URL;
     const [hostRooms, setHostRooms] = useState([]);
     const [joinedRooms, setJoinedRooms] = useState([]);
-    const [showCreateOptions, setShowCreateOptions] = useState(false); // State for modal
+    const [showCreateOptions, setShowCreateOptions] = useState(false);
+    const [roomFilter, setRoomFilter] = useState('all'); // 'all', 'hosted', 'joined'
 
     const handleCreateGame = () => {
-        setShowCreateOptions(true); // Show modal instead of direct navigation
+        setShowCreateOptions(true);
     };
 
     const handleSelectRoomGame = () => {
@@ -96,6 +97,20 @@ const DashBoard = () => {
         navigate(`/quiz/room/${roomId}`);
     };
 
+    // Filter rooms based on selected filter
+    const getFilteredRooms = () => {
+        switch (roomFilter) {
+            case 'hosted':
+                return hostRooms;
+            case 'joined':
+                return joinedRooms;
+            default:
+                return [...hostRooms, ...joinedRooms];
+        }
+    };
+
+    const filteredRooms = getFilteredRooms();
+
     const renderMobileLayout = () => (
         <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-violet-50 max-w-md mx-auto shadow-[0_0_30px_rgba(0,0,0,0.1)]">
             {/* Loading Overlay với glassmorphism */}
@@ -103,7 +118,7 @@ const DashBoard = () => {
                 <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-[1000]">
                     <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-4 border-violet-200 border-t-violet-600 mx-auto mb-3"></div>
-                        <p className="text-sm text-slate-600 font-medium">Loading...</p>
+                        <p className="text-sm text-slate-600 font-medium">{t("dashboard.loading")}</p>
                     </div>
                 </div>
             )}
@@ -127,6 +142,12 @@ const DashBoard = () => {
                                 className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white py-3 px-4 rounded-xl font-semibold shadow-lg transition-all duration-200 hover:scale-[1.02]"
                             >
                                 📝 {t("dashboard.createTestOption")}
+                            </button>
+                            <button
+                                onClick={() => setShowCreateOptions(false)}
+                                className="w-full bg-gradient-to-r from-slate-400 to-slate-500 hover:from-slate-500 hover:to-slate-600 text-white py-2 px-4 rounded-xl font-medium shadow-lg transition-all duration-200 hover:scale-[1.02]"
+                            >
+                                {t("dashboard.cancel")}
                             </button>
                         </div>
                     </div>
@@ -166,87 +187,110 @@ const DashBoard = () => {
                     </div>
                 </div>
 
-                {/* Grid layout cho các phòng */}
-                <div className="grid grid-cols-2 gap-4">
-                    {/* Card Tạo phòng mới với modern design */}
-                    <div
-                        className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-dashed border-violet-300 cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col items-center justify-center aspect-square hover:scale-[1.02] hover:bg-white/90"
-                        onClick={handleCreateGame}
-                        title={t("dashboard.createGameButton", "Create New Game")}
-                    >
-                        <div className="p-4 bg-gradient-to-r from-violet-100 to-indigo-100 rounded-full mb-3 group-hover:from-violet-200 group-hover:to-indigo-200 transition-all duration-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                        </div>
-                        <p className="text-sm font-semibold text-slate-700 group-hover:text-violet-600 transition-colors duration-200">
-                            {t("dashboard.createRoom", "Create New")}
-                        </p>
+                {/* Room Filter Section */}
+                <div className="mb-6 p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
+                    <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center">
+                        <svg className="w-4 h-4 text-violet-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        {t("dashboard.filterRooms")}
+                    </h3>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setRoomFilter('all')}
+                            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-[1.02] ${
+                                roomFilter === 'all'
+                                    ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
+                                    : 'bg-white/70 text-slate-600 hover:bg-white/90'
+                            }`}
+                        >
+                            {t("dashboard.filterAll")} ({hostRooms.length + joinedRooms.length})
+                        </button>
+                        <button
+                            onClick={() => setRoomFilter('hosted')}
+                            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-[1.02] ${
+                                roomFilter === 'hosted'
+                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
+                                    : 'bg-white/70 text-slate-600 hover:bg-white/90'
+                            }`}
+                        >
+                            {t("dashboard.filterHosted")} ({hostRooms.length})
+                        </button>
+                        <button
+                            onClick={() => setRoomFilter('joined')}
+                            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-[1.02] ${
+                                roomFilter === 'joined'
+                                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
+                                    : 'bg-white/70 text-slate-600 hover:bg-white/90'
+                            }`}
+                        >
+                            {t("dashboard.filterJoined")} ({joinedRooms.length})
+                        </button>
                     </div>
-
-                    {/* Danh sách các phòng đã tạo (Hosted Rooms) */}
-                    {hostRooms.map((room) => (
-                        <div
-                            key={`host-${room.room_id}`}
-                            className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 cursor-pointer overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col aspect-square hover:scale-[1.02] hover:bg-white/90"
-                            onClick={() => handleRoomCardClick(room.room_id)}
-                        >
-                            <div className="relative w-full h-3/5 overflow-hidden">
-                                <img
-                                    src={room.thumbnail || room.avatarImage || "https://via.placeholder.com/300x200.png?text=Room"}
-                                    alt={room.room_title || "Room Thumbnail"}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                    referrerPolicy="no-referrer"
-                                />
-                                <div className="absolute top-2 left-2">
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-emerald-100 to-cyan-100 text-emerald-800">
-                                        {t("dashboard.host")}
-                                    </span>
-                                </div>
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            </div>
-                            <div className="p-3 flex-grow flex flex-col justify-center">
-                                <h3 className="text-sm font-bold text-slate-800 truncate group-hover:text-violet-600 transition-colors duration-200">
-                                    {room.room_title || room.room_id}
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-1">{t("dashboard.hostedByYou")}</p>
-                            </div>
-                        </div>
-                    ))}
-
-                    {/* Danh sách các phòng đã tham gia (Joined Rooms) */}
-                    {joinedRooms.map((room) => (
-                        <div
-                            key={`joined-${room.room_id}`}
-                            className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 cursor-pointer overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col aspect-square hover:scale-[1.02] hover:bg-white/90"
-                            onClick={() => handleRoomCardClick(room.room_id)}
-                        >
-                            <div className="relative w-full h-3/5 overflow-hidden">
-                                <img
-                                    src={room.thumbnail || room.avatarImage || "https://via.placeholder.com/300x200.png?text=Room"}
-                                    alt={room.room_title || "Room Thumbnail"}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                    referrerPolicy="no-referrer"
-                                />
-                                <div className="absolute top-2 left-2">
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800">
-                                        {t("dashboard.joined")}
-                                    </span>
-                                </div>
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            </div>
-                            <div className="p-3 flex-grow flex flex-col justify-center">
-                                <h3 className="text-sm font-bold text-slate-800 truncate group-hover:text-violet-600 transition-colors duration-200">
-                                    {room.room_title || room.room_id}
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-1">{t("dashboard.joinedByYou")}</p>
-                            </div>
-                        </div>
-                    ))}
                 </div>
 
-                {/* Hiển thị nếu không có phòng nào */}
-                {hostRooms.length === 0 && joinedRooms.length === 0 && !loading && (
+                {/* Grid layout cho các phòng */}
+                <div className="grid grid-cols-2 gap-4">
+                    {/* Card Tạo phòng mới với modern design - chỉ hiển thị khi filter = 'all' hoặc 'hosted' */}
+                    {(roomFilter === 'all' || roomFilter === 'hosted') && (
+                        <div
+                            className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-dashed border-violet-300 cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col items-center justify-center aspect-square hover:scale-[1.02] hover:bg-white/90"
+                            onClick={handleCreateGame}
+                            title={t("dashboard.createGameButton")}
+                        >
+                            <div className="p-4 bg-gradient-to-r from-violet-100 to-indigo-100 rounded-full mb-3 group-hover:from-violet-200 group-hover:to-indigo-200 transition-all duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </div>
+                            <p className="text-sm font-semibold text-slate-700 group-hover:text-violet-600 transition-colors duration-200">
+                                {t("dashboard.createRoom")}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Render filtered rooms */}
+                    {filteredRooms.map((room) => {
+                        const isHosted = hostRooms.some(r => r.room_id === room.room_id);
+                        return (
+                            <div
+                                key={`${isHosted ? 'host' : 'joined'}-${room.room_id}`}
+                                className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 cursor-pointer overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col aspect-square hover:scale-[1.02] hover:bg-white/90"
+                                onClick={() => handleRoomCardClick(room.room_id)}
+                            >
+                                <div className="relative w-full h-3/5 overflow-hidden">
+                                    <img
+                                        src={room.thumbnail || room.avatarImage || "https://via.placeholder.com/300x200.png?text=Room"}
+                                        alt={room.room_title || "Room Thumbnail"}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                    <div className="absolute top-2 left-2">
+                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                            isHosted
+                                                ? 'bg-gradient-to-r from-emerald-100 to-cyan-100 text-emerald-800'
+                                                : 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800'
+                                        }`}>
+                                            {isHosted ? t("dashboard.host") : t("dashboard.joined")}
+                                        </span>
+                                    </div>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                </div>
+                                <div className="p-3 flex-grow flex flex-col justify-center">
+                                    <h3 className="text-sm font-bold text-slate-800 truncate group-hover:text-violet-600 transition-colors duration-200">
+                                        {room.room_title || room.room_id}
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        {isHosted ? t("dashboard.hostedByYou") : t("dashboard.joinedByYou")}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Hiển thị nếu không có phòng nào theo filter */}
+                {filteredRooms.length === 0 && !loading && (
                     <div className="text-center py-12">
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-violet-100 to-indigo-100 rounded-full mb-4">
                             <svg className="w-8 h-8 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,10 +298,14 @@ const DashBoard = () => {
                             </svg>
                         </div>
                         <p className="text-slate-500 font-medium">
-                            {t("dashboard.noRooms")}
+                            {roomFilter === 'hosted' && t("dashboard.noHostedRooms")}
+                            {roomFilter === 'joined' && t("dashboard.noJoinedRooms")}
+                            {roomFilter === 'all' && t("dashboard.noRooms")}
                         </p>
                         <p className="text-slate-400 text-sm mt-2">
-                            {t("dashboard.noRoomsYet")}
+                            {roomFilter === 'hosted' && t("dashboard.noHostedRoomsDesc")}
+                            {roomFilter === 'joined' && t("dashboard.noJoinedRoomsDesc")}
+                            {roomFilter === 'all' && t("dashboard.noRoomsYet")}
                         </p>
                     </div>
                 )}
@@ -265,9 +313,7 @@ const DashBoard = () => {
 
             {/* Bottom Navigation với glassmorphism */}
             <div className="fixed w-full max-w-md bottom-0 z-50">
-                <div className="">
-                    <NavigationComponent />
-                </div>
+                <NavigationComponent />
             </div>
         </div>
     );

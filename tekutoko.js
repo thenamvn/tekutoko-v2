@@ -433,21 +433,52 @@ app.get("/", (req, res) => {
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
+  
   if (!token) {
     return res.status(403).json({
       message: "Access denied",
     });
   }
+  
   try {
+    // Verify token với secret key (này sẽ throw error nếu expired)
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
     req.user = decoded;
+    
+    // Double check expiration manually (optional safety check)
+    const currentTime = Math.floor(Date.now() / 1000);
+    if (decoded.exp && decoded.exp < currentTime) {
+      return res.status(401).json({
+        message: "Token has expired",
+        expired: true
+      });
+    }
+    
+    return next();
   } catch (err) {
-    const decoded = jwt.decode(token);
-    return res.status(401).json({
-      message: "Invalid Token",
-    });
+    // Xử lý các loại lỗi JWT khác nhau
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        message: "Token has expired",
+        expired: true
+      });
+    } else if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        message: "Invalid token format",
+        invalid: true
+      });
+    } else if (err.name === 'NotBeforeError') {
+      return res.status(401).json({
+        message: "Token not active yet",
+        notActive: true
+      });
+    } else {
+      return res.status(401).json({
+        message: "Token verification failed",
+        error: err.message
+      });
+    }
   }
-  return next();
 };
 
 const verifyAdminToken = (req, res, next) => {
@@ -463,6 +494,15 @@ const verifyAdminToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
     const username = decoded.username;
+    
+    // Check expiration manually
+    const currentTime = Math.floor(Date.now() / 1000);
+    if (decoded.exp && decoded.exp < currentTime) {
+      return res.status(401).json({
+        message: "Admin token has expired",
+        expired: true
+      });
+    }
     
     // Kiểm tra username có trong bảng admin_account không
     pool.query(
@@ -482,7 +522,6 @@ const verifyAdminToken = (req, res, next) => {
           });
         }
         
-        // Lưu thông tin admin vào req.user
         req.user = {
           username: results[0].username,
           fullname: results[0].fullname,
@@ -494,9 +533,17 @@ const verifyAdminToken = (req, res, next) => {
     );
   } catch (err) {
     console.error("Token verification error:", err);
-    return res.status(401).json({
-      message: "Invalid Token",
-    });
+    
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        message: "Admin token has expired",
+        expired: true
+      });
+    } else {
+      return res.status(401).json({
+        message: "Invalid admin token",
+      });
+    }
   }
 };
 
