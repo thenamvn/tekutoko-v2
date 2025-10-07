@@ -87,11 +87,10 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
           <Route path="/quiz/room/:roomId" element={<QuizRoom />} />
           <Route path="/quiz/room/:roomId/question/:questionNumber" element={<PrivateQuestionPageWrapper />} />
-          {/* <Route path="/quiz/room/:roomId/results" element={<QuizResults />} /> */}
           
-          <Route path="/create-room" element={<RoomSetup />} />
-          <Route path="/create-test" element={<CreateTestOnline />} />
-          <Route path="/test/:testId" element={<TestRoom />} />
+          <Route path="/create-room" element={<PrivateRoute component={UserProfileFormModify} />} />
+          <Route path="/create-test" element={<PrivateRoute component={CreateTestOnline} />} />
+          <Route path="/test/:testId" element={<PrivateRoute component={TestRoom} />} />
 
 
         </Routes>

@@ -180,8 +180,6 @@ const TestRoom = () => {
       secureStorage.removeSecureItem(`suspicious_activity_${testId}`);
       secureStorage.removeSecureItem(`activity_log_${testId}`);
       secureStorage.removeSecureItem(`test_submitted_${testId}`);
-      // NOTE: We intentionally DON'T remove test_terminated flag
-      // This ensures the test remains blocked even after reload
     }
   }, [testId]);
 
@@ -195,6 +193,7 @@ const TestRoom = () => {
       
       const payload = {
         quiz_uuid: testId,
+        student_username: localStorage.getItem('username') || '',
         answers: testData?.questions.map((question, index) => ({
           question_id: question.id,
           selected_option: answers[index] || ''
@@ -687,6 +686,7 @@ const TestRoom = () => {
 
       const payload = {
         quiz_uuid: testId,
+        student_username: localStorage.getItem('username') || '',
         answers: testData.questions.map((question, index) => ({
           question_id: question.id,
           selected_option: answers[index] || ''
@@ -736,6 +736,7 @@ const TestRoom = () => {
 
         const payload = {
           quiz_uuid: testId,
+          student_username: localStorage.getItem('username') || '',
           answers: testData.questions.map((question, index) => ({
             question_id: question.id,
             selected_option: answers[index] || ''

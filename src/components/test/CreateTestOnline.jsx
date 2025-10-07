@@ -35,12 +35,11 @@ const CreateTestOnline = () => {
         try {
             const formData = new FormData();
             formData.append('file', docxFile);
+            formData.append('title', testTitle.trim());
+            formData.append('username', localStorage.getItem('username') || '');
             const response = await fetch(`${apiUrl}/api/v1/process-docx`, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
             });
 
             if (response.ok) {
