@@ -704,11 +704,12 @@ const TestRoom = () => {
         body: JSON.stringify(payload)
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to submit answers');
+        throw new Error(data.detail || 'Failed to submit answers');
       }
 
-      const data = await response.json();
       setResults(data);
       setIsTestSubmitted(true);
       
@@ -717,7 +718,7 @@ const TestRoom = () => {
       
     } catch (err) {
       console.error('Error submitting test:', err);
-      setSubmitError(t('test.submitError'));
+      setSubmitError(t(err.message));
     } finally {
       setSubmitting(false);
     }
@@ -753,12 +754,12 @@ const TestRoom = () => {
           },
           body: JSON.stringify(payload)
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to submit answers');
-        }
-
         const data = await response.json();
+        console.log('Submission response:', data);
+        if (!response.ok) {
+          throw new Error(data.detail || 'Failed to submit answers');
+        }
+        
         setResults(data);
         setIsTestSubmitted(true);
         
@@ -767,7 +768,7 @@ const TestRoom = () => {
         
       } catch (err) {
         console.error('Error submitting test:', err);
-        setSubmitError(t('test.submitError'));
+        setSubmitError(t(err.message));
       } finally {
         setSubmitting(false);
       }

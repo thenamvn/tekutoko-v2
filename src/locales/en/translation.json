@@ -549,7 +549,8 @@
         "question": "Question",
         "chooseAnswer": "Choose your answer",
         "detailedResults": "Detailed Results",
-        "clickToEnlarge": "Click to enlarge"
+        "clickToEnlarge": "Click to enlarge",
+        "submittedBefore": "Test has already been submitted."
     },
     "dashboardAdmin": {
         "roomsStatistics": "Room Statistics",

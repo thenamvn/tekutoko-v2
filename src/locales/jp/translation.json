@@ -518,7 +518,7 @@
     },
     "test": {
         "confirmExit": "テストを終了してもよろしいですか？",
-        "incompleteWarning": "すべての質問に答えていません。提出してもよろしいですか？",
+        "incompleteWarning": "すべての質問に回答していません。本当に提出しますか？",
         "previous": "前へ",
         "next": "次へ",
         "progress": "進捗",
@@ -532,7 +532,7 @@
         "correctAnswer": "正解",
         "backToDashboard": "ダッシュボードに戻る",
         "submit": "提出",
-        "questionTitle": "質問：",
+        "questionTitle": "質問: ",
         "resultsTitle": "テスト結果",
         "cancel": "キャンセル",
         "confirmSubmit": "確認",
@@ -549,7 +549,8 @@
         "question": "質問",
         "chooseAnswer": "回答を選択",
         "detailedResults": "詳細結果",
-        "clickToEnlarge": "クリックして拡大"
+        "clickToEnlarge": "クリックして拡大",
+        "submittedBefore": "テストは既に提出されています。"
     },
     "dashboardAdmin": {
         "roomsStatistics": "部屋の統計",
