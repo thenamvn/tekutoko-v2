@@ -514,7 +514,11 @@
         "resultsMayBeInvalid": "Results may not be recorded",
         "cheatingDetected": "Cheating detected",
         "viewResults": "View results",
-        "backToDashboard": "Back to Dashboard"
+        "backToDashboard": "Back to Dashboard",
+        "tabSwitches": "Tab Switches",
+        "devToolsAttempts": "DevTools Attempts",
+        "copyAttempts": "Copy Attempts",
+        "keyboardShortcuts": "Keyboard Shortcuts"
     },
     "test": {
         "confirmExit": "Are you sure you want to exit the test?",
@@ -551,6 +555,14 @@
         "detailedResults": "Detailed Results",
         "clickToEnlarge": "Click to enlarge",
         "submittedBefore": "Test has already been submitted."
+    },
+    "LeaderboardModalTest": {
+        "leaderboardTitle": "Leaderboard",
+        "totalSubmissions": "Total Submissions",
+        "examUuid": "Exam UUID",
+        "examCancelled": "Exam Cancelled",
+        "cheatingDetected": "Cheating Detected",
+        "noSubmissionsYet": "No submissions yet"
     },
     "dashboardAdmin": {
         "roomsStatistics": "Room Statistics",

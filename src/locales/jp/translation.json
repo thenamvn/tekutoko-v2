@@ -514,7 +514,11 @@
         "resultsMayBeInvalid": "結果が記録されない可能性があります",
         "cheatingDetected": "不正行為が検出されました",
         "viewResults": "結果を表示",
-        "backToDashboard": "ダッシュボードに戻る"
+        "backToDashboard": "ダッシュボードに戻る",
+        "tabSwitches": "タブ切り替え",
+        "devToolsAttempts": "DevTools試行",
+        "copyAttempts": "コピー試行",
+        "keyboardShortcuts": "キーボードショートカット"
     },
     "test": {
         "confirmExit": "テストを終了してもよろしいですか？",
@@ -551,6 +555,14 @@
         "detailedResults": "詳細結果",
         "clickToEnlarge": "クリックして拡大",
         "submittedBefore": "テストは既に提出されています。"
+    },
+    "LeaderboardModalTest": {
+        "leaderboardTitle": "リーダーボード",
+        "totalSubmissions": "総提出数",
+        "examUuid": "試験UUID",
+        "examCancelled": "試験がキャンセルされました",
+        "cheatingDetected": "不正行為が検出されました",
+        "noSubmissionsYet": "まだ提出がありません"
     },
     "dashboardAdmin": {
         "roomsStatistics": "部屋の統計",

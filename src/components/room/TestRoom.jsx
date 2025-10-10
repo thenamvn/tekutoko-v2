@@ -2,12 +2,18 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import secureStorage from '../../utils/secureStorage';
+import LeaderboardModalTest from './LeaderboardModalTest';
 
 const TestRoom = () => {
   const { t } = useTranslation();
   const { testId } = useParams();
   const navigate = useNavigate();
 
+  // Add new states for leaderboard
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState(null);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+ 
   // Helper functions for secure storage
   const getSuspiciousActivityFromStorage = (testId) => {
     try {
@@ -182,6 +188,26 @@ const TestRoom = () => {
       secureStorage.removeSecureItem(`test_submitted_${testId}`);
     }
   }, [testId]);
+
+  // Add function to fetch leaderboard
+  const fetchLeaderboard = async () => {
+    try {
+      setLeaderboardLoading(true);
+      const response = await fetch(`http://localhost:8000/api/v1/quiz/${testId}/results`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboardData(data);
+        setShowLeaderboard(true);
+      } else {
+        console.error('Failed to fetch leaderboard');
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
 
   // Auto-submit test due to cheating
   const handleAutoSubmit = useCallback(async (reason) => {
@@ -1037,7 +1063,6 @@ const TestRoom = () => {
 
   return (
     <div className="h-screen max-h-screen bg-gradient-to-br from-slate-50 to-violet-50 flex flex-col overflow-hidden select-none">
-      {/* ...existing normal test interface... */}
       <div className="container mx-auto max-w-full flex flex-col h-full">
         {/* Header - Fixed */}
         <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 md:p-6 shadow-lg flex-shrink-0">
@@ -1058,7 +1083,28 @@ const TestRoom = () => {
             <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white text-center flex-1">
               {t('test.questionTitle')} {currentQuestionIndex + 1}/{totalQuestions}
             </h1>
-            <div className="w-10 md:w-12 flex items-center justify-end">
+            <div className="flex items-center gap-2">
+              {/* Leaderboard button for admin */}
+              {localStorage.getItem('username') === testData?.username && (
+                <button
+                  onClick={fetchLeaderboard}
+                  disabled={leaderboardLoading}
+                  className="text-white hover:bg-white/20 p-2 md:p-3 rounded-xl transition-all duration-200 hover:scale-105 disabled:opacity-50"
+                  title={t('test.viewLeaderboard')}
+                >
+                  {leaderboardLoading ? (
+                    <svg className="w-5 h-5 md:w-6 md:h-6 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  )}
+                </button>
+              )}
+              
+              {/* Fullscreen button */}
               {!isFullscreen && (
                 <button
                   onClick={async () => {
@@ -1242,6 +1288,15 @@ const TestRoom = () => {
 
       {/* Anti-cheat Warning Modal */}
       <AntiCheatWarning />
+
+      <LeaderboardModalTest 
+        isOpen={showLeaderboard} 
+        onClose={() => setShowLeaderboard(false)} 
+        leaderboardData={leaderboardData} 
+        leaderboardLoading={leaderboardLoading} 
+        testData={testData} 
+      />
+
 
       {/* Image Modal */}
       {enlargedImage && (

@@ -515,7 +515,11 @@
         "resultsMayBeInvalid": "Kết quả có thể không được ghi nhận",
         "cheatingDetected": "Phát hiện gian lận",
         "viewResults": "Xem kết quả",
-        "backToDashboard": "Quay về Dashboard"
+        "backToDashboard": "Quay về Dashboard",
+        "tabSwitches": "Chuyển tab",
+        "devToolsAttempts": "Thử mở DevTools",
+        "copyAttempts": "Thử sao chép",
+        "keyboardShortcuts": "Phím tắt"
     },
     "test": {
         "confirmExit": "Bạn có chắc chắn muốn thoát bài kiểm tra không?",
@@ -552,6 +556,14 @@
         "detailedResults": "Kết quả Chi tiết",
         "clickToEnlarge": "Nhấn để phóng to",
         "submittedBefore": "Bài kiểm tra đã được nộp trước đó."
+    },
+    "LeaderboardModalTest": {
+        "leaderboardTitle": "Bảng Xếp Hạng",
+        "totalSubmissions": "Tổng số bài nộp",
+        "examUuid": "Mã bài thi",
+        "examCancelled": "Bài thi bị hủy",
+        "cheatingDetected": "Phát hiện gian lận",
+        "noSubmissionsYet": "Chưa có bài nộp nào"
     },
     "dashboardAdmin": {
         "roomsStatistics": "Thống kê phòng",
