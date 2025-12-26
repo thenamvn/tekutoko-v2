@@ -10,8 +10,9 @@ const DashBoard = () => {
     const apiUrl = process.env.REACT_APP_API_URL;
     const [hostRooms, setHostRooms] = useState([]);
     const [joinedRooms, setJoinedRooms] = useState([]);
+    const [testRooms, setTestRooms] = useState([]);
     const [showCreateOptions, setShowCreateOptions] = useState(false);
-    const [roomFilter, setRoomFilter] = useState('all'); // 'all', 'hosted', 'joined'
+    const [roomFilter, setRoomFilter] = useState('all'); // 'all', 'hosted', 'joined', 'tests'
 
     const handleCreateGame = () => {
         setShowCreateOptions(true);
@@ -73,17 +74,10 @@ const DashBoard = () => {
                 return response.json();
             })
             .then((data) => {
-                const allUserRooms = Array.isArray(data) ? data : (Array.isArray(data.rooms) ? data.rooms : []);
-
-                const hosted = allUserRooms.filter(
-                    (room) => room.admin_username === username || room.role === "hostedroom"
-                );
-                const joined = allUserRooms.filter(
-                    (room) => room.admin_username !== username && room.role !== "hostedroom"
-                );
-
-                setHostRooms(hosted);
-                setJoinedRooms(joined);
+                // Parse response data structure
+                setHostRooms(data.hostedRooms || []);
+                setJoinedRooms(data.joinedRooms || []);
+                setTestRooms(data.testRooms || []);
             })
             .catch((error) => {
                 console.error(t("dashboard.errorFetchingRooms"), error);
@@ -93,17 +87,24 @@ const DashBoard = () => {
             });
     }, [apiUrl, t, navigate]);
 
-    const handleRoomCardClick = (roomId) => {
-        navigate(`/quiz/room/${roomId}`);
+    const handleRoomCardClick = (room) => {
+        // Navigate to test room if it's a test_exam type
+        if (room.room_type === 'test_exam') {
+            navigate(`/test/${room.room_id}`);
+        } else {
+            navigate(`/quiz/room/${room.room_id}`);
+        }
     };
 
     // Filter rooms based on selected filter
     const getFilteredRooms = () => {
         switch (roomFilter) {
             case 'hosted':
-                return hostRooms;
+                return hostRooms.filter(room => room.room_type !== 'test_exam');
             case 'joined':
                 return joinedRooms;
+            case 'tests':
+                return testRooms;
             default:
                 return [...hostRooms, ...joinedRooms];
         }
@@ -111,9 +112,30 @@ const DashBoard = () => {
 
     const filteredRooms = getFilteredRooms();
 
+    // Get room type badge
+    const getRoomTypeBadge = (room) => {
+        if (room.room_type === 'test_exam') {
+            return {
+                text: t("dashboard.testExam", "Test"),
+                classes: 'bg-gradient-to-r from-orange-100 to-amber-100 text-orange-800'
+            };
+        }
+        const isHosted = hostRooms.some(r => r.room_id === room.room_id);
+        if (isHosted) {
+            return {
+                text: t("dashboard.host"),
+                classes: 'bg-gradient-to-r from-emerald-100 to-cyan-100 text-emerald-800'
+            };
+        }
+        return {
+            text: t("dashboard.joined"),
+            classes: 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800'
+        };
+    };
+
     const renderMobileLayout = () => (
         <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-violet-50 max-w-md mx-auto shadow-[0_0_30px_rgba(0,0,0,0.1)]">
-            {/* Loading Overlay với glassmorphism */}
+            {/* Loading Overlay */}
             {loading && (
                 <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-[1000]">
                     <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 text-center">
@@ -154,7 +176,7 @@ const DashBoard = () => {
                 </div>
             )}
 
-            {/* Header với gradient */}
+            {/* Header */}
             <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 shadow-lg">
                 <h1 className="text-xl font-bold text-white">
                     {t("dashboard.title")}
@@ -163,7 +185,7 @@ const DashBoard = () => {
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-y-auto p-4 pb-20">
-                {/* Form Join Room by Code với modern design */}
+                {/* Join Room by Code */}
                 <div className="mb-6 p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
                     <h2 className="text-lg font-semibold text-slate-800 mb-3 flex items-center">
                         <svg className="w-5 h-5 text-violet-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,6 +209,22 @@ const DashBoard = () => {
                     </div>
                 </div>
 
+                {/* Stats Cards */}
+                {/* <div className="grid grid-cols-3 gap-3 mb-6">
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
+                        <div className="text-2xl font-bold text-emerald-600">{hostRooms.filter(r => r.room_type !== 'test_exam').length}</div>
+                        <div className="text-xs text-slate-600">{t("dashboard.hosted", "Hosted")}</div>
+                    </div>
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
+                        <div className="text-2xl font-bold text-blue-600">{joinedRooms.length}</div>
+                        <div className="text-xs text-slate-600">{t("dashboard.joined")}</div>
+                    </div>
+                    <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
+                        <div className="text-2xl font-bold text-orange-600">{testRooms.length}</div>
+                        <div className="text-xs text-slate-600">{t("dashboard.tests", "Tests")}</div>
+                    </div>
+                </div> */}
+
                 {/* Room Filter Section */}
                 <div className="mb-6 p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
                     <h3 className="text-sm font-semibold text-slate-800 mb-3 flex items-center">
@@ -195,10 +233,10 @@ const DashBoard = () => {
                         </svg>
                         {t("dashboard.filterRooms")}
                     </h3>
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                         <button
                             onClick={() => setRoomFilter('all')}
-                            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-[1.02] ${
+                            className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-[1.02] ${
                                 roomFilter === 'all'
                                     ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
                                     : 'bg-white/70 text-slate-600 hover:bg-white/90'
@@ -208,17 +246,17 @@ const DashBoard = () => {
                         </button>
                         <button
                             onClick={() => setRoomFilter('hosted')}
-                            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-[1.02] ${
+                            className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-[1.02] ${
                                 roomFilter === 'hosted'
                                     ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg'
                                     : 'bg-white/70 text-slate-600 hover:bg-white/90'
                             }`}
                         >
-                            {t("dashboard.filterHosted")} ({hostRooms.length})
+                            {t("dashboard.filterHosted")} ({hostRooms.filter(r => r.room_type !== 'test_exam').length})
                         </button>
                         <button
                             onClick={() => setRoomFilter('joined')}
-                            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-[1.02] ${
+                            className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-[1.02] ${
                                 roomFilter === 'joined'
                                     ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
                                     : 'bg-white/70 text-slate-600 hover:bg-white/90'
@@ -226,12 +264,22 @@ const DashBoard = () => {
                         >
                             {t("dashboard.filterJoined")} ({joinedRooms.length})
                         </button>
+                        <button
+                            onClick={() => setRoomFilter('tests')}
+                            className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-200 hover:scale-[1.02] ${
+                                roomFilter === 'tests'
+                                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg'
+                                    : 'bg-white/70 text-slate-600 hover:bg-white/90'
+                            }`}
+                        >
+                            {t("dashboard.filterTests", "Tests")} ({testRooms.length})
+                        </button>
                     </div>
                 </div>
 
-                {/* Grid layout cho các phòng */}
+                {/* Grid layout */}
                 <div className="grid grid-cols-2 gap-4">
-                    {/* Card Tạo phòng mới với modern design - chỉ hiển thị khi filter = 'all' hoặc 'hosted' */}
+                    {/* Create Room Card */}
                     {(roomFilter === 'all' || roomFilter === 'hosted') && (
                         <div
                             className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-dashed border-violet-300 cursor-pointer hover:shadow-xl transition-all duration-300 flex flex-col items-center justify-center aspect-square hover:scale-[1.02] hover:bg-white/90"
@@ -251,37 +299,48 @@ const DashBoard = () => {
 
                     {/* Render filtered rooms */}
                     {filteredRooms.map((room) => {
-                        const isHosted = hostRooms.some(r => r.room_id === room.room_id);
+                        const badge = getRoomTypeBadge(room);
+                        const thumbnailUrl = room.thumbnail || room.avatarImage || "https://via.placeholder.com/300x200.png?text=Room";
+                        
                         return (
                             <div
-                                key={`${isHosted ? 'host' : 'joined'}-${room.room_id}`}
+                                key={`room-${room.room_id}`}
                                 className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 cursor-pointer overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col aspect-square hover:scale-[1.02] hover:bg-white/90"
-                                onClick={() => handleRoomCardClick(room.room_id)}
+                                onClick={() => handleRoomCardClick(room)}
                             >
-                                <div className="relative w-full h-3/5 overflow-hidden">
+                                <div className="relative w-full h-3/5 overflow-hidden bg-gradient-to-br from-violet-100 to-indigo-100">
                                     <img
-                                        src={room.thumbnail || room.avatarImage || "https://via.placeholder.com/300x200.png?text=Room"}
-                                        alt={room.room_title || "Room Thumbnail"}
+                                        src={thumbnailUrl}
+                                        alt={room.room_title || "Room"}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                         referrerPolicy="no-referrer"
+                                        onError={(e) => {
+                                            e.target.src = "https://via.placeholder.com/300x200.png?text=Room";
+                                        }}
                                     />
                                     <div className="absolute top-2 left-2">
-                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                            isHosted
-                                                ? 'bg-gradient-to-r from-emerald-100 to-cyan-100 text-emerald-800'
-                                                : 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800'
-                                        }`}>
-                                            {isHosted ? t("dashboard.host") : t("dashboard.joined")}
+                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badge.classes}`}>
+                                            {badge.text}
                                         </span>
                                     </div>
+                                    {room.room_type === 'test_exam' && (
+                                        <div className="absolute top-2 right-2">
+                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-white/90 text-slate-700">
+                                                📝
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 </div>
                                 <div className="p-3 flex-grow flex flex-col justify-center">
                                     <h3 className="text-sm font-bold text-slate-800 truncate group-hover:text-violet-600 transition-colors duration-200">
                                         {room.room_title || room.room_id}
                                     </h3>
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        {isHosted ? t("dashboard.hostedByYou") : t("dashboard.joinedByYou")}
+                                    <p className="text-xs text-slate-500 mt-1 truncate">
+                                        {room.room_type === 'test_exam' 
+                                            ? t("dashboard.testExam", "Test Exam")
+                                            : badge.text
+                                        }
                                     </p>
                                 </div>
                             </div>
@@ -289,7 +348,7 @@ const DashBoard = () => {
                     })}
                 </div>
 
-                {/* Hiển thị nếu không có phòng nào theo filter */}
+                {/* Empty State */}
                 {filteredRooms.length === 0 && !loading && (
                     <div className="text-center py-12">
                         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-violet-100 to-indigo-100 rounded-full mb-4">
@@ -300,18 +359,20 @@ const DashBoard = () => {
                         <p className="text-slate-500 font-medium">
                             {roomFilter === 'hosted' && t("dashboard.noHostedRooms")}
                             {roomFilter === 'joined' && t("dashboard.noJoinedRooms")}
+                            {roomFilter === 'tests' && t("dashboard.noTests", "No tests yet")}
                             {roomFilter === 'all' && t("dashboard.noRooms")}
                         </p>
                         <p className="text-slate-400 text-sm mt-2">
                             {roomFilter === 'hosted' && t("dashboard.noHostedRoomsDesc")}
                             {roomFilter === 'joined' && t("dashboard.noJoinedRoomsDesc")}
+                            {roomFilter === 'tests' && t("dashboard.noTestsDesc", "Create a test to get started")}
                             {roomFilter === 'all' && t("dashboard.noRoomsYet")}
                         </p>
                     </div>
                 )}
             </main>
 
-            {/* Bottom Navigation với glassmorphism */}
+            {/* Bottom Navigation */}
             <div className="fixed w-full max-w-md bottom-0 z-50">
                 <NavigationComponent />
             </div>

@@ -803,78 +803,65 @@ app.get("/room/:username", async (req, res) => {
   }
 
   try {
-    // Query 1: Lấy hosted rooms
-    const hostedRoomsQuery = `
-      SELECT r.room_id, r.room_title, r.thumbnail, r.description, r.admin_username, 'hostedroom' as role
+    // ✅ SINGLE OPTIMIZED QUERY - Gộp tất cả queries thành 1
+    const optimizedQuery = `
+      SELECT 
+        r.room_id,
+        r.room_title,
+        r.thumbnail,
+        r.description,
+        r.admin_username,
+        r.room_type,
+        CASE
+          WHEN r.admin_username = ? THEN 'hostedroom'
+          WHEN ru.username IS NOT NULL THEN 'joinedroom'
+          ELSE 'unknown'
+        END as role,
+        COALESCE(up.avatarImage, 'https://www.svgrepo.com/show/341256/user-avatar-filled.svg') AS avatarImage
       FROM room r
-      WHERE r.admin_username = ?
+      LEFT JOIN room_users ru ON r.room_id = ru.room_id AND ru.username = ?
+      LEFT JOIN UserProfile up ON r.admin_username = up.username
+      WHERE r.admin_username = ? OR ru.username = ?
+      
+      UNION ALL
+      
+      SELECT 
+        ter.uuid as room_id,
+        ter.title as room_title,
+        NULL as thumbnail,
+        NULL as description,
+        ter.username as admin_username,
+        'test_exam' as room_type,
+        'testroom' as role,
+        COALESCE(up.avatarImage, 'https://www.svgrepo.com/show/341256/user-avatar-filled.svg') AS avatarImage
+      FROM test_exam_rooms ter
+      LEFT JOIN UserProfile up ON ter.username = up.username
+      WHERE ter.username = ?
+      
+      ORDER BY room_type DESC, room_id ASC
     `;
 
-    // Query 2: Lấy joined rooms
-    const joinedRoomsQuery = `
-      SELECT r.room_id, r.room_title, r.thumbnail, r.description, r.admin_username, 'joinedroom' as role
-      FROM room_users ru
-      JOIN room r ON ru.room_id = r.room_id
-      WHERE ru.username = ?
-    `;
-
-    const [hostedResults, joinedResults] = await Promise.all([
-      new Promise((resolve, reject) => {
-        pool.query(hostedRoomsQuery, [username], (err, results) => {
-          if (err) reject(err);
-          else resolve(results);
-        });
-      }),
-      new Promise((resolve, reject) => {
-        pool.query(joinedRoomsQuery, [username], (err, results) => {
-          if (err) reject(err);
-          else resolve(results);
-        });
-      }),
-    ]);
-
-    // Combine results
-    const allRooms = [...hostedResults, ...joinedResults];
-
-    // Lấy unique admin usernames
-    const adminUsernames = [
-      ...new Set(allRooms.map((room) => room.admin_username)),
-    ];
-
-    // Query avatars một lần cho tất cả admins
-    if (adminUsernames.length > 0) {
-      const avatarQuery = `
-        SELECT username, COALESCE(avatarImage, 'https://www.svgrepo.com/show/341256/user-avatar-filled.svg') AS avatarImage
-        FROM UserProfile
-        WHERE username IN (${adminUsernames.map(() => "?").join(",")})
-      `;
-
-      pool.query(avatarQuery, adminUsernames, (err, avatarResults) => {
+    pool.query(
+      optimizedQuery,
+      [username, username, username, username, username],
+      (err, results) => {
         if (err) {
-          console.error("Error fetching avatars:", err);
-          res.status(500).send("Server error");
-          return;
+          console.error("Error fetching rooms:", err);
+          return res.status(500).send("Server error");
         }
 
-        // Create avatar map
-        const avatarMap = {};
-        avatarResults.forEach((row) => {
-          avatarMap[row.username] = row.avatarImage;
+        // Phân loại rooms theo role
+        const hostedRooms = results.filter(room => room.role === 'hostedroom');
+        const joinedRooms = results.filter(room => room.role === 'joinedroom');
+        const testRooms = results.filter(room => room.role === 'testroom');
+
+        res.json({
+          hostedRooms,
+          joinedRooms,
+          testRooms
         });
-
-        // Add avatars to rooms
-        const roomsWithAvatars = allRooms.map((room) => ({
-          ...room,
-          avatarImage:
-            avatarMap[room.admin_username] ||
-            "https://www.svgrepo.com/show/341256/user-avatar-filled.svg",
-        }));
-
-        res.json({ rooms: roomsWithAvatars });
-      });
-    } else {
-      res.json({ rooms: [] });
-    }
+      }
+    );
   } catch (error) {
     console.error("Error fetching rooms:", error);
     res.status(500).send("Server error");
