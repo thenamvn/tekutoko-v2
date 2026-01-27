@@ -137,6 +137,9 @@ const TestRoom = () => {
   // Security violation detection
   const [securityViolationDetected, setSecurityViolationDetected] = useState(false);
 
+  // Check if current user is the creator of the test
+  const [isCreator, setIsCreator] = useState(false);
+
   // Check storage integrity on component mount
   useEffect(() => {
     if (testId) {
@@ -328,7 +331,7 @@ const TestRoom = () => {
   // Anti-cheating effects
   useEffect(() => {
     // Nếu đã submit test hoặc đã bị blocked thì không cần theo dõi anti-cheat nữa
-    if (isTestSubmitted || blockedForCheating) return;
+    if (isTestSubmitted || blockedForCheating || isCreator) return;
     
     const handleBeforeUnload = (e) => {
       if (!isTestSubmitted) {
@@ -476,10 +479,16 @@ const TestRoom = () => {
       clearInterval(devToolsInterval);
       if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
     };
-  }, [logSuspiciousActivity, testData, isFullscreen, isTestSubmitted, blockedForCheating]);
+  }, [logSuspiciousActivity, testData, isFullscreen, isTestSubmitted, blockedForCheating, isCreator]);
 
   // Check violations after all functions are defined
   useEffect(() => {
+    // If user is creator, do not block
+    if (isCreator) {
+      setBlockedForCheating(false);
+      return;
+    }
+
     if (testId && !isTestSubmitted && testData) {
       // If test was previously terminated, block immediately
       if (isTestTerminated) {
@@ -500,15 +509,17 @@ const TestRoom = () => {
         }, 500);
       }
     }
-  }, [testId, isTestSubmitted, testData, isTestTerminated, handleAutoSubmit]);
+  }, [testId, isTestSubmitted, testData, isTestTerminated, handleAutoSubmit, isCreator]);
 
   // Fetch test data from API
   useEffect(() => {
     const fetchTestData = async () => {
       try {
         setIsLoading(true);
-        const apiUrl = 'http://localhost:8000';
-        const response = await fetch(`${apiUrl}/api/v1/quiz/${testId}`);
+        const quizApiUrl = 'http://localhost:8000';
+        const mainApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:9999';
+        
+        const response = await fetch(`${quizApiUrl}/api/v1/quiz/${testId}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch test data');
@@ -516,6 +527,31 @@ const TestRoom = () => {
         
         const data = await response.json();
         setTestData(data);
+
+        // Verify if current user is creator
+        const token = localStorage.getItem("token");
+        if (token && data.username) {
+          try {
+             const verifyResponse = await fetch(`${mainApiUrl}/verify-token`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token,
+                },
+             });
+             
+             if (verifyResponse.ok) {
+                const verifyData = await verifyResponse.json();
+                if (verifyData.success && verifyData.user && verifyData.user.username === data.username) {
+                   setIsCreator(true);
+                   console.log("Anti-cheat disabled for creator");
+                }
+             }
+          } catch (e) {
+             console.warn("Token verification failed:", e);
+          }
+        }
+
       } catch (err) {
         console.error('Error fetching test data:', err);
         setError(t('test.errorLoading'));

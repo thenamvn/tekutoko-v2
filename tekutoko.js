@@ -5444,7 +5444,7 @@ app.post('/api/chat', async (req, res) => {
     
     // ✅ Sử dụng API mới với syntax đúng
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp', // Hoặc gemini-1.5-flash
+      model: 'gemini-2.5-flash', // Switched to stable model
       contents: prompt,
     });
 
@@ -5464,6 +5464,7 @@ app.post('/api/chat', async (req, res) => {
 // ✅ API tạo câu hỏi tự động bằng AI
 app.post('/api/ai/generate-questions', async (req, res) => {
   try {
+    console.log("api key used:", process.env.GEMINI_API_KEY); // Debug log
     const { topic, numQuestions = 5, difficulty = 'medium', questionTypes = ['text', 'multiple-choice'] } = req.body;
     
     if (!topic) {
@@ -5486,7 +5487,7 @@ app.post('/api/ai/generate-questions', async (req, res) => {
     
     // Gọi AI để tạo câu hỏi
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
     });
 
