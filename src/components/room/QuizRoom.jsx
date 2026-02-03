@@ -296,16 +296,9 @@ const QuizRoom = () => {
       {/* Header với gradient */}
       <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 shadow-lg sticky top-0 z-40">
         <div className="flex items-center justify-between relative">
-          <div className="flex-1 min-w-0 pr-2">
-            <h1 className="text-xl font-bold text-white truncate text-left">
-              {roomInfo.title}
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-1">
-            {/* Location Button */}
-            <button
-              className="text-white hover:text-gray-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
+          {/* Location Button */}
+          <button
+              className="text-white hover:text-gray-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10 flex-shrink-0"
               onClick={() => {
                 if (isAdmin) {
                   setShowLocationModal(true);
@@ -319,7 +312,15 @@ const QuizRoom = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 0115 0z" />
               </svg>
-            </button>
+          </button>
+
+          <div className="flex-1 min-w-0 px-2 text-center">
+            <h1 className="text-xl font-bold text-white truncate">
+              {roomInfo.title}
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-1">
 
             {/* Menu Button */}
             <button
