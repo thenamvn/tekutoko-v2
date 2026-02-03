@@ -13,6 +13,7 @@ const TestRoom = () => {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardData, setLeaderboardData] = useState(null);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
  
   // Helper functions for secure storage
   const getSuspiciousActivityFromStorage = (testId) => {
@@ -1116,10 +1117,36 @@ const TestRoom = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white text-center flex-1">
-              {t('test.questionTitle')} {currentQuestionIndex + 1}/{totalQuestions}
-            </h1>
+            <div className="flex flex-col items-center flex-1 min-w-0 px-4">
+              <h1 className="text-lg md:text-xl font-bold text-white truncate w-full text-center">
+                {testData?.title || t('test.title')}
+              </h1>
+              <span className="text-sm md:text-base text-white/90 font-medium bg-white/20 px-3 py-0.5 rounded-full backdrop-blur-sm mt-1">
+                {t('test.questionTitle')} {currentQuestionIndex + 1}/{totalQuestions}
+              </span>
+            </div>
             <div className="flex items-center gap-2">
+              {/* Copy Link Button */}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setCopySuccess(true);
+                  setTimeout(() => setCopySuccess(false), 2000);
+                }}
+                className="text-white hover:bg-white/20 p-2 md:p-3 rounded-xl transition-all duration-200 hover:scale-105"
+                title={copySuccess ? t('test.linkCopied') : t('test.copyLink')}
+              >
+                {copySuccess ? (
+                  <svg className="w-5 h-5 md:w-6 md:h-6 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </button>
+
               {/* Leaderboard button for admin */}
               {localStorage.getItem('username') === testData?.username && (
                 <button
