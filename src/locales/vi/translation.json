@@ -28,6 +28,7 @@
         "userSubmissions": "Bài nộp của người dùng",
         "scanQRCode": "Quét mã QR để tham gia phòng",
         "shareThisQuiz": "Chia sẻ bài quiz này",
+        "leaderBoard": "Bảng xếp hạng",
         "copyLink": "Sao chép liên kết",
         "copiedToClipboard": "Đã sao chép vào clipboard!",
         "qrCode": "Mã QR",
@@ -898,5 +899,38 @@
         "remove": "Xóa phòng",
         "roomId": "ID phòng",
         "delete": "Xóa báo cáo"
+    },
+    "leaderboard": {
+        "title": "🏆 Bảng thành tích",
+        "loading": "Đang tải...",
+        "stats": {
+            "totalPlayers": "Tổng người chơi",
+            "completed": "Đã hoàn thành"
+        },
+        "user": {
+            "viewAnswers": "Xem đáp án",
+            "correct": "đúng",
+            "answered": "trả lời",
+            "completed": "Đã hoàn thành",
+            "incomplete": "Chưa hoàn thành"
+        },
+        "actions": {
+            "viewAllAnswers": "Xem đáp án toàn bộ user"
+        },
+        "empty": {
+            "title": "Chưa có dữ liệu",
+            "description": "Chưa có ai tham gia hoặc hoàn thành quiz"
+        },
+        "matrix": {
+            "loading": "Đang tải dữ liệu...",
+            "userAnswersTitle": "Đáp án của {{name}}",
+            "allUsersAnswersTitle": "Bảng đáp án của tất cả người chơi",
+            "table": {
+                "question": "Câu hỏi",
+                "answer": "Đáp án",
+                "playerQuestion": "Người chơi / Câu hỏi",
+                "notAnswered": "Chưa trả lời"
+            }
+        }
     }
 }

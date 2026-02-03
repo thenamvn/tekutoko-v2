@@ -28,6 +28,7 @@
         "userSubmissions": "User Submissions",
         "scanQRCode": "Scan QR Code to join the room",
         "shareThisQuiz": "Share This Quiz",
+        "leaderBoard": "Leaderboard",
         "copyLink": "Copy Link",
         "copiedToClipboard": "Copied to Clipboard!",
         "qrCode": "QR Code",
@@ -897,5 +898,38 @@
         "remove": "Remove Room",
         "roomId": "Room ID",
         "delete": "Delete Report"
+    },
+    "leaderboard": {
+        "title": "🏆 Leaderboard",
+        "loading": "Loading...",
+        "stats": {
+            "totalPlayers": "Total Participants",
+            "completed": "Completed"
+        },
+        "user": {
+            "viewAnswers": "View Answers",
+            "correct": "correct",
+            "answered": "answered",
+            "completed": "Completed",
+            "incomplete": "Incomplete"
+        },
+        "actions": {
+            "viewAllAnswers": "View All User Answers"
+        },
+        "empty": {
+            "title": "No Data Available",
+            "description": "No one has participated or completed the quiz yet"
+        },
+        "matrix": {
+            "loading": "Loading data...",
+            "userAnswersTitle": "Answers of {{name}}",
+            "allUsersAnswersTitle": "All Players' Answers Matrix",
+            "table": {
+                "question": "Question",
+                "answer": "Answer",
+                "playerQuestion": "Player / Question",
+                "notAnswered": "Not answered"
+            }
+        }
     }
 }

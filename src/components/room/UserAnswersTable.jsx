@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const UserAnswersTable = ({ user, roomId, apiUrl, onClose }) => {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,7 +21,7 @@ const UserAnswersTable = ({ user, roomId, apiUrl, onClose }) => {
     return (
       <div className="fixed inset-0 bg-black/40 z-[70] flex items-center justify-center p-4">
         <div className="bg-white/90 rounded-2xl shadow-2xl max-w-2xl w-full p-8 text-center border border-white/30 backdrop-blur-md">
-          Đang tải dữ liệu...
+          {t('leaderboard.matrix.loading')}
         </div>
       </div>
     );
@@ -38,15 +40,15 @@ const UserAnswersTable = ({ user, roomId, apiUrl, onClose }) => {
     className="w-8 h-8 rounded-full border border-white shadow"
     referrerPolicy="no-referrer"
   />
-  Đáp án của {user.fullname || user.username} <span className="text-xs text-slate-500">@{user.username}</span>
+  {t('leaderboard.matrix.userAnswersTitle', { name: user.fullname || user.username })} <span className="text-xs text-slate-500">@{user.username}</span>
 </h2>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm rounded-xl overflow-hidden">
             <thead>
               <tr className="bg-gradient-to-r from-violet-50 to-indigo-50 text-violet-700">
                 <th className="px-3 py-2 font-semibold text-left rounded-tl-xl">#</th>
-                <th className="px-3 py-2 font-semibold text-left">Câu hỏi</th>
-                <th className="px-3 py-2 font-semibold text-left rounded-tr-xl">Đáp án</th>
+                <th className="px-3 py-2 font-semibold text-left">{t('leaderboard.matrix.table.question')}</th>
+                <th className="px-3 py-2 font-semibold text-left rounded-tr-xl">{t('leaderboard.matrix.table.answer')}</th>
               </tr>
             </thead>
             <tbody>
@@ -59,7 +61,7 @@ const UserAnswersTable = ({ user, roomId, apiUrl, onClose }) => {
                       ? <span className={data.answers[idx].isCorrect ? "text-green-700 font-semibold" : "text-red-600"}>
                           {data.answers[idx].value}
                         </span>
-                      : <span className="text-slate-400 italic">Chưa trả lời</span>
+                      : <span className="text-slate-400 italic">{t('leaderboard.matrix.table.notAnswered')}</span>
                     }
                   </td>
                 </tr>

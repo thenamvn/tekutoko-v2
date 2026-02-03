@@ -62,6 +62,8 @@ const QuizRoom = () => {
 
   // show report form
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showMenu, setShowMenu] = useState(false); // Menu dropdown state
+
   const handleLocationSave = (location) => {
     setShowLocationModal(false);
   };
@@ -292,63 +294,135 @@ const QuizRoom = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-violet-50 max-w-md mx-auto shadow-[0_0_30px_rgba(0,0,0,0.1)]">
       {/* Header với gradient */}
-      <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 shadow-lg">
-        <div className="flex items-center justify-between">
-          {/* Report button - Left side */}
-          {username && !isAdmin && (
-            <button
-              className="text-white hover:text-gray-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
-              onClick={() => setShowReportModal(true)}
-              title="Report room"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-6"
-                fill='white'
-                viewBox="0 0 24 24"
-              >
-
-                <path d="M12 5.177l8.631 15.823h-17.262l8.631-15.823zm0-4.177l-12 22h24l-12-22zm-1 9h2v6h-2v-6zm1 9.75c-.689 0-1.25-.56-1.25-1.25s.561-1.25 1.25-1.25 1.25.56 1.25 1.25-.561 1.25-1.25 1.25z" />
-              </svg>
-            </button>
-          )}
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-white text-center">
+      <header className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 shadow-lg sticky top-0 z-40">
+        <div className="flex items-center justify-between relative">
+          <div className="flex-1 min-w-0 pr-2">
+            <h1 className="text-xl font-bold text-white truncate text-left">
               {roomInfo.title}
             </h1>
           </div>
-          <button
-            className="text-white hover:text-gray-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
-            onClick={() => {
-              if (isAdmin) {
-                // Admin: Mở modal để chọn/thay đổi vị trí
-                setShowLocationModal(true);
-              } else {
-                // User: Mở modal để xem vị trí phòng trên map
-                setShowViewLocationModal(true);
-              }
-            }}
-            title={isAdmin ? "Chọn vị trí phòng" : "Xem vị trí phòng"}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="w-6 h-6"
+          
+          <div className="flex items-center gap-1">
+            {/* Location Button */}
+            <button
+              className="text-white hover:text-gray-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
+              onClick={() => {
+                if (isAdmin) {
+                  setShowLocationModal(true);
+                } else {
+                  setShowViewLocationModal(true);
+                }
+              }}
+              title={isAdmin ? "Chọn vị trí phòng" : "Xem vị trí phòng"}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 0115 0z"
-              />
-            </svg>
-          </button>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 0115 0z" />
+              </svg>
+            </button>
+
+            {/* Menu Button */}
+            <button
+              className="text-white hover:text-gray-200 transition-colors duration-200 p-2 rounded-full hover:bg-white/10"
+              onClick={() => setShowMenu(!showMenu)}
+              title="Menu"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {showMenu && (
+              <>
+                {/* Backdrop to close menu */}
+                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)}></div>
+                
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 overflow-hidden z-50 origin-top-right animate-in fade-in zoom-in-95">
+                  <div className="py-1">
+                    {/* Share Button (For everyone) */}
+                    <button
+                      className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-violet-50 hover:text-violet-700 flex items-center transition-colors border-b border-gray-100"
+                      onClick={() => {
+                        setIsQrCodeClicked(true);
+                        setShowMenu(false);
+                      }}
+                    >
+                      <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                      {t('room.shareThisQuiz')}
+                    </button>
+
+                    {/* Leaderboard (For Admin) */}
+                    {isAdmin && (
+                      <button
+                        className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-violet-50 hover:text-violet-700 flex items-center transition-colors border-b border-gray-100"
+                        onClick={() => {
+                          setShowLeaderboard(true);
+                          setShowMenu(false);
+                        }}
+                      >
+                         <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        {t('room.leaderBoard')}
+                      </button>
+                    )}
+
+                    {/* Report (For Non-Admin) */}
+                    {username && !isAdmin && (
+                      <button
+                        className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-violet-50 hover:text-violet-700 flex items-center transition-colors border-b border-gray-100"
+                        onClick={() => {
+                          setShowReportModal(true);
+                          setShowMenu(false);
+                        }}
+                      >
+                        <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        Report Room
+                      </button>
+                    )}
+
+                    {/* Delete Room (For Admin - Red) */}
+                    {isAdmin && (
+                      <button
+                        className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center transition-colors"
+                        onClick={() => {
+                          setShowMenu(false);
+                          if (window.confirm("Are you sure you want to delete this room?")) {
+                            fetch(`${apiUrl}/user/delete/room/${roomId}/${username}`, {
+                              method: 'DELETE',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                              }
+                            })
+                            .then(response => {
+                              if (response.ok) {
+                                alert("Room deleted successfully");
+                                navigate('/dashboard');
+                              } else {
+                                alert("Failed to delete room");
+                              }
+                            })
+                            .catch(err => console.error("Error deleting room:", err));
+                          }
+                        }}
+                      >
+                        <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        {t('room.deleteRoom')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -485,26 +559,7 @@ const QuizRoom = () => {
 
           </div>
         </div>
-        {/* Leaderboard Section - Only show for admin */}
-        {isAdmin && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 mb-6">
-            <h2 className="text-lg font-semibold mb-4 text-slate-800 flex items-center">
-              <svg className="w-5 h-5 text-violet-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Bảng thành tích
-            </h2>
-            <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-              Xem kết quả và thành tích của tất cả người tham gia
-            </p>
-            <button
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 px-4 rounded-xl font-semibold shadow-lg transition-all duration-200 hover:scale-[1.02]"
-              onClick={() => setShowLeaderboard(true)}
-            >
-              Xem bảng thành tích
-            </button>
-          </div>
-        )}
+
         {/* User Submissions Section - Only show for admin and if there are upload questions */}
         {isAdmin && hasUploadQuestions && userSubmissions.length > 0 && (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 mb-6">
@@ -641,36 +696,7 @@ const QuizRoom = () => {
           />
         )}
 
-        {/* QR Code Section với modern design */}
-        <div className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-4 mx-auto mb-6 w-full max-w-sm">
-          <div className="flex-shrink-0 relative group" onClick={() => { handleQrCodeClick() }}>
-            <QRCode
-              className="w-20 h-20 rounded-xl shadow-lg cursor-pointer transition-transform duration-200 group-hover:scale-105"
-              value={window.location.href}
-              size={150}
-            />
-          </div>
-          <div className="flex-grow ml-4">
-            <p className="text-slate-800 font-semibold text-sm mb-1 flex items-center">
-              {t('room.shareThisQuiz')}
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-            </p>
-            <p className="text-slate-500 text-xs mb-3">
-              {t('room.scanQRCode')}
-            </p>
-            <button
-              className="text-sm w-full bg-gradient-to-r from-violet-100 to-indigo-100 text-violet-700 py-2 px-3 rounded-xl font-semibold hover:from-violet-200 hover:to-indigo-200 transition-all duration-200 hover:scale-[1.02]"
-              onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
-                alert(t('room.copiedToClipboard'));
-              }}
-            >
-              {t('room.copyLink')}
-            </button>
-          </div>
-        </div>
+
         {/* Leaderboard Modal */}
         <Leaderboard
           isOpen={showLeaderboard}
@@ -679,46 +705,40 @@ const QuizRoom = () => {
           apiUrl={apiUrl}
           isAdmin={isAdmin}
         />
-        {/* QR Code popup với glassmorphism */}
+        {/* Share/QR Modal */}
         {isQrCodeClicked && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm z-[51] cursor-pointer" onClick={() => setIsQrCodeClicked(false)}>
-            <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20">
-              <h2 className="text-lg font-semibold mb-4 text-slate-800">{t('room.qrCode')}</h2>
-              <QRCode value={window.location.href} size={256} className="rounded-xl" />
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-[60] p-4" onClick={() => setIsQrCodeClicked(false)}>
+            <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center" onClick={e => e.stopPropagation()}>
+              <h2 className="text-lg font-bold mb-4 text-slate-800 w-full text-center">{t('room.shareThisQuiz')}</h2>
+              
+              <div className="bg-white p-4 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.05)] border border-slate-100 mb-6">
+                <QRCode value={window.location.href} size={200} className="rounded-lg" />
+              </div>
+              
+              <button
+                className="w-full bg-violet-100 text-violet-700 py-3 px-4 rounded-xl font-semibold hover:bg-violet-200 transition-colors flex items-center justify-center gap-2 mb-2"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert(t('room.copiedToClipboard'));
+                }}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                {t('room.copyLink')}
+              </button>
+              
+              <button 
+                className="text-slate-500 py-2 text-sm hover:text-slate-700"
+                onClick={() => setIsQrCodeClicked(false)}
+              >
+                Close
+              </button>
             </div>
           </div>
         )}
 
-        {/* Delete Room Button for Admin với gradient */}
-        {isAdmin && (
-          <div className="flex justify-center">
-            <button
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 px-6 rounded-xl shadow-lg font-semibold transition-all duration-200 hover:scale-[1.02]"
-              onClick={() => {
-                if (window.confirm("Are you sure you want to delete this room?")) {
-                  fetch(`${apiUrl}/user/delete/room/${roomId}/${username}`, {
-                    method: 'DELETE',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                  })
-                    .then(response => {
-                      if (response.ok) {
-                        alert("Room deleted successfully");
-                        navigate('/dashboard');
-                      } else {
-                        alert("Failed to delete room");
-                      }
-                    })
-                    .catch(err => console.error("Error deleting room:", err));
-                }
-              }}
-            >
-              {t('room.deleteRoom')}
-            </button>
-          </div>
-        )}
+
       </div>
       {/* Location Modal */}
       {showLocationModal && (

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const AnswersMatrixTable = ({users, roomId, apiUrl, onClose }) => {
+    const { t } = useTranslation();
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -14,7 +16,7 @@ const AnswersMatrixTable = ({users, roomId, apiUrl, onClose }) => {
     }, [roomId, apiUrl]);
 
     if (!data) return null;
-    if (loading) return <div className="p-8 text-center">Đang tải dữ liệu...</div>;
+    if (loading) return <div className="p-8 text-center">{t('leaderboard.matrix.loading')}</div>;
 
     return (
         <div className="fixed inset-0 bg-black/40 z-[80] flex items-center justify-center p-2 sm:p-4">
@@ -23,7 +25,7 @@ const AnswersMatrixTable = ({users, roomId, apiUrl, onClose }) => {
                 <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-t-2xl bg-gradient-to-r from-violet-600 to-indigo-600">
                     <div className="flex items-center gap-2 text-white text-lg sm:text-xl font-bold">
                         <span className="text-xl sm:text-2xl">📋</span>
-                        Bảng đáp án của tất cả người chơi
+                        {t('leaderboard.matrix.allUsersAnswersTitle')}
                     </div>
                     <button
                         className="text-white text-2xl font-bold hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center transition"
@@ -40,7 +42,7 @@ const AnswersMatrixTable = ({users, roomId, apiUrl, onClose }) => {
                                 ))}
                             </tr>
                             <tr className="bg-gradient-to-r from-violet-50 to-indigo-50 text-violet-700">
-                                <th className="px-2 sm:px-4 py-1 sm:py-2 font-semibold text-left">Người chơi / Câu hỏi</th>
+                                <th className="px-2 sm:px-4 py-1 sm:py-2 font-semibold text-left">{t('leaderboard.matrix.table.playerQuestion')}</th>
                                 {data.questions.map(q => (
                                     <th key={q.id} className="px-2 sm:px-4 py-1 sm:py-2 font-semibold text-center whitespace-pre-line">{q.text}</th>
                                 ))}
