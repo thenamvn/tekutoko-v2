@@ -14,6 +14,7 @@ const DashBoard = () => {
     const [showCreateOptions, setShowCreateOptions] = useState(false);
     const [roomFilter, setRoomFilter] = useState('all'); // 'all', 'hosted', 'joined', 'tests'
     const [searchQuery, setSearchQuery] = useState(''); // Search filter
+    const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, room: null });
 
     const handleCreateGame = () => {
         setShowCreateOptions(true);
@@ -97,6 +98,96 @@ const DashBoard = () => {
         }
     };
 
+    // Handle right-click context menu
+    const handleContextMenu = (e, room) => {
+        e.preventDefault();
+        setContextMenu({
+            visible: true,
+            x: e.clientX,
+            y: e.clientY,
+            room: room
+        });
+    };
+
+    // Close context menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => {
+            if (contextMenu.visible) {
+                setContextMenu({ visible: false, x: 0, y: 0, room: null });
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [contextMenu.visible]);
+
+    // Handle delete room
+    const handleDeleteRoom = async (room) => {
+        const username = localStorage.getItem("username");
+        
+        // Check if this is a joined room (cannot delete)
+        const isJoined = joinedRooms.some(r => r.room_id === room.room_id);
+        if (isJoined) {
+            alert(t("dashboard.cannotDeleteJoined", "You cannot delete rooms you've joined. Only the host can delete."));
+            setContextMenu({ visible: false, x: 0, y: 0, room: null });
+            return;
+        }
+
+        // Confirm deletion
+        const confirmMsg = room.room_type === 'test_exam' 
+            ? t("dashboard.confirmDeleteTest", `Are you sure you want to delete test "${room.room_title}"?`)
+            : t("dashboard.confirmDeleteRoom", `Are you sure you want to delete room "${room.room_title}"?`);
+        
+        if (!window.confirm(confirmMsg)) {
+            setContextMenu({ visible: false, x: 0, y: 0, room: null });
+            return;
+        }
+
+        setLoading(true);
+        try {
+            let deleteEndpoint = '';
+            
+            if (room.room_type === 'test_exam') {
+                // Delete test exam
+                deleteEndpoint = `${apiUrl}/user/delete/room/${room.room_id}/${username}`;
+            } else {
+                // Delete hosted room
+                deleteEndpoint = `${apiUrl}/user/delete/test/${room.room_id}/${username}`;
+            }
+
+            const response = await fetch(deleteEndpoint, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (response.ok) {
+                // Remove from local state
+                if (room.room_type === 'test_exam') {
+                    setTestRooms(testRooms.filter(r => r.room_id !== room.room_id));
+                } else {
+                    setHostRooms(hostRooms.filter(r => r.room_id !== room.room_id));
+                }
+                alert(t("dashboard.deleteSuccess", "Room deleted successfully"));
+            } else {
+                const errorData = await response.json();
+                alert(t("dashboard.deleteError", `Failed to delete: ${errorData.error || response.statusText}`));
+            }
+        } catch (error) {
+            console.error("Error deleting room:", error);
+            alert(t("dashboard.deleteError", "An error occurred while deleting the room"));
+        } finally {
+            setLoading(false);
+            setContextMenu({ visible: false, x: 0, y: 0, room: null });
+        }
+    };
+
+    // Handle open room from context menu
+    const handleOpenRoom = (room) => {
+        setContextMenu({ visible: false, x: 0, y: 0, room: null });
+        handleRoomCardClick(room);
+    };
+
     // Filter rooms based on selected filter and search query
     const getFilteredRooms = () => {
         let rooms = [];
@@ -153,6 +244,41 @@ const DashBoard = () => {
 
     const renderMobileLayout = () => (
         <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-violet-50 max-w-md mx-auto shadow-[0_0_30px_rgba(0,0,0,0.1)]">
+            {/* Context Menu */}
+            {contextMenu.visible && contextMenu.room && (
+                <div 
+                    className="fixed bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/30 py-2 z-[2000] min-w-[160px]"
+                    style={{ 
+                        left: `${contextMenu.x}px`, 
+                        top: `${contextMenu.y}px`,
+                        transform: 'translate(-50%, -10px)'
+                    }}
+                >
+                    <button
+                        onClick={() => handleOpenRoom(contextMenu.room)}
+                        className="w-full px-4 py-2 text-left text-sm font-medium text-slate-700 hover:bg-violet-50 transition-colors duration-150 flex items-center gap-2"
+                    >
+                        <svg className="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        {t("dashboard.openRoom", "Open")}
+                    </button>
+                    
+                    {/* Show delete only for hosted and test rooms, not joined */}
+                    {!joinedRooms.some(r => r.room_id === contextMenu.room.room_id) && (
+                        <button
+                            onClick={() => handleDeleteRoom(contextMenu.room)}
+                            className="w-full px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            {t("dashboard.deleteRoom", "Delete")}
+                        </button>
+                    )}
+                </div>
+            )}
+
             {/* Loading Overlay */}
             {loading && (
                 <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-[1000]">
@@ -338,6 +464,7 @@ const DashBoard = () => {
                                 key={`room-${room.room_id}`}
                                 className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 cursor-pointer overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col aspect-square hover:scale-[1.02] hover:bg-white/90"
                                 onClick={() => handleRoomCardClick(room)}
+                                onContextMenu={(e) => handleContextMenu(e, room)}
                             >
                                 <div className="relative w-full h-3/5 overflow-hidden bg-gradient-to-br from-violet-100 to-indigo-100">
                                     <img
