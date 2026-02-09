@@ -28,6 +28,7 @@
         "userSubmissions": "Bài nộp của người dùng",
         "scanQRCode": "Quét mã QR để tham gia phòng",
         "shareThisQuiz": "Chia sẻ bài quiz này",
+        "leaderBoard": "Bảng xếp hạng",
         "copyLink": "Sao chép liên kết",
         "copiedToClipboard": "Đã sao chép vào clipboard!",
         "qrCode": "Mã QR",
@@ -341,18 +342,53 @@
         }
     },
     "dashboard": {
-        "title": "Phòng của tôi",
-        "createGameButton": "Tạo trò chơi mới",
-        "createRoom": "Tạo mới",
+        "title": "Dashboard",
+        "loading": "Đang tải...",
+        "createOptionsTitle": "Chọn loại tạo mới",
+        "createRoomOption": "Room Game",
+        "createTestOption": "Test Online",
+        "cancel": "Hủy",
         "joinWithCode": "Tham gia bằng mã",
         "joinCodePlaceholder": "Nhập mã phòng",
         "joinButton": "Tham gia",
+        "createRoom": "Tạo mới",
+        "createGameButton": "Tạo game mới",
         "host": "Chủ phòng",
-        "hostedByYou": "Do bạn tạo",
-        "noRooms": "Không có phòng nào",
         "joined": "Đã tham gia",
-        "joinedByYou": "Phòng đã tham gia",
-        "noRoomsYet": "Bạn chưa tạo hoặc tham gia phòng nào."
+        "hostedByYou": "Bạn tạo",
+        "joinedByYou": "Bạn tham gia",
+        "filterRooms": "Lọc phòng",
+        "filterAll": "Tất cả",
+        "filterHosted": "Đã tạo",
+        "filterJoined": "Đã tham gia",
+        "noRooms": "Không có phòng nào",
+        "noRoomsYet": "Tạo phòng đầu tiên của bạn",
+        "noHostedRooms": "Chưa có phòng nào được tạo",
+        "noHostedRoomsDesc": "Nhấn nút '+' để tạo phòng mới",
+        "noJoinedRooms": "Chưa tham gia phòng nào",
+        "noJoinedRoomsDesc": "Sử dụng mã phòng để tham gia",
+        "enterRoomCodePlaceholder": "Vui lòng nhập mã phòng",
+        "joinError": "Lỗi tham gia phòng",
+        "errorJoiningRoom": "Có lỗi xảy ra khi tham gia phòng",
+        "errorFetchingRooms": "Lỗi khi tải danh sách phòng"
+    },
+    "createTest": {
+        "title": "Tạo Test Online",
+        "loading": "Đang xử lý file...",
+        "testTitleLabel": "Tiêu đề bài test",
+        "testTitlePlaceholder": "Nhập tiêu đề bài test",
+        "timeLimitLabel": "Thời gian làm bài (phút)",
+        "fileUploadLabel": "Upload file DOCX",
+        "chooseFileButton": "Chọn file",
+        "noFileSelected": "Chưa chọn file",
+        "fileSize": "Kích thước:",
+        "fileTypeHint": "Chỉ chấp nhận file .docx chứa câu hỏi bài test",
+        "invalidFileError": "Chỉ chấp nhận file .docx",
+        "validationError": "Vui lòng nhập tiêu đề và chọn file DOCX",
+        "processingError": "Lỗi khi xử lý file",
+        "connectionError": "Lỗi kết nối. Vui lòng thử lại.",
+        "creatingButton": "Đang tạo...",
+        "createButton": "Tạo Test Online"
     },
     "userProfileCard": {
         "introduction": "Giới thiệu",
@@ -458,6 +494,78 @@
         "needToComplete": "Bạn cần hoàn thành câu hỏi để nhận phần thưởng.",
         "requirementsNotMet": "Chưa đáp ứng yêu cầu"
     },
+    "antiCheat": {
+        "warningTitle": "Cảnh báo vi phạm",
+        "tabSwitchWarning": "Đã phát hiện chuyển tab/cửa sổ. Hành vi này bị nghiêm cấm!",
+        "devToolsWarning": "Đã phát hiện mở Developer Tools. Hành vi này bị nghiêm cấm!",
+        "copyWarning": "Đã phát hiện sao chép nội dung. Hành vi này bị nghiêm cấm!",
+        "screenshotWarning": "Đã phát hiện chụp màn hình. Hành vi này bị nghiêm cấm!",
+        "contextMenuWarning": "Đã phát hiện nhấp chuột phải. Hành vi này bị nghiêm cấm!",
+        "shortcutWarning": "Đã phát hiện sử dụng phím tắt bị cấm. Hành vi này bị nghiêm cấm!",
+        "violationCount": "Số lần vi phạm",
+        "consequences": "Quá 5 lần vi phạm sẽ bị chấm dứt bài thi!",
+        "understood": "Đã hiểu",
+        "testTerminated": "Bài thi đã bị chấm dứt",
+        "blockedMessage": "Bạn đã bị chấm dứt bài thi do có quá nhiều hành vi gian lận.",
+        "contactSupport": "Vui lòng liên hệ với bộ phận hỗ trợ nếu bạn cho rằng đây là lỗi.",
+        "returnDashboard": "Quay về Dashboard",
+        "secureMode": "Chế độ bảo mật đang bật",
+        "fullscreenRequired": "Yêu cầu chế độ toàn màn hình",
+        "violations": "Vi phạm",
+        "enterFullscreen": "Vào chế độ toàn màn hình",
+        "resultsMayBeInvalid": "Kết quả có thể không được ghi nhận",
+        "cheatingDetected": "Phát hiện gian lận",
+        "viewResults": "Xem kết quả",
+        "backToDashboard": "Quay về Dashboard",
+        "tabSwitches": "Chuyển tab",
+        "devToolsAttempts": "Thử mở DevTools",
+        "copyAttempts": "Thử sao chép",
+        "keyboardShortcuts": "Phím tắt"
+    },
+    "test": {
+        "confirmExit": "Bạn có chắc chắn muốn thoát bài kiểm tra không?",
+        "incompleteWarning": "Bạn chưa trả lời tất cả câu hỏi. Bạn có chắc chắn muốn nộp bài không?",
+        "previous": "Trước",
+        "next": "Tiếp",
+        "progress": "Tiến độ",
+        "correctAnswers": "Câu trả lời đúng",
+        "incorrectAnswers": "Câu trả lời sai",
+        "totalQuestions": "Tổng số câu hỏi",
+        "scorePercentage": "Phần trăm điểm",
+        "incorrect": "Sai",
+        "correct": "Đúng",
+        "yourAnswer": "Câu trả lời của bạn",
+        "correctAnswer": "Câu trả lời đúng",
+        "backToDashboard": "Quay lại Bảng điều khiển",
+        "submit": "Nộp bài",
+        "questionTitle": "Câu hỏi: ",
+        "resultsTitle": "Kết quả Bài kiểm tra",
+        "cancel": "Hủy",
+        "confirmSubmit": "Xác nhận",
+        "incompleteWarningTitle": "Cảnh báo Bài kiểm tra Chưa hoàn thành",
+        "reviewAnswers": "Xem lại câu trả lời",
+        "loadingData": "Đang tải dữ liệu...",
+        "tapToClose": "Nhấn để đóng",
+        "loading": "Đang tải",
+        "errorLoading": "Lỗi tải bài kiểm tra",
+        "notFound": "Không tìm thấy bài kiểm tra",
+        "error": "Lỗi",
+        "submitting": "Đang nộp...",
+        "submitError": "Lỗi nộp bài kiểm tra",
+        "question": "Câu hỏi",
+        "chooseAnswer": "Chọn câu trả lời của bạn",
+        "detailedResults": "Kết quả Chi tiết",
+        "clickToEnlarge": "Nhấn để phóng to",
+        "submittedBefore": "Bài kiểm tra đã được nộp trước đó."
+    },
+    "LeaderboardModalTest": {
+        "leaderboardTitle": "Bảng Xếp Hạng",
+        "totalSubmissions": "Tổng số bài nộp",
+        "examUuid": "Mã bài thi",
+        "examCancelled": "Bài thi bị hủy",
+        "cheatingDetected": "Phát hiện gian lận",
+        "noSubmissionsYet": "Chưa có bài nộp nào"
+    },
     "dashboardAdmin": {
         "roomsStatistics": "Thống kê phòng",
         "usersStatistics": "Thống kê người dùng",
@@ -486,9 +594,13 @@
     "adminLogin": {
         "adminPanel": "BẢNG ĐIỀU KHIỂN QUẢN TRỊ",
         "username": "Tên đăng nhập",
+        "usernamePlaceholder": "Nhập tên đăng nhập",
+        "welcomeBack": "Chào mừng trở lại!",
         "password": "Mật khẩu",
+        "passwordPlaceholder": "Nhập mật khẩu",
         "loginButton": "Đăng nhập",
-        "forgotPassword": "Quên mật khẩu?"
+        "forgotPassword": "Quên mật khẩu?",
+        "allRightsReserved": " All rights reserved."
     },
     "profileForm": {
         "passwordUpdate": "CẬP NHẬT MẬT KHẨU",
@@ -787,5 +899,38 @@
         "remove": "Xóa phòng",
         "roomId": "ID phòng",
         "delete": "Xóa báo cáo"
+    },
+    "leaderboard": {
+        "title": "🏆 Bảng thành tích",
+        "loading": "Đang tải...",
+        "stats": {
+            "totalPlayers": "Tổng người chơi",
+            "completed": "Đã hoàn thành"
+        },
+        "user": {
+            "viewAnswers": "Xem đáp án",
+            "correct": "đúng",
+            "answered": "trả lời",
+            "completed": "Đã hoàn thành",
+            "incomplete": "Chưa hoàn thành"
+        },
+        "actions": {
+            "viewAllAnswers": "Xem đáp án toàn bộ user"
+        },
+        "empty": {
+            "title": "Chưa có dữ liệu",
+            "description": "Chưa có ai tham gia hoặc hoàn thành quiz"
+        },
+        "matrix": {
+            "loading": "Đang tải dữ liệu...",
+            "userAnswersTitle": "Đáp án của {{name}}",
+            "allUsersAnswersTitle": "Bảng đáp án của tất cả người chơi",
+            "table": {
+                "question": "Câu hỏi",
+                "answer": "Đáp án",
+                "playerQuestion": "Người chơi / Câu hỏi",
+                "notAnswered": "Chưa trả lời"
+            }
+        }
     }
 }

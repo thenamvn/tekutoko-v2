@@ -96,7 +96,7 @@ const Leaderboard = ({
         {/* Header */}
         <div className="bg-gradient-to-r from-violet-600 to-indigo-600 p-4 text-white">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">🏆 Bảng thành tích</h2>
+            <h2 className="text-xl font-bold">{t('leaderboard.title')}</h2>
             <button
               onClick={onClose}
               className="text-white hover:text-gray-200 transition-colors p-1"
@@ -113,7 +113,7 @@ const Leaderboard = ({
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"></div>
-              <span className="ml-3 text-slate-600">Đang tải...</span>
+              <span className="ml-3 text-slate-600">{t('leaderboard.loading')}</span>
             </div>
           ) : leaderboardData.users && leaderboardData.users.length > 0 ? (
             <>
@@ -125,13 +125,13 @@ const Leaderboard = ({
                       <div className="text-2xl font-bold text-violet-600">
                         {leaderboardData.stats.totalUsers}
                       </div>
-                      <div className="text-xs text-slate-600">Tổng người chơi</div>
+                      <div className="text-xs text-slate-600">{t('leaderboard.stats.totalPlayers')}</div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-green-600">
                         {leaderboardData.stats.completedUsers}
                       </div>
-                      <div className="text-xs text-slate-600">Đã hoàn thành</div>
+                      <div className="text-xs text-slate-600">{t('leaderboard.stats.completed')}</div>
                     </div>
                   </div>
                 </div>
@@ -190,7 +190,7 @@ const Leaderboard = ({
                           onClick={() => setSelectedUser(user)}
                           type="button"
                         >
-                          Xem đáp án
+                          {t('leaderboard.user.viewAnswers')}
                         </button>
                       </div>
 
@@ -202,16 +202,16 @@ const Leaderboard = ({
                               {user.score_percentage}%
                             </div>
                             <div className="text-xs text-slate-500">
-                              {user.correct_answers}/{leaderboardData.totalQuestions} đúng
+                              {user.correct_answers}/{leaderboardData.totalQuestions} {t('leaderboard.user.correct')}
                             </div>
                           </>
                         ) : (
                           <>
                             <div className="font-bold text-sm text-slate-500">
-                              Chưa hoàn thành
+                              {t('leaderboard.user.incomplete')}
                             </div>
                             <div className="text-xs text-slate-400">
-                              {user.answered_questions}/{leaderboardData.totalQuestions} trả lời
+                              {user.answered_questions}/{leaderboardData.totalQuestions} {t('leaderboard.user.answered')}
                             </div>
                           </>
                         )}
@@ -221,7 +221,7 @@ const Leaderboard = ({
                       <div className="ml-2 flex-shrink-0">
                         <div 
                           className={`w-3 h-3 rounded-full ${getStatusColor(user)}`}
-                          title={user.allAnswered ? 'Đã hoàn thành' : 'Chưa hoàn thành'}
+                          title={user.allAnswered ? t('leaderboard.user.completed') : t('leaderboard.user.incomplete')}
                         ></div>
                       </div>
                     </div>
@@ -232,7 +232,7 @@ const Leaderboard = ({
                     onClick={() => setShowMatrix(true)}
                     type="button"
                   >
-                    Xem đáp án toàn bộ user
+                    {t('leaderboard.actions.viewAllAnswers')}
                   </button>
                 </div>
                 {selectedUser && (
@@ -258,8 +258,8 @@ const Leaderboard = ({
               <svg className="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <p className="text-lg font-semibold mb-2">Chưa có dữ liệu</p>
-              <p className="text-sm">Chưa có ai tham gia hoặc hoàn thành quiz</p>
+              <p className="text-lg font-semibold mb-2">{t('leaderboard.empty.title')}</p>
+              <p className="text-sm">{t('leaderboard.empty.description')}</p>
             </div>
           )}
         </div>

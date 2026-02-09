@@ -28,6 +28,7 @@
         "userSubmissions": "User Submissions",
         "scanQRCode": "Scan QR Code to join the room",
         "shareThisQuiz": "Share This Quiz",
+        "leaderBoard": "Leaderboard",
         "copyLink": "Copy Link",
         "copiedToClipboard": "Copied to Clipboard!",
         "qrCode": "QR Code",
@@ -341,18 +342,53 @@
         }
     },
     "dashboard": {
-        "title": "My Rooms",
-        "createGameButton": "Create New Game",
-        "createRoom": "Create New",
+        "title": "Dashboard",
+        "loading": "Loading...",
+        "createOptionsTitle": "Choose Creation Type",
+        "createRoomOption": "Room Game",
+        "createTestOption": "Test Online",
+        "cancel": "Cancel",
         "joinWithCode": "Join with Code",
         "joinCodePlaceholder": "Enter room code",
         "joinButton": "Join",
+        "createRoom": "Create New",
+        "createGameButton": "Create New Game",
         "host": "Host",
-        "hostedByYou": "Hosted by you",
-        "noRooms": "No rooms available",
         "joined": "Joined",
-        "joinedByYou": "Joined room",
-        "noRoomsYet": "You haven't created or joined any rooms yet."
+        "hostedByYou": "Created by you",
+        "joinedByYou": "Joined by you",
+        "filterRooms": "Filter Rooms",
+        "filterAll": "All",
+        "filterHosted": "Hosted",
+        "filterJoined": "Joined",
+        "noRooms": "No rooms",
+        "noRoomsYet": "Create your first room",
+        "noHostedRooms": "No hosted rooms yet",
+        "noHostedRoomsDesc": "Tap '+' to create a new room",
+        "noJoinedRooms": "No joined rooms yet",
+        "noJoinedRoomsDesc": "Use room code to join",
+        "enterRoomCodePlaceholder": "Please enter a room code",
+        "joinError": "Failed to join room",
+        "errorJoiningRoom": "An error occurred while joining room",
+        "errorFetchingRooms": "Error fetching rooms"
+    },
+    "createTest": {
+        "title": "Create Test Online",
+        "loading": "Processing file...",
+        "testTitleLabel": "Test Title",
+        "testTitlePlaceholder": "Enter test title",
+        "timeLimitLabel": "Time Limit (minutes)",
+        "fileUploadLabel": "Upload DOCX File",
+        "chooseFileButton": "Choose File",
+        "noFileSelected": "No file selected",
+        "fileSize": "Size:",
+        "fileTypeHint": "Only .docx files containing test questions are accepted",
+        "invalidFileError": "Only .docx files are accepted",
+        "validationError": "Please enter title and select DOCX file",
+        "processingError": "Error processing file",
+        "connectionError": "Connection error. Please try again.",
+        "creatingButton": "Creating...",
+        "createButton": "Create Test Online"
     },
     "userProfileCard": {
         "introduction": "Introduction",
@@ -457,6 +493,78 @@
         "needToComplete": "You need to complete the room to receive rewards.",
         "requirementsNotMet": "Requirements not met"
     },
+    "antiCheat": {
+        "warningTitle": "Violation Warning",
+        "tabSwitchWarning": "Tab/window switching detected. This behavior is strictly prohibited!",
+        "devToolsWarning": "Developer Tools detected. This behavior is strictly prohibited!",
+        "copyWarning": "Content copying detected. This behavior is strictly prohibited!",
+        "screenshotWarning": "Screenshot attempt detected. This behavior is strictly prohibited!",
+        "contextMenuWarning": "Right-click detected. This behavior is strictly prohibited!",
+        "shortcutWarning": "Prohibited keyboard shortcut detected. This behavior is strictly prohibited!",
+        "violationCount": "Violation count",
+        "consequences": "More than 5 violations will result in test termination!",
+        "understood": "Understood",
+        "testTerminated": "Test has been terminated",
+        "blockedMessage": "Your test has been terminated due to excessive cheating behavior.",
+        "contactSupport": "Please contact support if you believe this is an error.",
+        "returnDashboard": "Return to Dashboard",
+        "secureMode": "Security mode is enabled",
+        "fullscreenRequired": "Fullscreen mode required",
+        "violations": "Violations",
+        "enterFullscreen": "Enter fullscreen mode",
+        "resultsMayBeInvalid": "Results may not be recorded",
+        "cheatingDetected": "Cheating detected",
+        "viewResults": "View results",
+        "backToDashboard": "Back to Dashboard",
+        "tabSwitches": "Tab Switches",
+        "devToolsAttempts": "DevTools Attempts",
+        "copyAttempts": "Copy Attempts",
+        "keyboardShortcuts": "Keyboard Shortcuts"
+    },
+    "test": {
+        "confirmExit": "Are you sure you want to exit the test?",
+        "incompleteWarning": "You haven't answered all questions. Are you sure you want to submit?",
+        "previous": "Previous",
+        "next": "Next",
+        "progress": "Progress",
+        "correctAnswers": "Correct answers",
+        "incorrectAnswers": "Incorrect answers",
+        "totalQuestions": "Total questions",
+        "scorePercentage": "Score percentage",
+        "incorrect": "Incorrect",
+        "correct": "Correct",
+        "yourAnswer": "Your answer",
+        "correctAnswer": "Correct answer",
+        "backToDashboard": "Back to Dashboard",
+        "submit": "Submit",
+        "questionTitle": "Question: ",
+        "resultsTitle": "Test Results",
+        "cancel": "Cancel",
+        "confirmSubmit": "Confirm",
+        "incompleteWarningTitle": "Incomplete Test Warning",
+        "reviewAnswers": "Review answers",
+        "loadingData": "Loading data...",
+        "tapToClose": "Tap to close",
+        "loading": "Loading",
+        "errorLoading": "Error loading test",
+        "notFound": "Test not found",
+        "error": "Error",
+        "submitting": "Submitting...",
+        "submitError": "Error submitting test",
+        "question": "Question",
+        "chooseAnswer": "Choose your answer",
+        "detailedResults": "Detailed Results",
+        "clickToEnlarge": "Click to enlarge",
+        "submittedBefore": "Test has already been submitted."
+    },
+    "LeaderboardModalTest": {
+        "leaderboardTitle": "Leaderboard",
+        "totalSubmissions": "Total Submissions",
+        "examUuid": "Exam UUID",
+        "examCancelled": "Exam Cancelled",
+        "cheatingDetected": "Cheating Detected",
+        "noSubmissionsYet": "No submissions yet"
+    },
     "dashboardAdmin": {
         "roomsStatistics": "Room Statistics",
         "usersStatistics": "User Statistics",
@@ -484,10 +592,14 @@
     },
     "adminLogin": {
         "adminPanel": "ADMIN DASHBOARD",
+        "welcomeBack": "Welcome Back, Admin!",
+        "usernamePlaceholder": "Username",
+        "passwordPlaceholder": "Password",
         "username": "Username",
         "password": "Password",
         "loginButton": "Login",
-        "forgotPassword": "Forgot Password?"
+        "forgotPassword": "Forgot Password?",
+        "allRightsReserved": " All rights reserved."
     },
     "profileForm": {
         "passwordUpdate": "UPDATE PASSWORD",
@@ -786,5 +898,38 @@
         "remove": "Remove Room",
         "roomId": "Room ID",
         "delete": "Delete Report"
+    },
+    "leaderboard": {
+        "title": "🏆 Leaderboard",
+        "loading": "Loading...",
+        "stats": {
+            "totalPlayers": "Total Participants",
+            "completed": "Completed"
+        },
+        "user": {
+            "viewAnswers": "View Answers",
+            "correct": "correct",
+            "answered": "answered",
+            "completed": "Completed",
+            "incomplete": "Incomplete"
+        },
+        "actions": {
+            "viewAllAnswers": "View All User Answers"
+        },
+        "empty": {
+            "title": "No Data Available",
+            "description": "No one has participated or completed the quiz yet"
+        },
+        "matrix": {
+            "loading": "Loading data...",
+            "userAnswersTitle": "Answers of {{name}}",
+            "allUsersAnswersTitle": "All Players' Answers Matrix",
+            "table": {
+                "question": "Question",
+                "answer": "Answer",
+                "playerQuestion": "Player / Question",
+                "notAnswered": "Not answered"
+            }
+        }
     }
 }

@@ -28,6 +28,7 @@
         "userSubmissions": "ユーザーの提出物",
         "scanQRCode": "QRコードをスキャンしてルームに参加",
         "shareThisQuiz": "このクイズをシェア",
+        "leaderBoard": "リーダーボード",
         "copyLink": "リンクをコピー",
         "copiedToClipboard": "クリップボードにコピーしました！",
         "qrCode": "QRコード",
@@ -341,18 +342,53 @@
         }
     },
     "dashboard": {
-        "title": "マイルーム",
-        "createGameButton": "新しいゲームを作成",
-        "createRoom": "新規作成",
+        "title": "ダッシュボード",
+        "loading": "読み込み中...",
+        "createOptionsTitle": "作成タイプを選択",
+        "createRoomOption": "ルームゲーム",
+        "createTestOption": "オンラインテスト",
+        "cancel": "キャンセル",
         "joinWithCode": "コードで参加",
         "joinCodePlaceholder": "ルームコードを入力",
         "joinButton": "参加",
+        "createRoom": "新規作成",
+        "createGameButton": "新しいゲームを作成",
         "host": "ホスト",
-        "hostedByYou": "あなたが作成",
-        "noRooms": "利用可能なルームがありません",
         "joined": "参加済み",
-        "joinedByYou": "参加したルーム",
-        "noRoomsYet": "まだルームを作成または参加していません。"
+        "hostedByYou": "あなたが作成",
+        "joinedByYou": "あなたが参加",
+        "filterRooms": "ルームフィルター",
+        "filterAll": "すべて",
+        "filterHosted": "作成済み",
+        "filterJoined": "参加済み",
+        "noRooms": "ルームがありません",
+        "noRoomsYet": "最初のルームを作成",
+        "noHostedRooms": "作成されたルームがありません",
+        "noHostedRoomsDesc": "'+'ボタンで新しいルームを作成",
+        "noJoinedRooms": "参加したルームがありません",
+        "noJoinedRoomsDesc": "ルームコードを使用して参加",
+        "enterRoomCodePlaceholder": "ルームコードを入力してください",
+        "joinError": "ルーム参加に失敗",
+        "errorJoiningRoom": "ルーム参加中にエラーが発生",
+        "errorFetchingRooms": "ルーム一覧の取得エラー"
+    },
+    "createTest": {
+        "title": "オンラインテスト作成",
+        "loading": "ファイルを処理中...",
+        "testTitleLabel": "テストタイトル",
+        "testTitlePlaceholder": "テストタイトルを入力",
+        "timeLimitLabel": "制限時間（分）",
+        "fileUploadLabel": "DOCXファイルをアップロード",
+        "chooseFileButton": "ファイルを選択",
+        "noFileSelected": "ファイルが選択されていません",
+        "fileSize": "サイズ：",
+        "fileTypeHint": "テスト問題を含む.docファイルをのみ受け付けます",
+        "invalidFileError": ".docxファイルのみ受け付けます",
+        "validationError": "タイトルを入力し、DOCXファイルを選択してください",
+        "processingError": "ファイル処理エラー",
+        "connectionError": "接続エラー。もう一度お試しください。",
+        "creatingButton": "作成中...",
+        "createButton": "オンラインテスト作成"
     },
     "userProfileCard": {
         "introduction": "自己紹介",
@@ -457,6 +493,78 @@
         "needToComplete": "報酬を受け取るにはルームを完了する必要があります。",
         "requirementsNotMet": "条件を満たしていません"
     },
+    "antiCheat": {
+        "warningTitle": "違反警告",
+        "tabSwitchWarning": "タブ/ウィンドウの切り替えが検出されました。この行為は厳しく禁止されています！",
+        "devToolsWarning": "開発者ツールが検出されました。この行為は厳しく禁止されています！",
+        "copyWarning": "コンテンツのコピーが検出されました。この行為は厳しく禁止されています！",
+        "screenshotWarning": "スクリーンショットの試行が検出されました。この行為は厳しく禁止されています！",
+        "contextMenuWarning": "右クリックが検出されました。この行為は厳しく禁止されています！",
+        "shortcutWarning": "禁止されたキーボードショートカットが検出されました。この行為は厳しく禁止されています！",
+        "violationCount": "違反回数",
+        "consequences": "5回以上の違反でテストが終了されます！",
+        "understood": "理解しました",
+        "testTerminated": "テストが終了されました",
+        "blockedMessage": "過度な不正行為によりテストが終了されました。",
+        "contactSupport": "これがエラーだと思われる場合は、サポートにご連絡ください。",
+        "returnDashboard": "ダッシュボードに戻る",
+        "secureMode": "セキュリティモードが有効です",
+        "fullscreenRequired": "フルスクリーンモードが必要です",
+        "violations": "違反",
+        "enterFullscreen": "フルスクリーンモードに入る",
+        "resultsMayBeInvalid": "結果が記録されない可能性があります",
+        "cheatingDetected": "不正行為が検出されました",
+        "viewResults": "結果を表示",
+        "backToDashboard": "ダッシュボードに戻る",
+        "tabSwitches": "タブ切り替え",
+        "devToolsAttempts": "DevTools試行",
+        "copyAttempts": "コピー試行",
+        "keyboardShortcuts": "キーボードショートカット"
+    },
+    "test": {
+        "confirmExit": "テストを終了してもよろしいですか？",
+        "incompleteWarning": "すべての質問に回答していません。本当に提出しますか？",
+        "previous": "前へ",
+        "next": "次へ",
+        "progress": "進捗",
+        "correctAnswers": "正解数",
+        "incorrectAnswers": "不正解数",
+        "totalQuestions": "総質問数",
+        "scorePercentage": "スコア率",
+        "incorrect": "不正解",
+        "correct": "正解",
+        "yourAnswer": "あなたの回答",
+        "correctAnswer": "正解",
+        "backToDashboard": "ダッシュボードに戻る",
+        "submit": "提出",
+        "questionTitle": "質問: ",
+        "resultsTitle": "テスト結果",
+        "cancel": "キャンセル",
+        "confirmSubmit": "確認",
+        "incompleteWarningTitle": "未完了テスト警告",
+        "reviewAnswers": "回答を確認",
+        "loadingData": "データを読み込み中...",
+        "tapToClose": "タップして閉じる",
+        "loading": "読み込み中",
+        "errorLoading": "テストの読み込みエラー",
+        "notFound": "テストが見つかりません",
+        "error": "エラー",
+        "submitting": "提出中...",
+        "submitError": "テスト提出エラー",
+        "question": "質問",
+        "chooseAnswer": "回答を選択",
+        "detailedResults": "詳細結果",
+        "clickToEnlarge": "クリックして拡大",
+        "submittedBefore": "テストは既に提出されています。"
+    },
+    "LeaderboardModalTest": {
+        "leaderboardTitle": "リーダーボード",
+        "totalSubmissions": "総提出数",
+        "examUuid": "試験UUID",
+        "examCancelled": "試験がキャンセルされました",
+        "cheatingDetected": "不正行為が検出されました",
+        "noSubmissionsYet": "まだ提出がありません"
+    },
     "dashboardAdmin": {
         "roomsStatistics": "部屋の統計",
         "usersStatistics": "ユーザーの統計",
@@ -484,10 +592,14 @@
     },
     "adminLogin": {
         "adminPanel": "管理ダッシュボード",
+        "welcomeBack": "お帰りなさい！",
+        "usernamePlaceholder": "ユーザー名",
+        "passwordPlaceholder": "パスワード",
         "username": "ユーザー名",
         "password": "パスワード",
         "loginButton": "ログイン",
-        "forgotPassword": "パスワードを忘れましたか？"
+        "forgotPassword": "パスワードを忘れましたか？",
+        "allRightsReserved": " All rights reserved。"
     },
     "profileForm": {
         "passwordUpdate": "パスワードを更新",
@@ -786,5 +898,38 @@
         "remove": "削除 部屋",
         "roomId": "部屋ID",
         "delete": "報告を削除"
+    },
+    "leaderboard": {
+        "title": "🏆 ランキング",
+        "loading": "読み込み中...",
+        "stats": {
+            "totalPlayers": "参加者総数",
+            "completed": "完了者数"
+        },
+        "user": {
+            "viewAnswers": "回答を見る",
+            "correct": "正解",
+            "answered": "回答済み",
+            "completed": "完了",
+            "incomplete": "未完了"
+        },
+        "actions": {
+            "viewAllAnswers": "全員の回答を見る"
+        },
+        "empty": {
+            "title": "データなし",
+            "description": "まだクイズに参加した人や完了した人はいません"
+        },
+        "matrix": {
+            "loading": "データを読み込み中...",
+            "userAnswersTitle": "{{name}} の回答",
+            "allUsersAnswersTitle": "全プレイヤーの回答一覧",
+            "table": {
+                "question": "質問",
+                "answer": "回答",
+                "playerQuestion": "プレイヤー / 質問",
+                "notAnswered": "未回答"
+            }
+        }
     }
 }

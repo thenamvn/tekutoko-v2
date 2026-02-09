@@ -35,6 +35,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 app.options("*", cors()); // Preflight request handler for all routes
 // Load environment variables from .env file
 const envPath = path.resolve(__dirname, ".env");
@@ -362,7 +363,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const firebaseApp = initializeApp(firebaseConfig);
 const storage = getStorage(firebaseApp);
-const upload = multer({ storage: multer.memoryStorage() });
 
 // Define the directory path
 const uploadDir = path.join(__dirname, "public", "uploads");
@@ -371,6 +371,87 @@ const uploadDir = path.join(__dirname, "public", "uploads");
 if (!fs.existsSync(uploadDir)) {
   // Create the directory
   fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure Multer for Disk Storage
+const storageConfig = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    // Sanitize original filename
+    const cleanName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, uniqueSuffix + '-' + cleanName);
+  },
+});
+
+const upload = multer({ storage: storageConfig });
+
+// ===== HELPER FUNCTION: Delete File (Local or Firebase) =====
+/**
+ * Deletes a file from local storage or Firebase Storage
+ * @param {string} imagePath - The path/URL of the image to delete
+ * @returns {Promise} - Resolves when deletion completes (or fails gracefully)
+ */
+function deleteFileFromStorage(imagePath) {
+  return new Promise((resolve) => {
+    if (!imagePath) {
+      return resolve();
+    }
+
+    // Check if it's a local file (contains /uploads/)
+    if (imagePath.includes('/uploads/')) {
+      const filename = imagePath.split('/uploads/').pop();
+      const localPath = path.join(uploadDir, filename);
+
+      fs.unlink(localPath, (err) => {
+        if (err) {
+          console.warn(`Failed to delete local file: ${localPath}`, err);
+        } else {
+          console.log(`Deleted local file: ${localPath}`);
+        }
+        resolve(); // Always resolve to continue
+      });
+    } 
+    // Check if it's a Firebase URL (legacy support)
+    else if (imagePath.includes('firebase')) {
+      try {
+        const fileRef = ref(storage, imagePath);
+        deleteObject(fileRef)
+          .then(() => {
+            console.log(`Deleted Firebase file: ${imagePath}`);
+            resolve();
+          })
+          .catch((err) => {
+            console.warn(`Failed to delete Firebase file: ${imagePath}`, err);
+            resolve();
+          });
+      } catch (e) {
+        console.warn(`Error initializing Firebase ref for: ${imagePath}`, e);
+        resolve();
+      }
+    } 
+    // Unknown format, just skip
+    else {
+      resolve();
+    }
+  });
+}
+
+/**
+ * Deletes multiple files in parallel
+ * @param {Array} imagePaths - Array of image paths/URLs or objects with image_path property
+ * @returns {Promise} - Resolves when all deletions complete
+ */
+async function deleteMultipleFiles(imagePaths) {
+  const deletePromises = imagePaths.map((item) => {
+    // Handle both direct strings and objects with image_path property
+    const imagePath = typeof item === 'string' ? item : item.image_path;
+    return deleteFileFromStorage(imagePath);
+  });
+  return Promise.all(deletePromises);
 }
 
 const transporter = nodeMailer.createTransport({
@@ -481,6 +562,7 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+
 const verifyAdminToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
@@ -548,13 +630,14 @@ const verifyAdminToken = (req, res, next) => {
 };
 
 // upload image
-app.post("/upload", verifyToken, (req, res) => {
-  const { room_id, uploader_username, fileUrls } = req.body;
+app.post("/upload", verifyToken, upload.array('files'), (req, res) => {
+  const { room_id, uploader_username } = req.body;
+  const files = req.files;
 
-  if (!room_id || !uploader_username || !fileUrls || fileUrls.length === 0) {
+  if (!room_id || !uploader_username || !files || files.length === 0) {
     return res
       .status(400)
-      .json({ error: "Room ID, username, and file URLs are required." });
+      .json({ error: "Room ID, username, and files are required." });
   }
 
   pool.getConnection((err, connection) => {
@@ -564,6 +647,12 @@ app.post("/upload", verifyToken, (req, res) => {
     }
 
     try {
+      // Generate URLs for the uploaded files
+      const fileUrls = files.map((file) => {
+        // Construct URL: protocol://host/uploads/filename
+        return `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
+      });
+
       const values = fileUrls.map((url) => [room_id, uploader_username, url]);
       const query =
         "INSERT INTO images (room_id, uploader_username, image_path) VALUES ?";
@@ -574,6 +663,9 @@ app.post("/upload", verifyToken, (req, res) => {
           return res.status(500).json({ error: "alert.room.databaseError" });
         }
 
+        // Return the list of images including the newly created URLs
+        // We can just return the fileUrls we generated, or fetch from DB as before.
+        // Fetching from DB as before ensures consistency.
         const selectQuery =
           "SELECT * FROM images WHERE room_id = ? AND uploader_username = ?";
         connection.query(
@@ -2056,17 +2148,8 @@ app.delete("/delete/room/:id", (req, res) => {
           .promise()
           .query("SELECT image_path FROM images WHERE room_id = ?", [roomId]);
 
-        // Xoá hình ảnh từ Firebase Storage
-        const deleteImagePromises = imageResults.map((row) => {
-          const imagePath = row.image_path;
-          const fileRef = ref(storage, imagePath);
-          return deleteObject(fileRef).catch((error) => {
-            console.error(`Error deleting file at ${imagePath}:`, error);
-            // Bỏ qua lỗi và tiếp tục
-          });
-        });
-
-        await Promise.all(deleteImagePromises);
+        // Xóa hình ảnh từ storage (local/Firebase)
+        await deleteMultipleFiles(imageResults);
 
         // Xoá phòng (các bảng liên quan sẽ tự động xóa nhờ ON DELETE CASCADE)
         await connection
@@ -2128,17 +2211,8 @@ app.delete("/user/delete/room/:id/:username", verifyToken, async (req, res) => {
           .promise()
           .query("SELECT image_path FROM images WHERE room_id = ?", [roomId]);
 
-        // Delete image files from Firebase Storage
-        const deleteImagePromises = imageResults.map((row) => {
-          const imagePath = row.image_path;
-          const fileRef = ref(storage, imagePath);
-          return deleteObject(fileRef).catch((error) => {
-            console.error(`Error deleting file at ${imagePath}:`, error);
-            // Ignore the error and continue
-          });
-        });
-
-        await Promise.all(deleteImagePromises);
+        // Delete image files from storage (local/Firebase)
+        await deleteMultipleFiles(imageResults);
 
         // Delete from room table (các bảng liên quan sẽ tự động xóa nhờ ON DELETE CASCADE)
         await connection
@@ -2166,6 +2240,28 @@ app.delete("/user/delete/room/:id/:username", verifyToken, async (req, res) => {
   });
 });
 
+app.delete("/user/delete/test/:id/:username", verifyToken, (req, res) => {
+  const roomId = req.params.id;
+  const username = req.params.username;
+  // Check if the user is authorized to delete the room
+  if (req.user.username !== username) {
+    return res
+      .status(403)
+      .json({ error: "You are not authorized to delete this room" });
+  }
+  pool.query(
+    "DELETE FROM room WHERE room_id = ?",
+    [roomId],
+    (err, results) => {
+      if (err) {
+        console.error("Error deleting room:", err);
+        return res.status(500).send("Server error");
+      }
+      res.send("Room deleted successfully");
+    }
+  );
+});
+
 // Admin delete a user and all related data
 app.delete("/delete/user/:username", async (req, res) => {
   const username = req.params.username;
@@ -2191,17 +2287,8 @@ app.delete("/delete/user/:username", async (req, res) => {
             username,
           ]);
 
-        // Delete images from Firebase Storage
-        const deleteImagePromises = imageResults.map((row) => {
-          const imagePath = row.image_path;
-          const fileRef = ref(storage, imagePath);
-          return deleteObject(fileRef).catch((error) => {
-            console.error(`Error deleting file at ${imagePath}:`, error);
-            // Ignore the error and continue
-          });
-        });
-
-        await Promise.all(deleteImagePromises);
+        // Delete images from storage (local/Firebase)
+        await deleteMultipleFiles(imageResults);
 
         // Delete from users table (các bảng liên quan sẽ tự động xóa nhờ ON DELETE CASCADE)
         await connection
@@ -2329,17 +2416,8 @@ app.delete("/user/leave/room/:room_id/:username", async (req, res) => {
             [username, room_id]
           );
 
-        // Delete images from Firebase Storage
-        const deleteImagePromises = imageResults.map((row) => {
-          const imagePath = row.image_path;
-          const fileRef = ref(storage, imagePath);
-          return deleteObject(fileRef).catch((error) => {
-            console.error(`Error deleting file at ${imagePath}:`, error);
-            // Ignore the error and continue
-          });
-        });
-
-        await Promise.all(deleteImagePromises);
+        // Delete images from storage (local/Firebase)
+        await deleteMultipleFiles(imageResults);
 
         // Delete images from images table
         await connection
@@ -2409,17 +2487,8 @@ app.delete("/deny/user/:username/room/:room_id", (req, res) => {
             [username, room_id]
           );
 
-        // Delete images from Firebase Storage
-        const deleteImagePromises = imageResults.map((row) => {
-          const imagePath = row.image_path;
-          const fileRef = ref(storage, imagePath);
-          return deleteObject(fileRef).catch((error) => {
-            console.error(`Error deleting file at ${imagePath}:`, error);
-            // Ignore the error and continue
-          });
-        });
-
-        await Promise.all(deleteImagePromises);
+        // Delete images from storage (local/Firebase)
+        await deleteMultipleFiles(imageResults);
 
         // Delete images from images table
         await connection
@@ -3171,20 +3240,9 @@ app.delete("/api/deleteVoucher/:id", async (req, res) => {
 
         const ticketImageUrl = results[0].ticket_image_url;
 
-        // Delete image from Firebase Storage
-        const imagePath = ticketImageUrl;
-        const fileRef = ref(storage, imagePath);
-
-        try {
-          await deleteObject(fileRef);
-          console.log(`Image deleted from Firebase Storage: ${imagePath}`);
-        } catch (error) {
-          if (error.code === "storage/object-not-found") {
-            console.warn(`Image not found in Firebase Storage: ${imagePath}`);
-          } else {
-            connection.release();
-            return res.status(500).json({ error: error.message });
-          }
+        // Delete image from storage (local/Firebase)
+        if (ticketImageUrl) {
+          await deleteFileFromStorage(ticketImageUrl);
         }
 
         // Delete related images from images table
@@ -3333,7 +3391,7 @@ app.delete("/delete_job/:room_id", verifyToken, (req, res) => {
 });
 
 // Delete old images
-app.delete("/delete_images/:room_id/:username", verifyToken, (req, res) => {
+app.delete("/delete_images/:room_id/:username", verifyToken, async (req, res) => {
   const { room_id, username } = req.params;
 
   if (req.user.username !== username) {
@@ -3345,7 +3403,7 @@ app.delete("/delete_images/:room_id/:username", verifyToken, (req, res) => {
   pool.query(
     "SELECT image_path FROM images WHERE room_id = ? AND uploader_username = ?",
     [room_id, username],
-    (error, results) => {
+    async (error, results) => {
       if (error) {
         console.error("Error fetching images:", error);
         return res.status(500).json({ message: "Server error" });
@@ -3359,34 +3417,20 @@ app.delete("/delete_images/:room_id/:username", verifyToken, (req, res) => {
           });
       }
 
-      // Assuming deleteObject and ref are Firebase functions
-      const deletePromises = results.map((image) => {
-        const fileRef = ref(storage, image.image_path);
-        return deleteObject(fileRef)
-          .then(() => {
-            console.log(`Deleted image from storage: ${image.image_path}`);
-          })
-          .catch((error) => {
-            console.warn(
-              `Error deleting image from storage: ${image.image_path}`,
-              error
-            );
-          });
-      });
+      // Delete files from storage (local/Firebase)
+      await deleteMultipleFiles(results);
 
-      Promise.all(deletePromises).then(() => {
-        pool.query(
-          "DELETE FROM images WHERE room_id = ? AND uploader_username = ?",
-          [room_id, username],
-          (error, deleteResult) => {
-            if (error) {
-              console.error("Error deleting images:", error);
-              return res.status(500).json({ message: "Server error" });
-            }
-            res.json({ message: "Images deleted successfully" });
+      pool.query(
+        "DELETE FROM images WHERE room_id = ? AND uploader_username = ?",
+        [room_id, username],
+        (error, deleteResult) => {
+          if (error) {
+            console.error("Error deleting images:", error);
+            return res.status(500).json({ message: "Server error" });
           }
-        );
-      });
+          res.json({ message: "Images deleted successfully" });
+        }
+      );
     }
   );
 });
@@ -3429,16 +3473,8 @@ app.delete("/api/delete/vouchers/:roomId/:hostId", verifyToken, (req, res) => {
         if (imageResults.length > 0) {
           const imagePaths = imageResults.map((row) => row.ticket_image_url);
 
-          // Xóa file từ Firebase Storage nếu tồn tại URL ảnh
-          const deleteImagePromises = imagePaths.map((imagePath) => {
-            const fileRef = ref(storage, imagePath);
-            return deleteObject(fileRef).catch((error) => {
-              console.error(`Error deleting file at ${imagePath}:`, error);
-              // Bỏ qua lỗi xóa file và tiếp tục
-            });
-          });
-
-          await Promise.all(deleteImagePromises);
+          // Delete files from storage (local/Firebase)
+          await deleteMultipleFiles(imagePaths);
 
           // Xóa ảnh trong bảng `images` chỉ nếu `image_path` nằm trong `ticket_image_url`
           await connection
@@ -3539,19 +3575,8 @@ cron.schedule("0 0 * * *", async () => {
                 });
               });
 
-              // 3. Cuối cùng mới xoá ảnh từ Firebase Storage
-              try {
-                const fileRef = ref(storage, ticketImageUrl);
-                await deleteObject(fileRef);
-                console.log(`Image deleted from Firebase Storage: ${ticketImageUrl}`);
-              } catch (error) {
-                if (error.code === "storage/object-not-found") {
-                  console.warn(`Image not found in Firebase Storage: ${ticketImageUrl}`);
-                } else {
-                  console.error("Error deleting image from Firebase:", error);
-                  // Không throw error vì việc xóa voucher đã thành công
-                }
-              }
+              // 3. Delete file from storage (local/Firebase)
+              await deleteFileFromStorage(ticketImageUrl);
             }
 
             // Commit transaction
@@ -3659,18 +3684,9 @@ app.post("/api/cleanup-expired-vouchers", verifyToken, async (req, res) => {
                       });
                     });
 
-                    // 3. Finally delete image from Firebase Storage
-                    try {
-                      const fileRef = ref(storage, ticketImageUrl);
-                      await deleteObject(fileRef);
-                      console.log(`Image deleted from Firebase Storage: ${ticketImageUrl}`);
-                    } catch (error) {
-                      if (error.code === "storage/object-not-found") {
-                        console.warn(`Image not found in Firebase Storage: ${ticketImageUrl}`);
-                      } else {
-                        console.error("Error deleting image from Firebase:", error);
-                        // Don't throw error as voucher deletion was successful
-                      }
+                    // 3. Delete file from storage (local/Firebase)
+                    if (ticketImageUrl) {
+                      await deleteFileFromStorage(ticketImageUrl);
                     }
                   }
 

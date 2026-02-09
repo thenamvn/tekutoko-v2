@@ -19,11 +19,11 @@ const UserProfileFormCreator = React.lazy(() => import('./components/introProfil
 const UserProfileFormModify = React.lazy(() => import('./components/introProfile/UserProfileCardModify'));
 const CouponCard = React.lazy(() => import('./components/coupon/CouponCard'));
 
-const QuizRoom = React.lazy(() => import('./components/room/test'));
+const QuizRoom = React.lazy(() => import('./components/room/QuizRoom'));
 const QuestionPage = React.lazy(() => import('./components/room/QuestionPage.jsx'));
-// const QuizResults = React.lazy(() => import('./components/room/QuizResults'));
+const TestRoom = React.lazy(() => import('./components/room/TestRoom'));
 const RoomSetup = React.lazy(() => import('./components/room/RoomSetup'));
-
+const CreateTestOnline = React.lazy(() => import('./components/test/CreateTestOnline'));
 
 // Admin Components
 const AdminLogin = React.lazy(() => import('./components/room_admin/login/adminLogin'));
@@ -37,6 +37,7 @@ const Terms = React.lazy(() => import('./components/termsConditions/Terms'));
 
 const HomePage = React.lazy(() => import('./components/homepage/HomePage'));
 const NotFound = React.lazy(() => import('./components/404/404'));
+
 const App = () => {
   const { i18n } = useTranslation();
 
@@ -86,9 +87,10 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
           <Route path="/quiz/room/:roomId" element={<QuizRoom />} />
           <Route path="/quiz/room/:roomId/question/:questionNumber" element={<PrivateQuestionPageWrapper />} />
-          {/* <Route path="/quiz/room/:roomId/results" element={<QuizResults />} /> */}
           
-          <Route path="/create-room" element={<RoomSetup />} />
+          <Route path="/create-room" element={<PrivateRoute component={RoomSetup} />} />
+          <Route path="/create-test" element={<PrivateRoute component={CreateTestOnline} />} />
+          <Route path="/test/:testId" element={<PrivateRoute component={TestRoom} />} />
 
 
         </Routes>
