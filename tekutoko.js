@@ -1,6 +1,7 @@
 // server.js
 const path = require("path");
 const dotenv = require("dotenv");
+const helmet = require("helmet");
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
@@ -35,6 +36,8 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(helmet());
+app.disable('x-powered-by');
 app.options("*", cors()); // Preflight request handler for all routes
 // Load environment variables from .env file
 const envPath = path.resolve(__dirname, ".env");
