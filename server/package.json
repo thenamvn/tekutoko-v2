@@ -1,0 +1,27 @@
+{
+  "name": "tekutoko-server",
+  "version": "1.0.0",
+  "description": "Tekutoko API Server",
+  "main": "tekutoko.js",
+  "scripts": {
+    "start": "node tekutoko.js",
+    "dev": "node tekutoko.js"
+  },
+  "dependencies": {
+    "@google/genai": "^1.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "firebase": "^12.9.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "mysql2": "^3.11.0",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^8.0.1",
+    "uuid": "^10.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
