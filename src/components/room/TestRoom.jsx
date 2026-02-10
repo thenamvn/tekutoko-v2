@@ -5,6 +5,7 @@ import secureStorage from '../../utils/secureStorage';
 import LeaderboardModalTest from './LeaderboardModalTest';
 
 const TestRoom = () => {
+  const apiUrl = process.env.REACT_APP_PYTHON_API_URL || 'http://localhost:8000';
   const { t } = useTranslation();
   const { testId } = useParams();
   const navigate = useNavigate();
@@ -197,8 +198,7 @@ const TestRoom = () => {
   const fetchLeaderboard = async () => {
     try {
       setLeaderboardLoading(true);
-      const response = await fetch(`http://localhost:8000/api/v1/quiz/${testId}/results`);
-      
+      const response = await fetch(`${apiUrl}/api/v1/quiz/${testId}/results`);
       if (response.ok) {
         const data = await response.json();
         setLeaderboardData(data);
@@ -235,7 +235,7 @@ const TestRoom = () => {
         security_violation_detected: securityViolationDetected
       };
 
-      const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
+      const response = await fetch(`${apiUrl}/api/v1/quiz/check-answers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -759,7 +759,7 @@ const TestRoom = () => {
         security_violation_detected: securityViolationDetected
       };
 
-      const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
+      const response = await fetch(`${apiUrl}/api/v1/quiz/check-answers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -810,7 +810,7 @@ const TestRoom = () => {
           security_violation_detected: securityViolationDetected
         };
 
-        const response = await fetch(`http://localhost:8000/api/v1/quiz/check-answers`, {
+        const response = await fetch(`${apiUrl}/api/v1/quiz/check-answers`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
