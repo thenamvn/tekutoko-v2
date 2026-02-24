@@ -148,7 +148,7 @@ const OTPVerify = ({ email }) => {
           </div>
         </div>
       )}
-      {showChangePassword && <ChangePassword email={email} />}
+      {showChangePassword && <ChangePassword email={email} otp={otp.join('')} />}
     </>
   );
 }
