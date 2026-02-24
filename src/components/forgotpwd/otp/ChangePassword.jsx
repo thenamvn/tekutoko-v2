@@ -3,7 +3,7 @@ import styles from './ChangePassword.module.css';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-const ChangePassword = ({ email }) => {
+const ChangePassword = ({ email, otp }) => {
   const { t } = useTranslation();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,7 +26,7 @@ const ChangePassword = ({ email }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username: email, password: newPassword }),
+        body: JSON.stringify({ username: email, password: newPassword, otp: otp }),
       });
 
       const data = await response.json();

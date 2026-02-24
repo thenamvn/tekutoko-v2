@@ -2561,24 +2561,72 @@ app.post("/verify-otp", (req, res) => {
 });
 //api change password after OTP verified
 app.put("/change-password-forgot", (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, otp } = req.body;
 
-  if (!username || !password) {
+  if (!username || !password || !otp) {
     return res
       .status(400)
-      .json({ error: "Username and password are required" });
+      .json({ error: "Username, password and OTP are required" });
   }
 
+  // ✅ Bước 1: Kiểm tra OTP còn hợp lệ không
   pool.query(
-    "UPDATE users SET password = ? WHERE username = ?",
-    [password, username],
-    (err, results) => {
+    "SELECT otp_expiry FROM otp WHERE username = ? AND otp = ?",
+    [username, otp],
+    (err, otpResults) => {
       if (err) {
-        console.error("Error updating password:", err);
+        console.error("Error verifying OTP:", err);
         return res.status(500).json({ error: "Server error" });
       }
 
-      res.json({ message: "Password updated successfully" });
+      if (otpResults.length === 0) {
+        return res.status(404).json({ error: "Invalid OTP" });
+      }
+
+      const otpExpiry = otpResults[0].otp_expiry;
+
+      if (Date.now() > otpExpiry) {
+        return res
+          .status(400)
+          .json({ error: "OTP has expired. Please request a new one." });
+      }
+
+      // ✅ Bước 2: OTP hợp lệ -> Đổi password
+      pool.query(
+        "UPDATE users SET password = ? WHERE username = ?",
+        [password, username],
+        (err, updateResults) => {
+          if (err) {
+            console.error("Error updating password:", err);
+            return res.status(500).json({ error: "Server error" });
+          }
+
+          if (updateResults.affectedRows === 0) {
+            return res.status(404).json({ error: "User not found" });
+          }
+
+          // ✅ Bước 3: Xóa OTP sau khi đổi password thành công
+          pool.query(
+            "DELETE FROM otp WHERE username = ? AND otp = ?",
+            [username, otp],
+            (deleteErr, deleteResult) => {
+              if (deleteErr) {
+                console.error("Error deleting OTP:", deleteErr);
+                // Vẫn trả về success vì password đã đổi thành công
+                return res.json({
+                  message: "Password updated successfully",
+                  warning: "Could not delete OTP from database"
+                });
+              }
+
+              console.log(`OTP deleted for user: ${username} after password change`);
+              res.json({ 
+                message: "Password updated successfully"
+              });
+            }
+          );
+        }
+      );
     }
   );
 });
