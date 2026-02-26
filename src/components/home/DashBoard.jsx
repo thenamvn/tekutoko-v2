@@ -8,6 +8,7 @@ const DashBoard = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const apiUrl = process.env.REACT_APP_API_URL;
+    const testApiUrl = process.env.REACT_APP_PYTHON_API_URL;
     const [hostRooms, setHostRooms] = useState([]);
     const [joinedRooms, setJoinedRooms] = useState([]);
     const [testRooms, setTestRooms] = useState([]);
@@ -148,7 +149,7 @@ const DashBoard = () => {
             
             if (room.room_type === 'test_exam') {
                 // Delete test exam
-                deleteEndpoint = `${apiUrl}/user/delete/room/${room.room_id}/${username}`;
+                deleteEndpoint = `${testApiUrl}/api/v1/test-room/${room.room_id}/${username}`;
             } else {
                 // Delete hosted room
                 deleteEndpoint = `${apiUrl}/user/delete/test/${room.room_id}/${username}`;
