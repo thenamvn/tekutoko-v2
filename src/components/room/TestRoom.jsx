@@ -517,7 +517,7 @@ const TestRoom = () => {
     const fetchTestData = async () => {
       try {
         setIsLoading(true);
-        const quizApiUrl = 'http://localhost:8000';
+        const quizApiUrl = process.env.REACT_APP_PYTHON_API_URL || 'http://localhost:8000';
         const mainApiUrl = process.env.REACT_APP_API_URL || 'http://localhost:9999';
         
         const response = await fetch(`${quizApiUrl}/api/v1/quiz/${testId}`);
