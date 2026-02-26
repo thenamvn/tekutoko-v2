@@ -4,7 +4,7 @@ import NavigationComponent from '../NavigationBar/NavigationBar';
 import { t } from 'i18next';
 const CreateTestOnline = () => {
     const navigate = useNavigate();
-    const apiUrl = 'http://localhost:8000';
+    const apiUrl = process.env.REACT_APP_PYTHON_API_URL || 'http://localhost:8000';
     const [testTitle, setTestTitle] = useState('');
     const [timeLimit, setTimeLimit] = useState(60); // Default 60 minutes
     const [docxFile, setDocxFile] = useState(null);
