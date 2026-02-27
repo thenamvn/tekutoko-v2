@@ -15,6 +15,14 @@ const TestRoom = () => {
   const [leaderboardData, setLeaderboardData] = useState(null);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  
+  // Timer states
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [timerStarted, setTimerStarted] = useState(false);
+  const [timeStartFromServer, setTimeStartFromServer] = useState(null);
+  const timerIntervalRef = useRef(null);
+  // Ref to always hold the latest handleAutoSubmit so interval doesn't need to re-register
+  const handleAutoSubmitRef = useRef(null);
  
   // Helper functions for secure storage
   const getSuspiciousActivityFromStorage = (testId) => {
@@ -252,6 +260,11 @@ const TestRoom = () => {
       console.error('Error auto-submitting test:', err);
     }
   }, [testId, testData, answers, suspiciousActivity, isTestSubmitted, securityViolationDetected, clearSecureStorage]);
+
+  // Keep ref up-to-date so timer interval can always call the latest version
+  useEffect(() => {
+    handleAutoSubmitRef.current = handleAutoSubmit;
+  }, [handleAutoSubmit]);
 
   // Log suspicious activity
   const logSuspiciousActivity = useCallback((type, details = '') => {
@@ -512,6 +525,168 @@ const TestRoom = () => {
     }
   }, [testId, isTestSubmitted, testData, isTestTerminated, handleAutoSubmit, isCreator]);
 
+  // Start timer with API
+  const startTimer = useCallback(async () => {
+    if (timerStarted || isCreator) {
+      console.log('Timer not starting:', { timerStarted, isCreator });
+      return;
+    }
+
+    if (!testData?.time_limit) {
+      console.log('No time limit set for this test');
+      return;
+    }
+
+    try {
+      const username = localStorage.getItem('username') || '';
+      const currentTime = new Date().toISOString();
+      
+      console.log('Starting timer with:', { testId, username, currentTime, timeLimit: testData.time_limit });
+      
+      const response = await fetch(`${apiUrl}/api/v1/quiz/start-timer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uuid_exam: testId,
+          username: username,
+          time_start: currentTime
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Timer API response:', data);
+        
+        // Fix timezone issue: if server returns time without Z or offset, assume it's UTC
+        // because we sent it as ISO string (UTC)
+        let timeStartStr = data.time_start;
+        if (!timeStartStr.endsWith('Z') && !timeStartStr.includes('+') && !timeStartStr.match(/-\d{2}:\d{2}$/)) {
+          timeStartStr += 'Z';
+        }
+        
+        const serverTimeStart = new Date(timeStartStr);
+        const currentTimeCheck = new Date();
+        
+        // Calculate time difference in seconds
+        const timeDiffSeconds = (serverTimeStart - currentTimeCheck) / 1000;
+
+        console.log('Time comparison:', { 
+          originalTimeStr: data.time_start,
+          parsedTimeStr: timeStartStr,
+          serverTimeStart: serverTimeStart.toISOString(), 
+          currentTimeCheck: currentTimeCheck.toISOString(),
+          diffSeconds: timeDiffSeconds,
+          isNew: data.is_new
+        });
+
+        // Check if server time_start is significantly in the future (tampering detected)
+        // Allow 10 seconds tolerance for network latency and clock differences
+        const TOLERANCE_SECONDS = 10;
+        
+        if (timeDiffSeconds > TOLERANCE_SECONDS) {
+          console.error('Time tampering detected: server time_start is too far in the future', {
+            diffSeconds: timeDiffSeconds,
+            tolerance: TOLERANCE_SECONDS
+          });
+          setBlockedForCheating(true);
+          handleAutoSubmitRef.current?.('Phát hiện gian lận: Thời gian bắt đầu không hợp lệ');
+          return;
+        }
+
+        setTimeStartFromServer(serverTimeStart);
+        
+        // Calculate remaining time if test has time limit
+        // time_limit is in MINUTES, convert to seconds
+        const timeLimitSeconds = testData.time_limit * 60;
+        
+        // Use max(0, elapsed) to handle the case where serverTimeStart is slightly in future
+        const elapsedSeconds = Math.max(0, Math.floor((currentTimeCheck - serverTimeStart) / 1000));
+        const remainingSeconds = Math.max(0, timeLimitSeconds - elapsedSeconds);
+        
+        console.log('Timer calculation:', { 
+          timeLimitMinutes: testData.time_limit,
+          timeLimitSeconds,
+          elapsedSeconds, 
+          remainingSeconds,
+          willExpireAt: new Date(Date.now() + remainingSeconds * 1000).toISOString()
+        });
+        
+        // If time already expired, auto-submit immediately
+        if (remainingSeconds <= 0) {
+          console.warn('⏰ Time already expired on load - auto-submitting immediately');
+          setTimeRemaining(0);
+          setTimerStarted(true);
+          // Use setTimeout to ensure state is updated before submitting
+          setTimeout(() => {
+            handleAutoSubmitRef.current?.('Hết thời gian làm bài');
+          }, 100);
+          return;
+        }
+        
+        // Set timeRemaining FIRST so the countdown useEffect sees a valid value
+        // when timerStarted flips to true
+        setTimeRemaining(remainingSeconds);
+        setTimerStarted(true);
+      } else {
+        console.error('Timer API error:', response.status, await response.text());
+      }
+    } catch (err) {
+      console.error('Error starting timer:', err);
+    }
+  }, [testId, timerStarted, testData, isCreator, apiUrl]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    // Only start interval when both timerStarted=true AND timeRemaining has a valid positive value
+    if (!timerStarted || timeRemaining === null || isCreator) return;
+
+    // Don't set interval if time is already 0 - handled in startTimer
+    if (timeRemaining <= 0) {
+      console.log('Timer already at 0, not starting countdown');
+      return;
+    }
+
+    // If an interval is already running, don't create another one
+    if (timerIntervalRef.current) {
+      return;
+    }
+
+    console.log('Starting countdown interval from:', timeRemaining);
+
+    timerIntervalRef.current = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+          console.warn('⏰ Timer reached 0 during countdown - auto-submitting');
+          // Use ref to avoid stale closure and prevent interval from being recreated
+          handleAutoSubmitRef.current?.('Hết thời gian làm bài');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  // timeRemaining in deps so the effect fires once timeRemaining is set after API call.
+  // The `if (timerIntervalRef.current) return` guard prevents duplicate intervals on subsequent renders.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timerStarted, timeRemaining, isCreator]);
+
+  // Format time for display
+  const formatTime = (seconds) => {
+    if (seconds === null) return '--:--:--';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   // Fetch test data from API
   useEffect(() => {
     const fetchTestData = async () => {
@@ -565,6 +740,23 @@ const TestRoom = () => {
       fetchTestData();
     }
   }, [testId, t]);
+
+  // Start timer when test data is loaded
+  useEffect(() => {
+    console.log('Timer useEffect triggered:', { 
+      hasTestData: !!testData, 
+      timerStarted, 
+      isTestSubmitted, 
+      blockedForCheating, 
+      isCreator,
+      timeLimit: testData?.time_limit 
+    });
+    
+    if (testData && !timerStarted && !isTestSubmitted && !blockedForCheating && !isCreator) {
+      console.log('Calling startTimer()...');
+      startTimer();
+    }
+  }, [testData, timerStarted, isTestSubmitted, blockedForCheating, isCreator, startTimer]);
 
   // ...existing helper functions (cleanTextContent, renderTextContent, etc.)...
   const cleanTextContent = (text) => {
@@ -1098,6 +1290,16 @@ const TestRoom = () => {
   const currentQuestion = testData.questions[currentQuestionIndex];
   const totalQuestions = testData.questions.length;
 
+  // Debug timer display
+  console.log('Timer display check:', {
+    hasTimeLimit: !!testData?.time_limit,
+    timeLimit: testData?.time_limit,
+    timerStarted,
+    isCreator,
+    timeRemaining,
+    shouldShow: testData?.time_limit && timerStarted && !isCreator
+  });
+
   return (
     <div className="h-screen max-h-screen bg-gradient-to-br from-slate-50 to-violet-50 flex flex-col overflow-hidden select-none">
       <div className="container mx-auto max-w-full flex flex-col h-full">
@@ -1121,9 +1323,30 @@ const TestRoom = () => {
               <h1 className="text-lg md:text-xl font-bold text-white truncate w-full text-center">
                 {testData?.title || t('test.title')}
               </h1>
-              <span className="text-sm md:text-base text-white/90 font-medium bg-white/20 px-3 py-0.5 rounded-full backdrop-blur-sm mt-1">
-                {t('test.questionTitle')} {currentQuestionIndex + 1}/{totalQuestions}
-              </span>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-sm md:text-base text-white/90 font-medium bg-white/20 px-3 py-0.5 rounded-full backdrop-blur-sm">
+                  {t('test.questionTitle')} {currentQuestionIndex + 1}/{totalQuestions}
+                </span>
+                {/* Timer Display - Show if test has time limit and timer started with valid value */}
+                {testData?.time_limit && timerStarted && timeRemaining !== null && (
+                  <span className={`text-sm md:text-base font-bold px-3 py-0.5 rounded-full backdrop-blur-sm ${
+                    timeRemaining !== null && timeRemaining < 300
+                      ? 'bg-red-500/90 text-white animate-pulse'
+                      : 'bg-white/20 text-white/90'
+                  }`}>
+                    <svg className="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {formatTime(timeRemaining)}
+                  </span>
+                )}
+                {/* Debug info - Remove after testing */}
+                {testData?.time_limit && (
+                  <span className="text-xs text-white/70 bg-black/20 px-2 py-1 rounded">
+                    {isCreator ? 'Creator' : `T:${timerStarted && timeRemaining !== null ? 'Y' : 'N'}`}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {/* Copy Link Button */}

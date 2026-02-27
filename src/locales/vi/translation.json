@@ -556,7 +556,13 @@
         "chooseAnswer": "Chọn câu trả lời của bạn",
         "detailedResults": "Kết quả Chi tiết",
         "clickToEnlarge": "Nhấn để phóng to",
-        "submittedBefore": "Bài kiểm tra đã được nộp trước đó."
+        "submittedBefore": "Bài kiểm tra đã được nộp trước đó.",
+        "timeRemaining": "Thời gian còn lại",
+        "timesUp": "Hết thời gian",
+        "copyLink": "Sao chép liên kết",
+        "linkCopied": "Đã sao chép liên kết",
+        "viewLeaderboard": "Xem bảng xếp hạng",
+        "title": "Bài kiểm tra"
     },
     "LeaderboardModalTest": {
         "leaderboardTitle": "Bảng Xếp Hạng",
