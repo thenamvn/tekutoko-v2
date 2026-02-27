@@ -6,6 +6,7 @@ const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
 const app = express();
+const router = express.Router(); // All API routes will be mounted at /backend
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const multer = require("multer");
@@ -15,13 +16,14 @@ const { getStorage, ref, deleteObject } = require("firebase/storage");
 const { initializeApp } = require("firebase/app");
 const { v4: uuidv4 } = require("uuid");
 const fetch = require("node-fetch");
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenAI } = require("@google/genai");
 const PORT = 9999;
 
 // Cấu hình CORS
 app.use(
   cors({
     origin: [
+      "https://tekutoko.duckdns.org",
       "https://tekutoko.org",
       "https://wwww.tekutoko.org",
       "https://jptravelz.web.app",
@@ -33,18 +35,18 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 app.use(helmet());
-app.disable('x-powered-by');
+app.disable("x-powered-by");
 app.options("*", cors()); // Preflight request handler for all routes
 // Load environment variables from .env file
 const envPath = path.resolve(__dirname, ".env");
 dotenv.config({ path: envPath });
 
 const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 // app.use(favicon(path.join(__dirname, 'public', 'favicon.webp')));
@@ -418,7 +420,7 @@ const timeout = (req, res, next) => {
   // Set a timeout for the request
   req.setTimeout(timeoutDuration, () => {
     console.error(
-      `Request to ${req.originalUrl} timed out after ${timeoutDuration} ms`
+      `Request to ${req.originalUrl} timed out after ${timeoutDuration} ms`,
     );
     res.status(408).json({ success: false, message: "alert.timeout" });
   });
@@ -429,56 +431,56 @@ const timeout = (req, res, next) => {
 // Use the timeout middleware
 app.use(timeout);
 
-app.get("/", (req, res) => {
+router.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-  
+
   if (!token) {
     return res.status(403).json({
       message: "Access denied",
     });
   }
-  
+
   try {
     // Verify token với secret key (này sẽ throw error nếu expired)
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
     req.user = decoded;
-    
+
     // Double check expiration manually (optional safety check)
     const currentTime = Math.floor(Date.now() / 1000);
     if (decoded.exp && decoded.exp < currentTime) {
       return res.status(401).json({
         message: "Token has expired",
-        expired: true
+        expired: true,
       });
     }
-    
+
     return next();
   } catch (err) {
     // Xử lý các loại lỗi JWT khác nhau
-    if (err.name === 'TokenExpiredError') {
+    if (err.name === "TokenExpiredError") {
       return res.status(401).json({
         message: "Token has expired",
-        expired: true
+        expired: true,
       });
-    } else if (err.name === 'JsonWebTokenError') {
+    } else if (err.name === "JsonWebTokenError") {
       return res.status(401).json({
         message: "Invalid token format",
-        invalid: true
+        invalid: true,
       });
-    } else if (err.name === 'NotBeforeError') {
+    } else if (err.name === "NotBeforeError") {
       return res.status(401).json({
         message: "Token not active yet",
-        notActive: true
+        notActive: true,
       });
     } else {
       return res.status(401).json({
         message: "Token verification failed",
-        error: err.message
+        error: err.message,
       });
     }
   }
@@ -487,26 +489,26 @@ const verifyToken = (req, res, next) => {
 const verifyAdminToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-  
+
   if (!token) {
     return res.status(403).json({
       message: "Access denied",
     });
   }
-  
+
   try {
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
     const username = decoded.username;
-    
+
     // Check expiration manually
     const currentTime = Math.floor(Date.now() / 1000);
     if (decoded.exp && decoded.exp < currentTime) {
       return res.status(401).json({
         message: "Admin token has expired",
-        expired: true
+        expired: true,
       });
     }
-    
+
     // Kiểm tra username có trong bảng admin_account không
     pool.query(
       "SELECT username, fullname FROM admin_account WHERE username = ?",
@@ -518,29 +520,29 @@ const verifyAdminToken = (req, res, next) => {
             message: "Database error",
           });
         }
-        
+
         if (results.length === 0) {
           return res.status(403).json({
             message: "Admin access required",
           });
         }
-        
+
         req.user = {
           username: results[0].username,
           fullname: results[0].fullname,
-          role: 'admin'
+          role: "admin",
         };
-        
+
         return next();
-      }
+      },
     );
   } catch (err) {
     console.error("Token verification error:", err);
-    
-    if (err.name === 'TokenExpiredError') {
+
+    if (err.name === "TokenExpiredError") {
       return res.status(401).json({
         message: "Admin token has expired",
-        expired: true
+        expired: true,
       });
     } else {
       return res.status(401).json({
@@ -551,7 +553,7 @@ const verifyAdminToken = (req, res, next) => {
 };
 
 // upload image
-app.post("/upload", verifyToken, (req, res) => {
+router.post("/upload", verifyToken, (req, res) => {
   const { room_id, uploader_username, fileUrls } = req.body;
 
   if (!room_id || !uploader_username || !fileUrls || fileUrls.length === 0) {
@@ -590,7 +592,7 @@ app.post("/upload", verifyToken, (req, res) => {
                 .json({ error: "alert.room.databaseError" });
             }
             res.status(200).json({ images: results });
-          }
+          },
         );
       });
     } catch (error) {
@@ -604,7 +606,7 @@ app.post("/upload", verifyToken, (req, res) => {
   });
 });
 
-app.post("/sendemail", async (req, res) => {
+router.post("/sendemail", async (req, res) => {
   const { email, subject, text, html } = req.body; // Accept html in the request body
   try {
     await sendEmail(email, subject, text, html);
@@ -618,7 +620,7 @@ app.post("/sendemail", async (req, res) => {
 
 // API để gửi tin nhắn đến người dùng Line
 // Sending a message to LINE
-app.post("/send-message-line", async (req, res) => {
+router.post("/send-message-line", async (req, res) => {
   const { id, messages } = req.body;
   console.log(id, messages);
 
@@ -663,7 +665,7 @@ app.post("/send-message-line", async (req, res) => {
   }
 });
 
-app.post("/createroom", verifyToken, (req, res) => {
+router.post("/createroom", verifyToken, (req, res) => {
   const { id, admin_username } = req.body;
 
   if (req.user.username !== admin_username) {
@@ -708,7 +710,7 @@ app.post("/createroom", verifyToken, (req, res) => {
   });
 });
 
-app.post("/joinroom", verifyToken, (req, res) => {
+router.post("/joinroom", verifyToken, (req, res) => {
   const { id, username } = req.body;
 
   if (req.user.username !== username) {
@@ -797,7 +799,7 @@ app.post("/joinroom", verifyToken, (req, res) => {
   });
 });
 
-app.get("/room/:username", async (req, res) => {
+router.get("/room/:username", async (req, res) => {
   const username = req.params.username;
 
   if (!username) {
@@ -854,16 +856,20 @@ app.get("/room/:username", async (req, res) => {
         }
 
         // Phân loại rooms theo role
-        const hostedRooms = results.filter(room => room.role === 'hostedroom');
-        const joinedRooms = results.filter(room => room.role === 'joinedroom');
-        const testRooms = results.filter(room => room.role === 'testroom');
+        const hostedRooms = results.filter(
+          (room) => room.role === "hostedroom",
+        );
+        const joinedRooms = results.filter(
+          (room) => room.role === "joinedroom",
+        );
+        const testRooms = results.filter((room) => room.role === "testroom");
 
         res.json({
           hostedRooms,
           joinedRooms,
-          testRooms
+          testRooms,
         });
-      }
+      },
     );
   } catch (error) {
     console.error("Error fetching rooms:", error);
@@ -872,7 +878,7 @@ app.get("/room/:username", async (req, res) => {
 });
 
 // Update room type endpoint
-app.put("/room/:id/update-type", verifyToken, (req, res) => {
+router.put("/room/:id/update-type", verifyToken, (req, res) => {
   const roomId = req.params.id;
   const { room_type, admin_username } = req.body;
 
@@ -904,12 +910,9 @@ app.put("/room/:id/update-type", verifyToken, (req, res) => {
     }
 
     if (results.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({
-          error:
-            "Room not found or you are not authorized to update this room.",
-        });
+      return res.status(404).json({
+        error: "Room not found or you are not authorized to update this room.",
+      });
     }
 
     res.status(200).json({ message: "Room type updated successfully." });
@@ -917,7 +920,7 @@ app.put("/room/:id/update-type", verifyToken, (req, res) => {
 });
 
 // Get room details by ID with admin's avatar and background images
-app.get("/room/:id/info", (req, res) => {
+router.get("/room/:id/info", (req, res) => {
   const roomId = req.params.id;
 
   const query = `
@@ -947,7 +950,7 @@ app.get("/room/:id/info", (req, res) => {
   });
 });
 
-app.get("/room/:id/submited", (req, res) => {
+router.get("/room/:id/submited", (req, res) => {
   const roomId = req.params.id;
 
   const query = `
@@ -974,7 +977,7 @@ app.get("/room/:id/submited", (req, res) => {
   });
 });
 
-app.post("/submit", (req, res) => {
+router.post("/submit", (req, res) => {
   const { id, username } = req.body;
   if (!id || !username) {
     return res
@@ -992,7 +995,7 @@ app.post("/submit", (req, res) => {
 });
 
 // Get images for a room uploaded by the admin
-app.get("/room/:id/images", (req, res) => {
+router.get("/room/:id/images", (req, res) => {
   const roomId = req.params.id;
 
   const query = `
@@ -1013,7 +1016,7 @@ app.get("/room/:id/images", (req, res) => {
 });
 
 // Get images for a room uploaded by host
-app.get("/room/host/:id/userimages/:username", (req, res) => {
+router.get("/room/host/:id/userimages/:username", (req, res) => {
   const roomId = req.params.id;
   const username = req.params.username;
 
@@ -1026,12 +1029,12 @@ app.get("/room/host/:id/userimages/:username", (req, res) => {
         return res.status(500).json({ error: "Server error" });
       }
       res.json(results);
-    }
+    },
   );
 });
 
 // Get images for a room uploaded by user
-app.get("/room/:id/userimages/:username", verifyToken, (req, res) => {
+router.get("/room/:id/userimages/:username", verifyToken, (req, res) => {
   const roomId = req.params.id;
   const username = req.params.username;
   if (req.user.username !== username) {
@@ -1049,11 +1052,11 @@ app.get("/room/:id/userimages/:username", verifyToken, (req, res) => {
         return res.status(500).json({ error: "Server error" });
       }
       res.json(results);
-    }
+    },
   );
 });
 
-app.get("/room/:id/jobs", (req, res) => {
+router.get("/room/:id/jobs", (req, res) => {
   const roomId = req.params.id;
   pool.query(
     "SELECT * FROM job WHERE room_id = ?",
@@ -1065,11 +1068,11 @@ app.get("/room/:id/jobs", (req, res) => {
         return;
       }
       res.json(results);
-    }
+    },
   );
 });
 
-app.post("/upload_job", verifyToken, (req, res) => {
+router.post("/upload_job", verifyToken, (req, res) => {
   const room_id = req.body.room_id;
   const job_description = req.body.job;
   const job_owner = req.body.job_owner;
@@ -1090,7 +1093,7 @@ app.post("/upload_job", verifyToken, (req, res) => {
   });
 });
 
-app.post("/signup", (req, res) => {
+router.post("/signup", (req, res) => {
   const fullname = req.body.fullname;
   const username = req.body.username;
   const password = req.body.password;
@@ -1131,13 +1134,13 @@ app.post("/signup", (req, res) => {
           } else {
             res.json({ success: true, message: "alert.signUp.signupSuccess" });
           }
-        }
+        },
       );
-    }
+    },
   );
 });
 
-app.post("/login", (req, res) => {
+router.post("/login", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
@@ -1167,12 +1170,10 @@ app.post("/login", (req, res) => {
         function (error, results, fields) {
           if (error) {
             console.error("Database query error:", error);
-            return res
-              .status(500)
-              .json({
-                success: false,
-                message: "An error occurred during login.",
-              });
+            return res.status(500).json({
+              success: false,
+              message: "An error occurred during login.",
+            });
           }
 
           if (results.length > 0) {
@@ -1181,7 +1182,7 @@ app.post("/login", (req, res) => {
               const token = jwt.sign(
                 { username: username },
                 process.env.SECRET_KEY,
-                { expiresIn: "1d" }
+                { expiresIn: "1d" },
               );
               res.json({
                 success: true,
@@ -1203,14 +1204,14 @@ app.post("/login", (req, res) => {
               message: "alert.login.notFound",
             });
           }
-        }
+        },
       );
-    }
+    },
   );
 });
 
 //api line login
-app.post("/line/callback", async (req, res) => {
+router.post("/line/callback", async (req, res) => {
   const code = req.body.code;
   const url = req.body.url;
 
@@ -1253,7 +1254,7 @@ app.post("/line/callback", async (req, res) => {
 });
 
 //api google login
-app.post("/google-login", (req, res) => {
+router.post("/google-login", (req, res) => {
   const { username, fullname, picture } = req.body;
 
   // Kiểm tra xem người dùng có trong danh sách bị cấm không
@@ -1291,7 +1292,7 @@ app.post("/google-login", (req, res) => {
             const token = jwt.sign(
               { username: username },
               process.env.SECRET_KEY,
-              { expiresIn: "1d" }
+              { expiresIn: "1d" },
             );
 
             res.json({
@@ -1311,12 +1312,10 @@ app.post("/google-login", (req, res) => {
               function (error, results) {
                 if (error) {
                   console.error("Database insert error:", error);
-                  return res
-                    .status(500)
-                    .json({
-                      success: false,
-                      message: "alert.login.loginFailed",
-                    });
+                  return res.status(500).json({
+                    success: false,
+                    message: "alert.login.loginFailed",
+                  });
                 }
 
                 pool.query(
@@ -1326,20 +1325,18 @@ app.post("/google-login", (req, res) => {
                     if (error) {
                       console.error(
                         "Database insert error for UserProfile:",
-                        error
+                        error,
                       );
-                      return res
-                        .status(500)
-                        .json({
-                          success: false,
-                          message: "alert.login.loginFailed",
-                        });
+                      return res.status(500).json({
+                        success: false,
+                        message: "alert.login.loginFailed",
+                      });
                     }
 
                     const token = jwt.sign(
                       { username: username },
                       process.env.SECRET_KEY,
-                      { expiresIn: "1d" }
+                      { expiresIn: "1d" },
                     );
                     res.json({
                       success: true,
@@ -1350,18 +1347,18 @@ app.post("/google-login", (req, res) => {
                       username: username,
                       id: results.insertId + 1093046400,
                     });
-                  }
+                  },
                 );
-              }
+              },
             );
           }
-        }
+        },
       );
-    }
+    },
   );
 });
 
-app.post("/adminlogin", (req, res) => {
+router.post("/adminlogin", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
 
@@ -1377,7 +1374,7 @@ app.post("/adminlogin", (req, res) => {
           const token = jwt.sign(
             { username: username },
             process.env.SECRET_KEY,
-            { expiresIn: "7d" }
+            { expiresIn: "7d" },
           );
 
           // Send success message along with the token
@@ -1400,11 +1397,11 @@ app.post("/adminlogin", (req, res) => {
           message: "Username not found! Please register!",
         });
       }
-    }
+    },
   );
 });
 
-app.post("/verify-token", (req, res) => {
+router.post("/verify-token", (req, res) => {
   const authHeader = req.headers["authorization"];
 
   if (!authHeader) {
@@ -1482,7 +1479,7 @@ app.post("/verify-token", (req, res) => {
   }
 });
 
-app.post("/verify-token-admin", (req, res) => {
+router.post("/verify-token-admin", (req, res) => {
   const authHeader = req.headers["authorization"];
 
   if (!authHeader) {
@@ -1532,7 +1529,7 @@ app.post("/verify-token-admin", (req, res) => {
 });
 
 //update room title
-app.put("/host/room/update-title/:id", verifyToken, (req, res) => {
+router.put("/host/room/update-title/:id", verifyToken, (req, res) => {
   const roomId = req.params.id;
   const { room_title, username } = req.body;
 
@@ -1597,7 +1594,7 @@ app.put("/host/room/update-title/:id", verifyToken, (req, res) => {
 });
 
 //update password for user
-app.put("/user/update/password/:username", verifyToken, (req, res) => {
+router.put("/user/update/password/:username", verifyToken, (req, res) => {
   const username = req.params.username;
   const password = req.body.password;
 
@@ -1618,12 +1615,12 @@ app.put("/user/update/password/:username", verifyToken, (req, res) => {
         return;
       }
       res.send("Password updated successfully.Please login again!");
-    }
+    },
   );
 });
 
 //update fullname for user
-app.put("/user/update/fullname/:username", verifyToken, (req, res) => {
+router.put("/user/update/fullname/:username", verifyToken, (req, res) => {
   const username = req.params.username;
   const fullname = req.body.fullname;
 
@@ -1644,13 +1641,13 @@ app.put("/user/update/fullname/:username", verifyToken, (req, res) => {
         return;
       }
       res.send("Fullname updated successfully");
-    }
+    },
   );
 });
 
 //reward
 // Add a new reward
-app.post("/reward", (req, res) => {
+router.post("/reward", (req, res) => {
   const { room_id, username, gift, used, gift_expiration } = req.body;
 
   pool.query(
@@ -1662,12 +1659,12 @@ app.post("/reward", (req, res) => {
         return res.status(500).json({ error: "Server error" });
       }
       res.status(201).json({ message: "Reward added successfully" });
-    }
+    },
   );
 });
 
 // Check if a record exists in denyjob by room_id and username
-app.get("/denycheck/:room_id/:username", (req, res) => {
+router.get("/denycheck/:room_id/:username", (req, res) => {
   const room_id = req.params.room_id;
   const username = req.params.username;
   pool.getConnection((err, connection) => {
@@ -1700,7 +1697,7 @@ app.get("/denycheck/:room_id/:username", (req, res) => {
 });
 
 // Add denyjob record
-app.post("/denyjob", (req, res) => {
+router.post("/denyjob", (req, res) => {
   const { room_id, username } = req.body;
 
   if (!room_id || !username) {
@@ -1718,11 +1715,11 @@ app.post("/denyjob", (req, res) => {
       }
 
       res.status(201).send("Denied");
-    }
+    },
   );
 });
 
-app.delete("/deletedeny/:room_id/:username", (req, res) => {
+router.delete("/deletedeny/:room_id/:username", (req, res) => {
   const room_id = req.params.room_id;
   const username = req.params.username;
 
@@ -1736,14 +1733,14 @@ app.delete("/deletedeny/:room_id/:username", (req, res) => {
       }
 
       res.status(200).send("Record deleted successfully");
-    }
+    },
   );
 });
 
 //admin
 
 // Get sum of rooms, empty rooms, and private rooms
-app.get("/admin/room/dashboard", (req, res) => {
+router.get("/admin/room/dashboard", (req, res) => {
   const query = `
     SELECT 
       (SELECT COUNT(*) FROM room) AS total_rooms,
@@ -1767,7 +1764,7 @@ app.get("/admin/room/dashboard", (req, res) => {
 });
 
 //api to delete a user from submitedusers table
-app.delete("/host/delete/submiteduser/:room_id/:username", (req, res) => {
+router.delete("/host/delete/submiteduser/:room_id/:username", (req, res) => {
   const room_id = req.params.room_id;
   const username = req.params.username;
 
@@ -1781,12 +1778,12 @@ app.delete("/host/delete/submiteduser/:room_id/:username", (req, res) => {
       }
 
       res.status(200).send("User deleted successfully");
-    }
+    },
   );
 });
 
 // API to get total number of users and active users
-app.get("/admin/user/dashboard", (req, res) => {
+router.get("/admin/user/dashboard", (req, res) => {
   // Query 1: Total number of users
   pool.query(
     "SELECT COUNT(*) AS total_users FROM users",
@@ -1815,13 +1812,13 @@ app.get("/admin/user/dashboard", (req, res) => {
 
           // Return the result
           res.json({ total_users: totalUsers, active_users: activeUsers });
-        }
+        },
       );
-    }
+    },
   );
 });
 
-app.get("/admin/roommanager", (req, res) => {
+router.get("/admin/roommanager", (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
@@ -1838,14 +1835,14 @@ app.get("/admin/roommanager", (req, res) => {
   let whereClauses = [];
   if (search) {
     whereClauses.push(
-      `(room.room_id LIKE ? OR users.fullname LIKE ? OR room.admin_username LIKE ? OR room.room_title LIKE ? OR room.room_type LIKE ?)`
+      `(room.room_id LIKE ? OR users.fullname LIKE ? OR room.admin_username LIKE ? OR room.room_title LIKE ? OR room.room_type LIKE ?)`,
     ); // Updated to include room_title
   }
   if (filter === "empty") {
     whereClauses.push(`room.room_id NOT IN (SELECT room_id FROM room_users)`);
   } else if (filter === "over_max") {
     whereClauses.push(
-      `(SELECT COUNT(*) FROM room_users WHERE room_users.room_id = room.room_id) > ?`
+      `(SELECT COUNT(*) FROM room_users WHERE room_users.room_id = room.room_id) > ?`,
     );
   }
 
@@ -1881,7 +1878,7 @@ app.get("/admin/roommanager", (req, res) => {
       `%${search}%`,
       `%${search}%`,
       `%${search}%`,
-      `%${search}%`
+      `%${search}%`,
     ); // Include room_title in search params
   }
   if (filter === "over_max") {
@@ -1906,7 +1903,7 @@ app.get("/admin/roommanager", (req, res) => {
 });
 
 // lấy thông tin room có bao nhiêu member từ room_users
-app.get("/room/:id/members", (req, res) => {
+router.get("/room/:id/members", (req, res) => {
   const roomId = req.params.id;
   const query = "SELECT COUNT(*) AS members FROM room_users WHERE room_id = ?";
   pool.query(query, [roomId], (err, results) => {
@@ -1918,7 +1915,7 @@ app.get("/room/:id/members", (req, res) => {
 });
 
 // lấy thông tin các users
-app.get("/admin/users", (req, res) => {
+router.get("/admin/users", (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
@@ -1948,12 +1945,12 @@ app.get("/admin/users", (req, res) => {
   // Add filterOption filter
   if (filterOption === "over_min") {
     whereConditions.push(
-      `(SELECT COUNT(*) FROM room r WHERE r.admin_username = u.username) >= ?`
+      `(SELECT COUNT(*) FROM room r WHERE r.admin_username = u.username) >= ?`,
     );
     queryParams.push(minCreatedRooms);
   } else if (filterOption === "inactive") {
     whereConditions.push(
-      `(SELECT COUNT(*) FROM room r WHERE r.admin_username = u.username) = 0 AND (SELECT COUNT(*) FROM room_users ru WHERE ru.username = u.username) = 0`
+      `(SELECT COUNT(*) FROM room r WHERE r.admin_username = u.username) = 0 AND (SELECT COUNT(*) FROM room_users ru WHERE ru.username = u.username) = 0`,
     );
   }
 
@@ -1984,12 +1981,12 @@ app.get("/admin/users", (req, res) => {
         }
         res.json({ users: results, total });
       });
-    }
+    },
   );
 });
 
 // POST endpoint to add a rewarded user
-app.post("/rewarded_users", (req, res) => {
+router.post("/rewarded_users", (req, res) => {
   const { room_id, username } = req.body;
 
   if (!room_id || !username) {
@@ -2007,7 +2004,7 @@ app.post("/rewarded_users", (req, res) => {
 });
 
 // Route to check if user is rewarded
-app.get("/rewarded_users/check", (req, res) => {
+router.get("/rewarded_users/check", (req, res) => {
   const { room_id, username } = req.query;
 
   if (!room_id || !username) {
@@ -2032,12 +2029,12 @@ app.get("/rewarded_users/check", (req, res) => {
       }
       const isRewarded = results[0].count > 0;
       res.status(200).json({ isRewarded });
-    }
+    },
   );
 });
 
 // API delete room for admin
-app.delete("/delete/room/:id", (req, res) => {
+router.delete("/delete/room/:id", (req, res) => {
   const roomId = req.params.id;
 
   pool.getConnection((err, connection) => {
@@ -2101,76 +2098,80 @@ app.delete("/delete/room/:id", (req, res) => {
 });
 
 // User delete them room
-app.delete("/user/delete/room/:id/:username", verifyToken, async (req, res) => {
-  const roomId = req.params.id;
-  const username = req.params.username;
+router.delete(
+  "/user/delete/room/:id/:username",
+  verifyToken,
+  async (req, res) => {
+    const roomId = req.params.id;
+    const username = req.params.username;
 
-  // Check if the user is authorized to delete the room
-  if (req.user.username !== username) {
-    return res
-      .status(403)
-      .json({ error: "You are not authorized to delete this room" });
-  }
-
-  // Start a transaction
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Error getting connection:", err);
-      return res.status(500).send("Server error");
+    // Check if the user is authorized to delete the room
+    if (req.user.username !== username) {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to delete this room" });
     }
 
-    connection.beginTransaction(async (err) => {
+    // Start a transaction
+    pool.getConnection((err, connection) => {
       if (err) {
-        console.error("Error starting transaction:", err);
+        console.error("Error getting connection:", err);
         return res.status(500).send("Server error");
       }
 
-      try {
-        // Get image paths from images table
-        const [imageResults] = await connection
-          .promise()
-          .query("SELECT image_path FROM images WHERE room_id = ?", [roomId]);
+      connection.beginTransaction(async (err) => {
+        if (err) {
+          console.error("Error starting transaction:", err);
+          return res.status(500).send("Server error");
+        }
 
-        // Delete image files from Firebase Storage
-        const deleteImagePromises = imageResults.map((row) => {
-          const imagePath = row.image_path;
-          const fileRef = ref(storage, imagePath);
-          return deleteObject(fileRef).catch((error) => {
-            console.error(`Error deleting file at ${imagePath}:`, error);
-            // Ignore the error and continue
-          });
-        });
+        try {
+          // Get image paths from images table
+          const [imageResults] = await connection
+            .promise()
+            .query("SELECT image_path FROM images WHERE room_id = ?", [roomId]);
 
-        await Promise.all(deleteImagePromises);
-
-        // Delete from room table (các bảng liên quan sẽ tự động xóa nhờ ON DELETE CASCADE)
-        await connection
-          .promise()
-          .query("DELETE FROM room WHERE room_id = ?", [roomId]);
-
-        connection.commit((err) => {
-          if (err) {
-            return connection.rollback(() => {
-              console.error("Error committing transaction:", err);
-              res.status(500).send("Server error");
+          // Delete image files from Firebase Storage
+          const deleteImagePromises = imageResults.map((row) => {
+            const imagePath = row.image_path;
+            const fileRef = ref(storage, imagePath);
+            return deleteObject(fileRef).catch((error) => {
+              console.error(`Error deleting file at ${imagePath}:`, error);
+              // Ignore the error and continue
             });
-          }
+          });
 
-          connection.release();
-          res.send("Room and related data deleted successfully");
-        });
-      } catch (error) {
-        connection.rollback(() => {
-          console.error("Error during transaction:", error);
-          res.status(500).send("Server error");
-        });
-      }
+          await Promise.all(deleteImagePromises);
+
+          // Delete from room table (các bảng liên quan sẽ tự động xóa nhờ ON DELETE CASCADE)
+          await connection
+            .promise()
+            .query("DELETE FROM room WHERE room_id = ?", [roomId]);
+
+          connection.commit((err) => {
+            if (err) {
+              return connection.rollback(() => {
+                console.error("Error committing transaction:", err);
+                res.status(500).send("Server error");
+              });
+            }
+
+            connection.release();
+            res.send("Room and related data deleted successfully");
+          });
+        } catch (error) {
+          connection.rollback(() => {
+            console.error("Error during transaction:", error);
+            res.status(500).send("Server error");
+          });
+        }
+      });
     });
-  });
-});
+  },
+);
 
 // Admin delete a user and all related data
-app.delete("/delete/user/:username", async (req, res) => {
+router.delete("/delete/user/:username", async (req, res) => {
   const username = req.params.username;
 
   pool.getConnection((err, connection) => {
@@ -2233,7 +2234,7 @@ app.delete("/delete/user/:username", async (req, res) => {
   });
 });
 
-app.post("/ban/user/:username", (req, res) => {
+router.post("/ban/user/:username", (req, res) => {
   const { username } = req.params;
 
   if (!username) {
@@ -2260,7 +2261,7 @@ app.post("/ban/user/:username", (req, res) => {
   });
 });
 
-app.get("/admin/getinfo/:username", (req, res) => {
+router.get("/admin/getinfo/:username", (req, res) => {
   const username = req.params.username;
   pool.query(
     "SELECT * FROM admin_account WHERE username = ?",
@@ -2278,11 +2279,11 @@ app.get("/admin/getinfo/:username", (req, res) => {
       }
 
       res.json(results[0]);
-    }
+    },
   );
 });
 
-app.put("/admin/update/:username", verifyToken, (req, res) => {
+router.put("/admin/update/:username", verifyToken, (req, res) => {
   const username = req.params.username;
   const password = req.body.password;
   // Check if the user is authorized to update the password
@@ -2300,12 +2301,12 @@ app.put("/admin/update/:username", verifyToken, (req, res) => {
         return;
       }
       res.send("Password updated successfully");
-    }
+    },
   );
 });
 
 // User leave room
-app.delete("/user/leave/room/:room_id/:username", async (req, res) => {
+router.delete("/user/leave/room/:room_id/:username", async (req, res) => {
   const username = req.params.username;
   const room_id = req.params.room_id;
 
@@ -2329,7 +2330,7 @@ app.delete("/user/leave/room/:room_id/:username", async (req, res) => {
           .promise()
           .query(
             "SELECT image_path FROM images WHERE uploader_username = ? AND room_id = ?",
-            [username, room_id]
+            [username, room_id],
           );
 
         // Delete images from Firebase Storage
@@ -2349,7 +2350,7 @@ app.delete("/user/leave/room/:room_id/:username", async (req, res) => {
           .promise()
           .query(
             "DELETE FROM images WHERE uploader_username = ? AND room_id = ?",
-            [username, room_id]
+            [username, room_id],
           );
 
         // Delete user-related data in the specified room
@@ -2385,7 +2386,7 @@ app.delete("/user/leave/room/:room_id/:username", async (req, res) => {
 });
 
 // Deny user submit
-app.delete("/deny/user/:username/room/:room_id", (req, res) => {
+router.delete("/deny/user/:username/room/:room_id", (req, res) => {
   const username = req.params.username;
   const room_id = req.params.room_id;
 
@@ -2409,7 +2410,7 @@ app.delete("/deny/user/:username/room/:room_id", (req, res) => {
           .promise()
           .query(
             "SELECT image_path FROM images WHERE uploader_username = ? AND room_id = ?",
-            [username, room_id]
+            [username, room_id],
           );
 
         // Delete images from Firebase Storage
@@ -2429,7 +2430,7 @@ app.delete("/deny/user/:username/room/:room_id", (req, res) => {
           .promise()
           .query(
             "DELETE FROM images WHERE uploader_username = ? AND room_id = ?",
-            [username, room_id]
+            [username, room_id],
           );
 
         // Delete user-related data in the specified room
@@ -2437,7 +2438,7 @@ app.delete("/deny/user/:username/room/:room_id", (req, res) => {
           .promise()
           .query(
             "DELETE FROM submitedusers WHERE username = ? AND room_id = ?",
-            [username, room_id]
+            [username, room_id],
           );
 
         connection.commit((err) => {
@@ -2465,7 +2466,7 @@ app.delete("/deny/user/:username/room/:room_id", (req, res) => {
 });
 
 //api forgot password
-app.post("/forgot-password", (req, res) => {
+router.post("/forgot-password", (req, res) => {
   const { email } = req.body;
 
   pool.query(
@@ -2524,14 +2525,14 @@ app.post("/forgot-password", (req, res) => {
 
             res.json({ message: "Email sent successfully" });
           });
-        }
+        },
       );
-    }
+    },
   );
 });
 
 //api verify OTP/
-app.post("/verify-otp", (req, res) => {
+router.post("/verify-otp", (req, res) => {
   const { username, otp } = req.body;
 
   pool.query(
@@ -2556,11 +2557,11 @@ app.post("/verify-otp", (req, res) => {
       }
 
       res.json({ message: "OTP verified successfully" });
-    }
+    },
   );
 });
 //api change password after OTP verified
-app.put("/change-password-forgot", (req, res) => {
+router.put("/change-password-forgot", (req, res) => {
   const { username, password, otp } = req.body;
 
   if (!username || !password || !otp) {
@@ -2615,24 +2616,26 @@ app.put("/change-password-forgot", (req, res) => {
                 // Vẫn trả về success vì password đã đổi thành công
                 return res.json({
                   message: "Password updated successfully",
-                  warning: "Could not delete OTP from database"
+                  warning: "Could not delete OTP from database",
                 });
               }
 
-              console.log(`OTP deleted for user: ${username} after password change`);
-              res.json({ 
-                message: "Password updated successfully"
+              console.log(
+                `OTP deleted for user: ${username} after password change`,
+              );
+              res.json({
+                message: "Password updated successfully",
               });
-            }
+            },
           );
-        }
+        },
       );
-    }
+    },
   );
 });
 
 // add info profile
-app.post("/info/userprofile", verifyToken, (req, res) => {
+router.post("/info/userprofile", verifyToken, (req, res) => {
   const {
     username,
     avatarImage,
@@ -2680,13 +2683,13 @@ app.post("/info/userprofile", verifyToken, (req, res) => {
           return res.status(500).send(err);
         }
         res.send("User profile added");
-      }
+      },
     );
   });
 });
 
 // get info profile
-app.get("/info/userprofile/:username", (req, res) => {
+router.get("/info/userprofile/:username", (req, res) => {
   const encodedId = req.params.username;
   const username = parseInt(encodedId, 10) - 1093046400;
 
@@ -2719,7 +2722,7 @@ app.get("/info/userprofile/:username", (req, res) => {
 });
 
 //api upload avatar
-app.post("/avatar/upload", verifyToken, async (req, res) => {
+router.post("/avatar/upload", verifyToken, async (req, res) => {
   const { username, files } = req.body;
   if (!username || !files || files.length === 0) {
     return res
@@ -2737,7 +2740,7 @@ app.post("/avatar/upload", verifyToken, async (req, res) => {
 });
 
 //api upload background
-app.post("/background/upload", verifyToken, async (req, res) => {
+router.post("/background/upload", verifyToken, async (req, res) => {
   const { username, files } = req.body;
   if (!username || !files || files.length === 0) {
     return res
@@ -2755,7 +2758,7 @@ app.post("/background/upload", verifyToken, async (req, res) => {
 });
 
 // check profile exists
-app.get("/check-profile/:username", (req, res) => {
+router.get("/check-profile/:username", (req, res) => {
   const username = req.params.username;
   const query = "SELECT * FROM UserProfile WHERE username = ?";
 
@@ -2772,7 +2775,7 @@ app.get("/check-profile/:username", (req, res) => {
 });
 
 // delete profile
-app.delete("/delete-profile/:username", (req, res) => {
+router.delete("/delete-profile/:username", (req, res) => {
   const username = req.params.username;
   const query = "DELETE FROM UserProfile WHERE username = ?";
 
@@ -2789,7 +2792,7 @@ app.delete("/delete-profile/:username", (req, res) => {
 });
 
 // modify profile
-app.put("/modify-profile/:username", verifyToken, (req, res) => {
+router.put("/modify-profile/:username", verifyToken, (req, res) => {
   const {
     avatarImage,
     backgroundImage,
@@ -2839,12 +2842,12 @@ app.put("/modify-profile/:username", verifyToken, (req, res) => {
       } else {
         return res.status(404).json({ message: "Profile not found" });
       }
-    }
+    },
   );
 });
 
 // API endpoint to add a voucher or ticket
-app.post("/api/vouchers", verifyToken, (req, res) => {
+router.post("/api/vouchers", verifyToken, (req, res) => {
   const {
     rewardType,
     roomId,
@@ -2912,12 +2915,10 @@ app.post("/api/vouchers", verifyToken, (req, res) => {
           expiration_date: expirationDate,
           // host_avatar_url: req.user.avatarUrl // Assuming you have the avatar URL in req.user
         };
-        res
-          .status(201)
-          .send({
-            message: "Voucher or ticket added successfully",
-            voucher: newVoucher,
-          });
+        res.status(201).send({
+          message: "Voucher or ticket added successfully",
+          voucher: newVoucher,
+        });
       });
     } catch (error) {
       console.error("Error adding voucher or ticket:", error);
@@ -2929,7 +2930,7 @@ app.post("/api/vouchers", verifyToken, (req, res) => {
 });
 
 //api add voucher to user user_vouchers
-app.post("/api/user-vouchers", (req, res) => {
+router.post("/api/user-vouchers", (req, res) => {
   const { username, voucherIds } = req.body; // Expecting voucherIds to be an array
   if (!Array.isArray(voucherIds) || voucherIds.length === 0) {
     return res.status(400).send("Invalid voucherIds");
@@ -2947,7 +2948,7 @@ app.post("/api/user-vouchers", (req, res) => {
 });
 
 //api get voucher by username and room_id
-app.get("/api/vouchers/:username/:room_id", verifyToken, (req, res) => {
+router.get("/api/vouchers/:username/:room_id", verifyToken, (req, res) => {
   const username = req.params.username;
   const room_id = req.params.room_id;
   if (req.user.username !== username) {
@@ -2990,7 +2991,7 @@ app.get("/api/vouchers/:username/:room_id", verifyToken, (req, res) => {
 });
 
 //api get voucher by username
-app.get("/api/vouchers/:username", (req, res) => {
+router.get("/api/vouchers/:username", (req, res) => {
   const username = req.params.username;
   const sql = `
     SELECT 
@@ -3032,7 +3033,7 @@ app.get("/api/vouchers/:username", (req, res) => {
   });
 });
 //checkUserVoucher
-app.post("/api/checkUserVoucher", (req, res) => {
+router.post("/api/checkUserVoucher", (req, res) => {
   const { username, voucher_id } = req.body;
   const query =
     "SELECT * FROM user_vouchers WHERE username = ? AND voucher_id = ?";
@@ -3047,7 +3048,7 @@ app.post("/api/checkUserVoucher", (req, res) => {
 });
 
 //api get info voucher by id
-app.get("/api/voucher/:id", (req, res) => {
+router.get("/api/voucher/:id", (req, res) => {
   const id = req.params.id;
   const sql = `
     SELECT 
@@ -3081,7 +3082,7 @@ app.get("/api/voucher/:id", (req, res) => {
   });
 });
 //api get info voucher by room_id
-app.get("/get/vouchers/room/:room_id", (req, res) => {
+router.get("/get/vouchers/room/:room_id", (req, res) => {
   const room_id = req.params.room_id;
   const sql = `
     SELECT 
@@ -3116,7 +3117,7 @@ app.get("/get/vouchers/room/:room_id", (req, res) => {
 });
 
 // user delete account
-app.delete("/user/delete/:username", verifyToken, (req, res) => {
+router.delete("/user/delete/:username", verifyToken, (req, res) => {
   const username = req.params.username;
   // Check if the user is authorized to delete the user
   if (req.user.username !== username) {
@@ -3183,7 +3184,7 @@ app.delete("/user/delete/:username", verifyToken, (req, res) => {
 });
 
 // api /api/deleteUserVoucher
-app.delete("/api/deleteUserVoucher", (req, res) => {
+router.delete("/api/deleteUserVoucher", (req, res) => {
   const { username, voucher_id } = req.body;
   const query =
     "DELETE FROM user_vouchers WHERE username = ? AND voucher_id = ?";
@@ -3194,7 +3195,7 @@ app.delete("/api/deleteUserVoucher", (req, res) => {
 });
 
 // API xoá voucher và ảnh
-app.delete("/api/deleteVoucher/:id", async (req, res) => {
+router.delete("/api/deleteVoucher/:id", async (req, res) => {
   const id = req.params.id;
   const query = "SELECT ticket_image_url FROM vouchers WHERE id = ?";
 
@@ -3273,7 +3274,7 @@ app.delete("/api/deleteVoucher/:id", async (req, res) => {
 
 // API discover room
 // API discover room - Updated với sorting
-app.get("/discovery/rooms", (req, res) => {
+router.get("/discovery/rooms", (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const offset = (page - 1) * limit;
@@ -3333,11 +3334,11 @@ app.get("/discovery/rooms", (req, res) => {
           hasMore: results.length === limit,
         },
       });
-    }
+    },
   );
 });
 
-app.get("/check_job/:room_id/:username", (req, res) => {
+router.get("/check_job/:room_id/:username", (req, res) => {
   const { room_id, username } = req.params;
   pool.query(
     "SELECT COUNT(*) AS hasJob FROM job WHERE room_id = ? AND job_owner = ?",
@@ -3348,12 +3349,12 @@ app.get("/check_job/:room_id/:username", (req, res) => {
         return res.status(500).json({ message: "Server error" });
       }
       res.json({ hasJob: results[0].hasJob > 0 });
-    }
+    },
   );
 });
 
 // Delete the old job description
-app.delete("/delete_job/:room_id", verifyToken, (req, res) => {
+router.delete("/delete_job/:room_id", verifyToken, (req, res) => {
   const { room_id } = req.params;
   const username = req.body.username;
 
@@ -3379,12 +3380,12 @@ app.delete("/delete_job/:room_id", verifyToken, (req, res) => {
       }
       console.log(`Job deleted for room_id: ${room_id}`); // Debug log
       res.json({ message: "Job deleted successfully" });
-    }
+    },
   );
 });
 
 // Delete old images
-app.delete("/delete_images/:room_id/:username", verifyToken, (req, res) => {
+router.delete("/delete_images/:room_id/:username", verifyToken, (req, res) => {
   const { room_id, username } = req.params;
 
   if (req.user.username !== username) {
@@ -3403,11 +3404,9 @@ app.delete("/delete_images/:room_id/:username", verifyToken, (req, res) => {
       }
       if (results.length === 0) {
         console.log("No images found for this user in the specified room.");
-        return res
-          .status(404)
-          .json({
-            message: "No images found for this user in the specified room.",
-          });
+        return res.status(404).json({
+          message: "No images found for this user in the specified room.",
+        });
       }
 
       // Assuming deleteObject and ref are Firebase functions
@@ -3420,7 +3419,7 @@ app.delete("/delete_images/:room_id/:username", verifyToken, (req, res) => {
           .catch((error) => {
             console.warn(
               `Error deleting image from storage: ${image.image_path}`,
-              error
+              error,
             );
           });
       });
@@ -3435,95 +3434,99 @@ app.delete("/delete_images/:room_id/:username", verifyToken, (req, res) => {
               return res.status(500).json({ message: "Server error" });
             }
             res.json({ message: "Images deleted successfully" });
-          }
+          },
         );
       });
-    }
+    },
   );
 });
 
 // Xóa voucher và ảnh liên quan cũ trong bảng vouchers
-app.delete("/api/delete/vouchers/:roomId/:hostId", verifyToken, (req, res) => {
-  const roomId = req.params.roomId;
-  const hostId = req.params.hostId;
+router.delete(
+  "/api/delete/vouchers/:roomId/:hostId",
+  verifyToken,
+  (req, res) => {
+    const roomId = req.params.roomId;
+    const hostId = req.params.hostId;
 
-  // Kiểm tra quyền truy cập
-  if (req.user.username !== hostId) {
-    return res
-      .status(403)
-      .send("You are not authorized to perform this action");
-  }
-
-  pool.getConnection((err, connection) => {
-    if (err) {
-      console.error("Database connection error:", err);
-      return res.status(500).json({ error: "Database connection error" });
+    // Kiểm tra quyền truy cập
+    if (req.user.username !== hostId) {
+      return res
+        .status(403)
+        .send("You are not authorized to perform this action");
     }
 
-    connection.beginTransaction(async (err) => {
+    pool.getConnection((err, connection) => {
       if (err) {
-        console.error("Error starting transaction:", err);
-        connection.release();
-        return res.status(500).send("Server error");
+        console.error("Database connection error:", err);
+        return res.status(500).json({ error: "Database connection error" });
       }
 
-      try {
-        // Lấy danh sách URL ảnh từ vouchers
-        const [imageResults] = await connection
-          .promise()
-          .query(
-            "SELECT ticket_image_url FROM vouchers WHERE room_id = ? AND ticket_image_url IS NOT NULL",
-            [roomId]
-          );
-
-        // Nếu không có ảnh thì không cần xoá ảnh từ Firebase
-        if (imageResults.length > 0) {
-          const imagePaths = imageResults.map((row) => row.ticket_image_url);
-
-          // Xóa file từ Firebase Storage nếu tồn tại URL ảnh
-          const deleteImagePromises = imagePaths.map((imagePath) => {
-            const fileRef = ref(storage, imagePath);
-            return deleteObject(fileRef).catch((error) => {
-              console.error(`Error deleting file at ${imagePath}:`, error);
-              // Bỏ qua lỗi xóa file và tiếp tục
-            });
-          });
-
-          await Promise.all(deleteImagePromises);
-
-          // Xóa ảnh trong bảng `images` chỉ nếu `image_path` nằm trong `ticket_image_url`
-          await connection
-            .promise()
-            .query(
-              "DELETE FROM images WHERE room_id = ? AND image_path IN (?)",
-              [roomId, imagePaths]
-            );
+      connection.beginTransaction(async (err) => {
+        if (err) {
+          console.error("Error starting transaction:", err);
+          connection.release();
+          return res.status(500).send("Server error");
         }
 
-        // Xóa các dòng dữ liệu `vouchers` liên quan
-        await connection
-          .promise()
-          .query("DELETE FROM vouchers WHERE room_id = ?", [roomId]);
+        try {
+          // Lấy danh sách URL ảnh từ vouchers
+          const [imageResults] = await connection
+            .promise()
+            .query(
+              "SELECT ticket_image_url FROM vouchers WHERE room_id = ? AND ticket_image_url IS NOT NULL",
+              [roomId],
+            );
 
-        connection.commit((err) => {
-          if (err) {
-            return connection.rollback(() => {
-              console.error("Error committing transaction:", err);
-              res.status(500).send("Server error");
+          // Nếu không có ảnh thì không cần xoá ảnh từ Firebase
+          if (imageResults.length > 0) {
+            const imagePaths = imageResults.map((row) => row.ticket_image_url);
+
+            // Xóa file từ Firebase Storage nếu tồn tại URL ảnh
+            const deleteImagePromises = imagePaths.map((imagePath) => {
+              const fileRef = ref(storage, imagePath);
+              return deleteObject(fileRef).catch((error) => {
+                console.error(`Error deleting file at ${imagePath}:`, error);
+                // Bỏ qua lỗi xóa file và tiếp tục
+              });
             });
+
+            await Promise.all(deleteImagePromises);
+
+            // Xóa ảnh trong bảng `images` chỉ nếu `image_path` nằm trong `ticket_image_url`
+            await connection
+              .promise()
+              .query(
+                "DELETE FROM images WHERE room_id = ? AND image_path IN (?)",
+                [roomId, imagePaths],
+              );
           }
-          connection.release();
-          res.send("Vouchers and associated images deleted successfully");
-        });
-      } catch (error) {
-        connection.rollback(() => {
-          console.error("Error during transaction:", error);
-          res.status(500).send("Server error");
-        });
-      }
+
+          // Xóa các dòng dữ liệu `vouchers` liên quan
+          await connection
+            .promise()
+            .query("DELETE FROM vouchers WHERE room_id = ?", [roomId]);
+
+          connection.commit((err) => {
+            if (err) {
+              return connection.rollback(() => {
+                console.error("Error committing transaction:", err);
+                res.status(500).send("Server error");
+              });
+            }
+            connection.release();
+            res.send("Vouchers and associated images deleted successfully");
+          });
+        } catch (error) {
+          connection.rollback(() => {
+            console.error("Error during transaction:", error);
+            res.status(500).send("Server error");
+          });
+        }
+      });
     });
-  });
-});
+  },
+);
 
 // Cron job để xoá các voucher hết hạn
 cron.schedule("0 0 * * *", async () => {
@@ -3566,38 +3569,52 @@ cron.schedule("0 0 * * *", async () => {
           try {
             // 1. Xoá voucher trước (quan trọng nhất)
             await new Promise((resolve, reject) => {
-              connection.query("DELETE FROM vouchers WHERE id = ?", [voucherId], (err, results) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  console.log(`Voucher deleted successfully: ${voucherId}`);
-                  resolve(results);
-                }
-              });
+              connection.query(
+                "DELETE FROM vouchers WHERE id = ?",
+                [voucherId],
+                (err, results) => {
+                  if (err) {
+                    reject(err);
+                  } else {
+                    console.log(`Voucher deleted successfully: ${voucherId}`);
+                    resolve(results);
+                  }
+                },
+              );
             });
 
             // 2. Xoá dữ liệu liên quan trong bảng images (nếu có)
             if (ticketImageUrl) {
               await new Promise((resolve, reject) => {
-                connection.query("DELETE FROM images WHERE image_path = ?", [ticketImageUrl], (err, results) => {
-                  if (err) {
-                    console.error("Error deleting from images table:", err);
-                    // Không reject ở đây vì không quan trọng bằng việc xóa voucher
-                  } else {
-                    console.log(`Images table cleaned for voucher: ${voucherId}`);
-                  }
-                  resolve(results);
-                });
+                connection.query(
+                  "DELETE FROM images WHERE image_path = ?",
+                  [ticketImageUrl],
+                  (err, results) => {
+                    if (err) {
+                      console.error("Error deleting from images table:", err);
+                      // Không reject ở đây vì không quan trọng bằng việc xóa voucher
+                    } else {
+                      console.log(
+                        `Images table cleaned for voucher: ${voucherId}`,
+                      );
+                    }
+                    resolve(results);
+                  },
+                );
               });
 
               // 3. Cuối cùng mới xoá ảnh từ Firebase Storage
               try {
                 const fileRef = ref(storage, ticketImageUrl);
                 await deleteObject(fileRef);
-                console.log(`Image deleted from Firebase Storage: ${ticketImageUrl}`);
+                console.log(
+                  `Image deleted from Firebase Storage: ${ticketImageUrl}`,
+                );
               } catch (error) {
                 if (error.code === "storage/object-not-found") {
-                  console.warn(`Image not found in Firebase Storage: ${ticketImageUrl}`);
+                  console.warn(
+                    `Image not found in Firebase Storage: ${ticketImageUrl}`,
+                  );
                 } else {
                   console.error("Error deleting image from Firebase:", error);
                   // Không throw error vì việc xóa voucher đã thành công
@@ -3613,11 +3630,12 @@ cron.schedule("0 0 * * *", async () => {
                   connection.release();
                 });
               } else {
-                console.log(`Successfully processed expired voucher: ${voucherId}`);
+                console.log(
+                  `Successfully processed expired voucher: ${voucherId}`,
+                );
                 connection.release();
               }
             });
-
           } catch (error) {
             console.error(`Error processing voucher ${voucherId}:`, error);
             connection.rollback(() => {
@@ -3630,29 +3648,30 @@ cron.schedule("0 0 * * *", async () => {
   });
 });
 
-app.post("/api/cleanup-expired-vouchers", verifyToken, async (req, res) => {
+router.post("/api/cleanup-expired-vouchers", verifyToken, async (req, res) => {
   try {
     console.log("Starting manual cleanup of expired vouchers...");
 
-    const query = "SELECT id, ticket_image_url FROM vouchers WHERE expiration_date < CURDATE()";
+    const query =
+      "SELECT id, ticket_image_url FROM vouchers WHERE expiration_date < CURDATE()";
 
     pool.query(query, async (err, results) => {
       if (err) {
         console.error("Error checking expired vouchers:", err);
-        return res.status(500).json({ 
-          success: false, 
+        return res.status(500).json({
+          success: false,
           error: "Database error",
-          details: err.message 
+          details: err.message,
         });
       }
 
       if (results.length === 0) {
         console.log("No expired vouchers found.");
-        return res.json({ 
+        return res.json({
           success: true,
           message: "No expired vouchers found",
           deleted: 0,
-          total: 0
+          total: 0,
         });
       }
 
@@ -3686,40 +3705,62 @@ app.post("/api/cleanup-expired-vouchers", verifyToken, async (req, res) => {
                 try {
                   // 1. Delete voucher first (most important)
                   await new Promise((resolveDelete, rejectDelete) => {
-                    connection.query("DELETE FROM vouchers WHERE id = ?", [voucherId], (err, results) => {
-                      if (err) {
-                        rejectDelete(err);
-                      } else {
-                        console.log(`Voucher deleted successfully: ${voucherId}`);
-                        resolveDelete(results);
-                      }
-                    });
+                    connection.query(
+                      "DELETE FROM vouchers WHERE id = ?",
+                      [voucherId],
+                      (err, results) => {
+                        if (err) {
+                          rejectDelete(err);
+                        } else {
+                          console.log(
+                            `Voucher deleted successfully: ${voucherId}`,
+                          );
+                          resolveDelete(results);
+                        }
+                      },
+                    );
                   });
 
                   // 2. Clean related data in images table (if exists)
                   if (ticketImageUrl) {
                     await new Promise((resolveImage, rejectImage) => {
-                      connection.query("DELETE FROM images WHERE image_path = ?", [ticketImageUrl], (err, results) => {
-                        if (err) {
-                          console.error("Error deleting from images table:", err);
-                          // Don't reject here as it's not as critical as voucher deletion
-                        } else {
-                          console.log(`Images table cleaned for voucher: ${voucherId}`);
-                        }
-                        resolveImage(results);
-                      });
+                      connection.query(
+                        "DELETE FROM images WHERE image_path = ?",
+                        [ticketImageUrl],
+                        (err, results) => {
+                          if (err) {
+                            console.error(
+                              "Error deleting from images table:",
+                              err,
+                            );
+                            // Don't reject here as it's not as critical as voucher deletion
+                          } else {
+                            console.log(
+                              `Images table cleaned for voucher: ${voucherId}`,
+                            );
+                          }
+                          resolveImage(results);
+                        },
+                      );
                     });
 
                     // 3. Finally delete image from Firebase Storage
                     try {
                       const fileRef = ref(storage, ticketImageUrl);
                       await deleteObject(fileRef);
-                      console.log(`Image deleted from Firebase Storage: ${ticketImageUrl}`);
+                      console.log(
+                        `Image deleted from Firebase Storage: ${ticketImageUrl}`,
+                      );
                     } catch (error) {
                       if (error.code === "storage/object-not-found") {
-                        console.warn(`Image not found in Firebase Storage: ${ticketImageUrl}`);
+                        console.warn(
+                          `Image not found in Firebase Storage: ${ticketImageUrl}`,
+                        );
                       } else {
-                        console.error("Error deleting image from Firebase:", error);
+                        console.error(
+                          "Error deleting image from Firebase:",
+                          error,
+                        );
                         // Don't throw error as voucher deletion was successful
                       }
                     }
@@ -3730,15 +3771,18 @@ app.post("/api/cleanup-expired-vouchers", verifyToken, async (req, res) => {
                     if (err) {
                       connection.rollback(() => {
                         connection.release();
-                        reject(new Error(`Transaction commit error: ${err.message}`));
+                        reject(
+                          new Error(`Transaction commit error: ${err.message}`),
+                        );
                       });
                     } else {
-                      console.log(`Successfully processed expired voucher: ${voucherId}`);
+                      console.log(
+                        `Successfully processed expired voucher: ${voucherId}`,
+                      );
                       connection.release();
                       resolve();
                     }
                   });
-
                 } catch (error) {
                   connection.rollback(() => {
                     connection.release();
@@ -3750,13 +3794,12 @@ app.post("/api/cleanup-expired-vouchers", verifyToken, async (req, res) => {
           });
 
           successCount++;
-          
         } catch (error) {
           console.error(`Error processing voucher ${voucherId}:`, error);
           errorCount++;
           errors.push({
             voucherId: voucherId,
-            error: error.message
+            error: error.message,
           });
         }
       }
@@ -3771,24 +3814,23 @@ app.post("/api/cleanup-expired-vouchers", verifyToken, async (req, res) => {
         details: {
           successfulDeletions: successCount,
           failedDeletions: errorCount,
-          errorDetails: errors.length > 0 ? errors : null
+          errorDetails: errors.length > 0 ? errors : null,
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     });
-
   } catch (error) {
     console.error("Unexpected error in cleanup:", error);
     res.status(500).json({
       success: false,
       error: "Unexpected error occurred",
-      details: error.message
+      details: error.message,
     });
   }
 });
 
 //api report
-app.post("/report", verifyToken, (req, res) => {
+router.post("/report", verifyToken, (req, res) => {
   const { roomId, username, reason, additionalInfo, reporter } = req.body;
   if (req.user.username !== reporter) {
     return res
@@ -3848,7 +3890,7 @@ app.post("/report", verifyToken, (req, res) => {
 });
 
 //api report admin
-app.get("/admin/reports", verifyAdminToken, (req, res) => {
+router.get("/admin/reports", verifyAdminToken, (req, res) => {
   const query = `
     SELECT 
       r.*, 
@@ -3869,7 +3911,7 @@ app.get("/admin/reports", verifyAdminToken, (req, res) => {
   });
 });
 //api delete report
-app.delete("/admin/reports/:id", verifyAdminToken, (req, res) => {
+router.delete("/admin/reports/:id", verifyAdminToken, (req, res) => {
   const reportId = req.params.id;
   const query = "DELETE FROM reports WHERE id = ?";
   pool.query(query, [reportId], (err, results) => {
@@ -3882,7 +3924,7 @@ app.delete("/admin/reports/:id", verifyAdminToken, (req, res) => {
 });
 
 // Create a new quiz room
-app.post("/api/rooms/create", verifyToken, async (req, res) => {
+router.post("/api/rooms/create", verifyToken, async (req, res) => {
   try {
     const { room_details, questions } = req.body;
 
@@ -3989,7 +4031,7 @@ app.post("/api/rooms/create", verifyToken, async (req, res) => {
 });
 
 // Endpoint to get all questions for a specific room
-app.get("/api/rooms/:roomId/questions", async (req, res) => {
+router.get("/api/rooms/:roomId/questions", async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -4031,7 +4073,7 @@ app.get("/api/rooms/:roomId/questions", async (req, res) => {
 });
 
 // Endpoint to get a specific question by room_id and question_number
-app.get("/room/:roomId/question/:questionNumber", async (req, res) => {
+router.get("/room/:roomId/question/:questionNumber", async (req, res) => {
   try {
     const { roomId, questionNumber } = req.params;
 
@@ -4110,7 +4152,7 @@ app.get("/room/:roomId/question/:questionNumber", async (req, res) => {
   }
 });
 
-app.post("/api/room/:roomId/submit-answer", async (req, res) => {
+router.post("/api/room/:roomId/submit-answer", async (req, res) => {
   try {
     const { roomId } = req.params;
     const { questionId, answer } = req.body;
@@ -4135,7 +4177,7 @@ app.post("/api/room/:roomId/submit-answer", async (req, res) => {
         q.is_survey
       FROM Questions q
       WHERE q.room_id = ? AND q.question_number = ?`,
-      [roomId, questionNumber]
+      [roomId, questionNumber],
     );
 
     if (questions.length === 0) {
@@ -4175,7 +4217,7 @@ app.post("/api/room/:roomId/submit-answer", async (req, res) => {
         `SELECT option_id, option_text, is_correct
          FROM Question_Options
          WHERE question_id = ?`,
-        [question.question_id]
+        [question.question_id],
       );
 
       const correctOption = options.find((opt) => opt.is_correct === 1);
@@ -4203,7 +4245,7 @@ app.post("/api/room/:roomId/submit-answer", async (req, res) => {
         submitted_answer_text = VALUES(submitted_answer_text),
         is_correct = VALUES(is_correct),
         submitted_at = NOW()`,
-      [userId, roomId, question.question_id, answer, isCorrect ? 1 : 0]
+      [userId, roomId, question.question_id, answer, isCorrect ? 1 : 0],
     );
 
     return res.json({
@@ -4248,7 +4290,7 @@ const normalizeText = (text) => {
 };
 
 // API endpoint xử lý submit file URL (đã được upload từ frontend)
-app.post("/api/room/:roomId/submit-file-answer", async (req, res) => {
+router.post("/api/room/:roomId/submit-file-answer", async (req, res) => {
   try {
     const { roomId } = req.params;
     const { questionId, fileUrl, username } = req.body;
@@ -4281,7 +4323,7 @@ app.post("/api/room/:roomId/submit-file-answer", async (req, res) => {
       .promise()
       .query(
         `SELECT question_id, question_type FROM Questions WHERE room_id = ? AND question_number = ?`,
-        [roomId, questionNumber]
+        [roomId, questionNumber],
       );
 
     if (questions.length === 0) {
@@ -4293,12 +4335,10 @@ app.post("/api/room/:roomId/submit-file-answer", async (req, res) => {
     const question = questions[0];
 
     if (question.question_type !== "upload") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: "This question does not accept file uploads",
-        });
+      return res.status(400).json({
+        success: false,
+        error: "This question does not accept file uploads",
+      });
     }
 
     // Lưu submission vào database với URL của file
@@ -4310,7 +4350,7 @@ app.post("/api/room/:roomId/submit-file-answer", async (req, res) => {
         submitted_file_url = VALUES(submitted_file_url),
         is_correct = 1,
         submitted_at = NOW()`,
-      [submittingUser, roomId, question.question_id, fileUrl, 1] // Using username instead of userId
+      [submittingUser, roomId, question.question_id, fileUrl, 1], // Using username instead of userId
     );
 
     return res.json({
@@ -4329,7 +4369,7 @@ app.post("/api/room/:roomId/submit-file-answer", async (req, res) => {
   }
 });
 // leaderboard
-app.get("/api/room/:roomId/answers-table", async (req, res) => {
+router.get("/api/room/:roomId/answers-table", async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -4337,7 +4377,7 @@ app.get("/api/room/:roomId/answers-table", async (req, res) => {
     const [questions] = await pool.promise().query(
       `SELECT question_id, question_number, question_text, question_type 
        FROM Questions WHERE room_id = ? ORDER BY question_number ASC`,
-      [roomId]
+      [roomId],
     );
 
     // 2. Lấy danh sách user đã nộp bài (có submission)
@@ -4347,7 +4387,7 @@ app.get("/api/room/:roomId/answers-table", async (req, res) => {
        JOIN users u ON us.user_id = u.username
        WHERE us.room_id = ?
        ORDER BY u.fullname ASC`,
-      [roomId]
+      [roomId],
     );
 
     // 3. Lấy tất cả đáp án
@@ -4355,40 +4395,45 @@ app.get("/api/room/:roomId/answers-table", async (req, res) => {
       `SELECT us.user_id, us.question_id, us.submitted_answer_text, us.submitted_option_id, us.submitted_file_url, us.is_correct
        FROM User_Submissions us
        WHERE us.room_id = ?`,
-      [roomId]
+      [roomId],
     );
 
     // 4. Build bảng: rows = users, columns = questions
-    const table = users.map(user => {
+    const table = users.map((user) => {
       const row = {
         username: user.username,
         fullname: user.fullname,
-        answers: questions.map(q => {
+        answers: questions.map((q) => {
           const sub = submissions.find(
-            s => s.user_id === user.username && s.question_id === q.question_id
+            (s) =>
+              s.user_id === user.username && s.question_id === q.question_id,
           );
           return sub
             ? {
-                value: sub.submitted_answer_text || sub.submitted_option_id || sub.submitted_file_url || "",
+                value:
+                  sub.submitted_answer_text ||
+                  sub.submitted_option_id ||
+                  sub.submitted_file_url ||
+                  "",
                 isCorrect: !!sub.is_correct,
-                type: q.question_type
+                type: q.question_type,
               }
             : null;
-        })
+        }),
       };
       return row;
     });
 
     res.json({
       success: true,
-      questions: questions.map(q => ({
+      questions: questions.map((q) => ({
         id: q.question_id,
         number: q.question_number,
         text: q.question_text,
-        type: q.question_type
+        type: q.question_type,
       })),
       users: users,
-      table: table
+      table: table,
     });
   } catch (err) {
     console.error("Error building answers table:", err);
@@ -4396,7 +4441,7 @@ app.get("/api/room/:roomId/answers-table", async (req, res) => {
   }
 });
 
-app.get("/api/room/:roomId/answers-table/:username", async (req, res) => {
+router.get("/api/room/:roomId/answers-table/:username", async (req, res) => {
   try {
     const { roomId, username } = req.params;
 
@@ -4404,7 +4449,7 @@ app.get("/api/room/:roomId/answers-table/:username", async (req, res) => {
     const [questions] = await pool.promise().query(
       `SELECT question_id, question_number, question_text, question_type 
        FROM Questions WHERE room_id = ? ORDER BY question_number ASC`,
-      [roomId]
+      [roomId],
     );
 
     // 2. Lấy đáp án của user
@@ -4412,30 +4457,34 @@ app.get("/api/room/:roomId/answers-table/:username", async (req, res) => {
       `SELECT question_id, submitted_answer_text, submitted_option_id, submitted_file_url, is_correct
        FROM User_Submissions
        WHERE room_id = ? AND user_id = ?`,
-      [roomId, username]
+      [roomId, username],
     );
 
     // 3. Build answers theo thứ tự câu hỏi
-    const answers = questions.map(q => {
-      const sub = submissions.find(s => s.question_id === q.question_id);
+    const answers = questions.map((q) => {
+      const sub = submissions.find((s) => s.question_id === q.question_id);
       return sub
         ? {
-            value: sub.submitted_answer_text || sub.submitted_option_id || sub.submitted_file_url || "",
+            value:
+              sub.submitted_answer_text ||
+              sub.submitted_option_id ||
+              sub.submitted_file_url ||
+              "",
             isCorrect: !!sub.is_correct,
-            type: q.question_type
+            type: q.question_type,
           }
         : null;
     });
 
     res.json({
       success: true,
-      questions: questions.map(q => ({
+      questions: questions.map((q) => ({
         id: q.question_id,
         number: q.question_number,
         text: q.question_text,
-        type: q.question_type
+        type: q.question_type,
       })),
-      answers: answers
+      answers: answers,
     });
   } catch (err) {
     console.error("Error building user answers table:", err);
@@ -4444,7 +4493,7 @@ app.get("/api/room/:roomId/answers-table/:username", async (req, res) => {
 });
 
 // GET user's submission for a specific question
-app.get(
+router.get(
   "/room/:roomId/user/:userId/question/:questionNumber/submission",
   async (req, res) => {
     try {
@@ -4459,7 +4508,7 @@ app.get(
       const [questions] = await pool.promise().query(
         `SELECT question_id, question_type FROM Questions 
        WHERE room_id = ? AND question_number = ?`,
-        [roomId, parseInt(questionNumber)]
+        [roomId, parseInt(questionNumber)],
       );
 
       if (questions.length === 0) {
@@ -4474,7 +4523,7 @@ app.get(
         `SELECT submitted_answer_text, submitted_file_url, is_correct, submitted_at 
        FROM User_Submissions 
        WHERE room_id = ? AND user_id = ? AND question_id = ?`,
-        [roomId, userId, question.question_id]
+        [roomId, userId, question.question_id],
       );
 
       if (submissions.length === 0) {
@@ -4506,11 +4555,10 @@ app.get(
           process.env.NODE_ENV === "development" ? err.message : undefined,
       });
     }
-  }
+  },
 );
 
-
-app.get("/user/:userId/hosted-rooms", async (req, res) => {
+router.get("/user/:userId/hosted-rooms", async (req, res) => {
   const { userId } = req.params;
 
   // Kiểm tra xem userId có phải là một số hợp lệ không
@@ -4546,7 +4594,7 @@ app.get("/user/:userId/hosted-rooms", async (req, res) => {
       ORDER BY 
         r.id DESC
     `,
-      [numericUserId]
+      [numericUserId],
     );
 
     // Kiểm tra nếu không tìm thấy user hoặc rooms
@@ -4578,7 +4626,7 @@ app.get("/user/:userId/hosted-rooms", async (req, res) => {
 });
 
 // 1. API kiểm tra trạng thái follow - cũng cần cập nhật
-app.post("/follow/status", async (req, res) => {
+router.post("/follow/status", async (req, res) => {
   try {
     const { follower, following } = req.body;
 
@@ -4633,7 +4681,7 @@ app.post("/follow/status", async (req, res) => {
       .promise()
       .query(
         "SELECT * FROM User_Follows WHERE follower_username = ? AND following_username = ?",
-        [followerUsername, followingUsername]
+        [followerUsername, followingUsername],
       );
 
     return res.json({
@@ -4651,7 +4699,7 @@ app.post("/follow/status", async (req, res) => {
 });
 
 // 2. API để follow một user - UPDATED
-app.post("/follow", async (req, res) => {
+router.post("/follow", async (req, res) => {
   try {
     const { follower, following } = req.body;
 
@@ -4715,7 +4763,7 @@ app.post("/follow", async (req, res) => {
         .promise()
         .query(
           "INSERT INTO User_Follows (follower_username, following_username) VALUES (?, ?)",
-          [followerUsername, followingUsername]
+          [followerUsername, followingUsername],
         );
 
       // FETCH updated counts sau khi trigger đã chạy
@@ -4723,7 +4771,7 @@ app.post("/follow", async (req, res) => {
         .promise()
         .query(
           "SELECT follower_count, following_count FROM users WHERE username = ?",
-          [followingUsername]
+          [followingUsername],
         );
 
       const [followerResult] = await pool
@@ -4766,7 +4814,7 @@ app.post("/follow", async (req, res) => {
 });
 
 // 3. API để unfollow một user - UPDATED
-app.post("/unfollow", async (req, res) => {
+router.post("/unfollow", async (req, res) => {
   try {
     const { follower, following } = req.body;
 
@@ -4822,7 +4870,7 @@ app.post("/unfollow", async (req, res) => {
         .promise()
         .query(
           "DELETE FROM User_Follows WHERE follower_username = ? AND following_username = ?",
-          [followerUsername, followingUsername]
+          [followerUsername, followingUsername],
         );
 
       // Nếu không có bản ghi nào bị xóa (không tìm thấy)
@@ -4838,7 +4886,7 @@ app.post("/unfollow", async (req, res) => {
         .promise()
         .query(
           "SELECT follower_count, following_count FROM users WHERE username = ?",
-          [followingUsername]
+          [followingUsername],
         );
 
       const [followerResult] = await pool
@@ -4874,7 +4922,7 @@ app.post("/unfollow", async (req, res) => {
 });
 
 // 4. API lấy danh sách followers của một user
-app.get("/user/:username/followers", async (req, res) => {
+router.get("/user/:username/followers", async (req, res) => {
   try {
     const { username } = req.params;
     const page = parseInt(req.query.page) || 1;
@@ -4890,7 +4938,7 @@ app.get("/user/:username/followers", async (req, res) => {
        WHERE f.following_username = ?
        ORDER BY f.created_at DESC
        LIMIT ? OFFSET ?`,
-      [username, limit, offset]
+      [username, limit, offset],
     );
 
     // Đếm tổng số followers
@@ -4898,7 +4946,7 @@ app.get("/user/:username/followers", async (req, res) => {
       .promise()
       .query(
         "SELECT COUNT(*) as total FROM User_Follows WHERE following_username = ?",
-        [username]
+        [username],
       );
 
     const totalFollowers = countResult[0].total;
@@ -4924,7 +4972,7 @@ app.get("/user/:username/followers", async (req, res) => {
 });
 
 // 5. API lấy danh sách người mà user đang follow
-app.get("/user/:username/following", async (req, res) => {
+router.get("/user/:username/following", async (req, res) => {
   try {
     const { username } = req.params;
     const page = parseInt(req.query.page) || 1;
@@ -4940,7 +4988,7 @@ app.get("/user/:username/following", async (req, res) => {
        WHERE f.follower_username = ?
        ORDER BY f.created_at DESC
        LIMIT ? OFFSET ?`,
-      [username, limit, offset]
+      [username, limit, offset],
     );
 
     // Đếm tổng số following
@@ -4948,7 +4996,7 @@ app.get("/user/:username/following", async (req, res) => {
       .promise()
       .query(
         "SELECT COUNT(*) as total FROM User_Follows WHERE follower_username = ?",
-        [username]
+        [username],
       );
 
     const totalFollowing = countResult[0].total;
@@ -4974,7 +5022,7 @@ app.get("/user/:username/following", async (req, res) => {
 });
 
 // Endpoint to get total number of questions in a room
-app.get("/api/room/:roomId/user/:username/progress", async (req, res) => {
+router.get("/api/room/:roomId/user/:username/progress", async (req, res) => {
   try {
     const { roomId, username } = req.params;
 
@@ -5011,7 +5059,7 @@ app.get("/api/room/:roomId/user/:username/progress", async (req, res) => {
 });
 
 // API endpoint để kiểm tra xem user có trả lời đúng tất cả câu hỏi không
-app.get(
+router.get(
   "/api/room/:roomId/user/:username/correct-answers",
   async (req, res) => {
     try {
@@ -5030,13 +5078,15 @@ app.get(
          FROM User_Submissions us
          JOIN Questions q ON us.question_id = q.question_id
          WHERE us.user_id = ? AND q.room_id = ? AND us.is_correct = 1`,
-        [username, roomId]
+        [username, roomId],
       );
 
       const total = totalQuestions[0].total;
       const correct = correctAnswers[0].correct;
-      const correctQuestionIds = correctAnswers[0].correct_question_ids 
-        ? correctAnswers[0].correct_question_ids.split(',').map(id => parseInt(id))
+      const correctQuestionIds = correctAnswers[0].correct_question_ids
+        ? correctAnswers[0].correct_question_ids
+            .split(",")
+            .map((id) => parseInt(id))
         : [];
 
       res.json({
@@ -5044,7 +5094,7 @@ app.get(
         allCorrect: total > 0 && correct === total,
         correct: correct,
         total: total,
-        correctQuestionIds: correctQuestionIds
+        correctQuestionIds: correctQuestionIds,
       });
     } catch (err) {
       console.error("Error checking correct answers:", err);
@@ -5053,10 +5103,10 @@ app.get(
         error: "Failed to check correct answers",
       });
     }
-  }
+  },
 );
 
-app.get("/api/room/:roomId/all-users-results", async (req, res) => {
+router.get("/api/room/:roomId/all-users-results", async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -5074,7 +5124,7 @@ app.get("/api/room/:roomId/all-users-results", async (req, res) => {
         success: true,
         message: "No questions found in this room",
         totalQuestions: 0,
-        users: []
+        users: [],
       });
     }
 
@@ -5095,35 +5145,42 @@ app.get("/api/room/:roomId/all-users-results", async (req, res) => {
       WHERE q.room_id = ?
       GROUP BY us.user_id, u.fullname, up.avatarImage
       ORDER BY score_percentage DESC, correct_answers DESC, last_submission ASC`,
-      [totalQuestionsCount, roomId]
+      [totalQuestionsCount, roomId],
     );
 
     // Thêm thông tin về việc hoàn thành tất cả câu hỏi
-    const processedResults = userResults.map(user => ({
+    const processedResults = userResults.map((user) => ({
       ...user,
       allCorrect: user.correct_answers === totalQuestionsCount,
       allAnswered: user.answered_questions === totalQuestionsCount,
-      completion_status: user.answered_questions === totalQuestionsCount ? 
-        (user.correct_answers === totalQuestionsCount ? 'perfect' : 'completed') : 
-        'incomplete'
+      completion_status:
+        user.answered_questions === totalQuestionsCount
+          ? user.correct_answers === totalQuestionsCount
+            ? "perfect"
+            : "completed"
+          : "incomplete",
     }));
 
     // Thống kê tổng quan
     const stats = {
       totalUsers: processedResults.length,
-      perfectScores: processedResults.filter(u => u.allCorrect).length,
-      completedUsers: processedResults.filter(u => u.allAnswered).length,
-      averageScore: processedResults.length > 0 ? 
-        (processedResults.reduce((sum, u) => sum + u.score_percentage, 0) / processedResults.length).toFixed(2) : 0
+      perfectScores: processedResults.filter((u) => u.allCorrect).length,
+      completedUsers: processedResults.filter((u) => u.allAnswered).length,
+      averageScore:
+        processedResults.length > 0
+          ? (
+              processedResults.reduce((sum, u) => sum + u.score_percentage, 0) /
+              processedResults.length
+            ).toFixed(2)
+          : 0,
     };
 
     res.json({
       success: true,
       totalQuestions: totalQuestionsCount,
       stats: stats,
-      users: processedResults
+      users: processedResults,
     });
-
   } catch (err) {
     console.error("Error checking all users results:", err);
     res.status(500).json({
@@ -5133,7 +5190,7 @@ app.get("/api/room/:roomId/all-users-results", async (req, res) => {
   }
 });
 
-app.get("/api/room/:roomId/user-submissions-upload", async (req, res) => {
+router.get("/api/room/:roomId/user-submissions-upload", async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -5162,7 +5219,7 @@ app.get("/api/room/:roomId/user-submissions-upload", async (req, res) => {
   }
 });
 
-app.post("/api/room/:roomId/location", verifyToken, (req, res) => {
+router.post("/api/room/:roomId/location", verifyToken, (req, res) => {
   const { roomId } = req.params;
   const { lat, lng, address, admin_username, city, country } = req.body;
 
@@ -5292,7 +5349,7 @@ app.post("/api/room/:roomId/location", verifyToken, (req, res) => {
                     },
                   },
                 });
-              }
+              },
             );
             return;
           }
@@ -5332,7 +5389,7 @@ app.post("/api/room/:roomId/location", verifyToken, (req, res) => {
 });
 
 // API tìm phòng gần đây với city/country filtering
-app.get("/api/room/search/nearby", (req, res) => {
+router.get("/api/room/search/nearby", (req, res) => {
   const {
     lat,
     lng,
@@ -5466,7 +5523,7 @@ app.get("/api/room/search/nearby", (req, res) => {
 });
 
 // Health check API
-app.get("/health", async (req, res) => {
+router.get("/health", async (req, res) => {
   try {
     // Kiểm tra kết nối database
     pool.query("SELECT 1", (err, result) => {
@@ -5481,64 +5538,73 @@ app.get("/health", async (req, res) => {
 });
 
 // ✅ Endpoint chat với API mới
-app.post('/api/chat', async (req, res) => {
+router.post("/api/chat", async (req, res) => {
   try {
     const { question } = req.body;
-    
+
     if (!question) {
-      return res.status(400).json({ 
-        error: 'Vui lòng nhập câu hỏi' 
+      return res.status(400).json({
+        error: "Vui lòng nhập câu hỏi",
       });
     }
 
     const prompt = buildPrompt(question);
-    
+
     // ✅ Sử dụng API mới với syntax đúng
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash', // Switched to stable model
+      model: "gemini-2.5-flash", // Switched to stable model
       contents: prompt,
     });
 
-    res.json({ 
+    res.json({
       answer: response.text,
-      timestamp: new Date().toISOString() 
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
-    console.error('Chatbot error:', error);
-    res.status(500).json({ 
-      error: 'Xin lỗi, TekuBot đang gặp sự cố. Vui lòng thử lại sau!' 
+    console.error("Chatbot error:", error);
+    res.status(500).json({
+      error: "Xin lỗi, TekuBot đang gặp sự cố. Vui lòng thử lại sau!",
     });
   }
 });
 
 // ✅ API tạo câu hỏi tự động bằng AI
-app.post('/api/ai/generate-questions', async (req, res) => {
+router.post("/api/ai/generate-questions", async (req, res) => {
   try {
     console.log("api key used:", process.env.GEMINI_API_KEY); // Debug log
-    const { topic, numQuestions = 5, difficulty = 'medium', questionTypes = ['text', 'multiple-choice'] } = req.body;
-    
+    const {
+      topic,
+      numQuestions = 5,
+      difficulty = "medium",
+      questionTypes = ["text", "multiple-choice"],
+    } = req.body;
+
     if (!topic) {
-      return res.status(400).json({ 
-        error: 'Vui lòng nhập chủ đề để tạo câu hỏi' 
+      return res.status(400).json({
+        error: "Vui lòng nhập chủ đề để tạo câu hỏi",
       });
     }
 
     // Validate số lượng câu hỏi - Tăng từ 10 lên 25
     const validNumQuestions = Math.min(Math.max(parseInt(numQuestions), 1), 25);
-    
+
     // ✅ Timeout tối ưu hơn: min 30s, với 10 câu = 15s thêm, 25 câu = 37.5s thêm
     const timeoutMs = Math.max(30000, Math.round(validNumQuestions * 1500)); // 1.5s mỗi câu thay vì 15s
     req.setTimeout(timeoutMs);
-    
+
     // console.log(`Generating ${validNumQuestions} questions with ${timeoutMs}ms timeout`);
-    
+
     // Tạo prompt cho AI
-    const prompt = buildQuestionGenerationPrompt(topic, validNumQuestions, difficulty, questionTypes);
-    
+    const prompt = buildQuestionGenerationPrompt(
+      topic,
+      validNumQuestions,
+      difficulty,
+      questionTypes,
+    );
+
     // Gọi AI để tạo câu hỏi
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: "gemini-2.5-flash",
       contents: prompt,
     });
 
@@ -5546,31 +5612,34 @@ app.post('/api/ai/generate-questions', async (req, res) => {
     let generatedQuestions;
     try {
       // Lấy text từ response và parse JSON
-      const responseText = response.text || response.response?.text || '';
-      
+      const responseText = response.text || response.response?.text || "";
+
       // Tìm JSON trong response text
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         generatedQuestions = JSON.parse(jsonMatch[0]);
       } else {
-        throw new Error('Không tìm thấy JSON trong response');
+        throw new Error("Không tìm thấy JSON trong response");
       }
     } catch (parseError) {
-      console.error('Error parsing AI response:', parseError);
-      return res.status(500).json({ 
-        error: 'Lỗi xử lý phản hồi từ AI. Vui lòng thử lại!' 
+      console.error("Error parsing AI response:", parseError);
+      return res.status(500).json({
+        error: "Lỗi xử lý phản hồi từ AI. Vui lòng thử lại!",
       });
     }
 
     // Validate và format câu hỏi
-    const formattedQuestions = formatGeneratedQuestions(generatedQuestions.questions || [], questionTypes);
+    const formattedQuestions = formatGeneratedQuestions(
+      generatedQuestions.questions || [],
+      questionTypes,
+    );
     // ✅ Thêm check nếu không có câu hỏi hợp lệ nào
     if (formattedQuestions.length === 0) {
-      return res.status(500).json({ 
-        error: `AI không tạo được câu hỏi phù hợp với loại: ${questionTypes.join(', ')}. Vui lòng thử lại!` 
+      return res.status(500).json({
+        error: `AI không tạo được câu hỏi phù hợp với loại: ${questionTypes.join(", ")}. Vui lòng thử lại!`,
       });
     }
-    res.json({ 
+    res.json({
       success: true,
       questions: formattedQuestions,
       topic: topic,
@@ -5579,92 +5648,118 @@ app.post('/api/ai/generate-questions', async (req, res) => {
       estimatedTime: `${Math.round(timeoutMs / 1000)}s`,
       actualQuestions: formattedQuestions.length,
       requestedQuestions: validNumQuestions,
-      timestamp: new Date().toISOString() 
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
-    console.error('AI Question Generation error:', error);
-    res.status(500).json({ 
-      error: 'Xin lỗi, có lỗi xảy ra khi tạo câu hỏi. Vui lòng thử lại sau!' 
+    console.error("AI Question Generation error:", error);
+    res.status(500).json({
+      error: "Xin lỗi, có lỗi xảy ra khi tạo câu hỏi. Vui lòng thử lại sau!",
     });
   }
 });
 
 // Hàm tạo prompt cho AI
-function buildQuestionGenerationPrompt(topic, numQuestions, difficulty, questionTypes) {
+function buildQuestionGenerationPrompt(
+  topic,
+  numQuestions,
+  difficulty,
+  questionTypes,
+) {
   const difficultyDesc = {
-    easy: 'dễ (cơ bản)',
-    medium: 'trung bình',
-    hard: 'khó (nâng cao)'
+    easy: "dễ (cơ bản)",
+    medium: "trung bình",
+    hard: "khó (nâng cao)",
   };
 
   const typeDesc = {
-    text: 'Câu hỏi văn bản (người dùng nhập đáp án)',
-    'multiple-choice': 'Câu hỏi trắc nghiệm (4 lựa chọn)',
-    upload: 'Câu hỏi upload ảnh (không cần đáp án cụ thể)'
+    text: "Câu hỏi văn bản (người dùng nhập đáp án)",
+    "multiple-choice": "Câu hỏi trắc nghiệm (4 lựa chọn)",
+    upload: "Câu hỏi upload ảnh (không cần đáp án cụ thể)",
   };
 
-  return `Bạn là một chuyên gia giáo dục. Tạo ${numQuestions} câu hỏi về chủ đề "${topic}" với độ khó ${difficultyDesc[difficulty] || 'trung bình'}.
+  return `Bạn là một chuyên gia giáo dục. Tạo ${numQuestions} câu hỏi về chủ đề "${topic}" với độ khó ${difficultyDesc[difficulty] || "trung bình"}.
 
 **YÊU CẦU QUAN TRỌNG:**
-1. CHỈ tạo câu hỏi với các loại được chỉ định: ${questionTypes.map(type => typeDesc[type]).join(', ')}
-2. KHÔNG được tạo loại câu hỏi khác ngoài: ${questionTypes.join(', ')}
-3. Tất cả ${numQuestions} câu hỏi phải thuộc loại: ${questionTypes.join(' HOẶC ')}
+1. CHỈ tạo câu hỏi với các loại được chỉ định: ${questionTypes.map((type) => typeDesc[type]).join(", ")}
+2. KHÔNG được tạo loại câu hỏi khác ngoài: ${questionTypes.join(", ")}
+3. Tất cả ${numQuestions} câu hỏi phải thuộc loại: ${questionTypes.join(" HOẶC ")}
 4. Câu hỏi phải phù hợp với độ khó ${difficulty}
 
 **CHI TIẾT THEO LOẠI:**
-${questionTypes.includes('multiple-choice') ? `
+${
+  questionTypes.includes("multiple-choice")
+    ? `
 - MULTIPLE-CHOICE: Tạo 4 lựa chọn A,B,C,D với chỉ 1 đáp án đúng
-` : ''}
-${questionTypes.includes('text') ? `
+`
+    : ""
+}
+${
+  questionTypes.includes("text")
+    ? `
 - TEXT: Cung cấp nhiều đáp án đúng có thể (cách nhau bằng |)
-` : ''}
-${questionTypes.includes('upload') ? `
+`
+    : ""
+}
+${
+  questionTypes.includes("upload")
+    ? `
 - UPLOAD: Tạo câu hỏi yêu cầu upload ảnh/file (không cần đáp án cụ thể)
-` : ''}
+`
+    : ""
+}
 
 **Format JSON trả về:**
 {
   "questions": [
     {
       "question_text": "Nội dung câu hỏi",
-      "question_type": "${questionTypes.length === 1 ? questionTypes[0] : 'CHỈ một trong: ' + questionTypes.join('|')}",
+      "question_type": "${questionTypes.length === 1 ? questionTypes[0] : "CHỈ một trong: " + questionTypes.join("|")}",
       "hint": "Gợi ý (tùy chọn)",
-      "explanation": "Giải thích đáp án"${questionTypes.includes('text') ? ',\n      "correct_text_answer": "đáp án 1|đáp án 2|đáp án 3" (chỉ cho type text)' : ''}${questionTypes.includes('multiple-choice') ? ',\n      "options": [\n        {"option_text": "Lựa chọn A", "is_correct": false},\n        {"option_text": "Lựa chọn B", "is_correct": true},\n        {"option_text": "Lựa chọn C", "is_correct": false},\n        {"option_text": "Lựa chọn D", "is_correct": false}\n      ] (chỉ cho type multiple-choice)' : ''}
+      "explanation": "Giải thích đáp án"${questionTypes.includes("text") ? ',\n      "correct_text_answer": "đáp án 1|đáp án 2|đáp án 3" (chỉ cho type text)' : ""}${questionTypes.includes("multiple-choice") ? ',\n      "options": [\n        {"option_text": "Lựa chọn A", "is_correct": false},\n        {"option_text": "Lựa chọn B", "is_correct": true},\n        {"option_text": "Lựa chọn C", "is_correct": false},\n        {"option_text": "Lựa chọn D", "is_correct": false}\n      ] (chỉ cho type multiple-choice)' : ""}
     }
   ]
 }
 
-**LƯU Ý:** Chỉ trả về JSON thuần, không thêm text khác. Tất cả câu hỏi phải thuộc loại: ${questionTypes.join(' hoặc ')}.`;
+**LƯU Ý:** Chỉ trả về JSON thuần, không thêm text khác. Tất cả câu hỏi phải thuộc loại: ${questionTypes.join(" hoặc ")}.`;
 }
 
 // Hàm format và validate câu hỏi được tạo
 function formatGeneratedQuestions(questions) {
-  return questions.map((q, index) => {
-    const formattedQuestion = {
-      tempId: Date.now() + index,
-      question_text: q.question_text || '',
-      question_type: q.question_type || 'text',
-      hint: q.hint || '',
-      explanation: q.explanation || '',
-    };
+  return questions
+    .map((q, index) => {
+      const formattedQuestion = {
+        tempId: Date.now() + index,
+        question_text: q.question_text || "",
+        question_type: q.question_type || "text",
+        hint: q.hint || "",
+        explanation: q.explanation || "",
+      };
 
-    // Xử lý theo loại câu hỏi
-    if (q.question_type === 'text') {
-      formattedQuestion.correct_text_answer = q.correct_text_answer || '';
-    } else if (q.question_type === 'multiple-choice') {
-      formattedQuestion.options = q.options || [
-        { option_text: '', is_correct: false },
-        { option_text: '', is_correct: false },
-        { option_text: '', is_correct: false },
-        { option_text: '', is_correct: false }
-      ];
-    }
-    // upload type không cần thêm gì
+      // Xử lý theo loại câu hỏi
+      if (q.question_type === "text") {
+        formattedQuestion.correct_text_answer = q.correct_text_answer || "";
+      } else if (q.question_type === "multiple-choice") {
+        formattedQuestion.options = q.options || [
+          { option_text: "", is_correct: false },
+          { option_text: "", is_correct: false },
+          { option_text: "", is_correct: false },
+          { option_text: "", is_correct: false },
+        ];
+      }
+      // upload type không cần thêm gì
 
-    return formattedQuestion;
-  }).filter(q => q.question_text.trim() !== ''); // Loại bỏ câu hỏi rỗng
+      return formattedQuestion;
+    })
+    .filter((q) => q.question_text.trim() !== ""); // Loại bỏ câu hỏi rỗng
 }
+
+// Health check at root level (for k8s probes)
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
+// Mount all API routes under /backend prefix
+app.use("/backend", router);
 
 app.listen(PORT, () => {
   console.log("Server is running on port 9999");
