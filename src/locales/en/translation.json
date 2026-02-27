@@ -555,7 +555,13 @@
         "chooseAnswer": "Choose your answer",
         "detailedResults": "Detailed Results",
         "clickToEnlarge": "Click to enlarge",
-        "submittedBefore": "Test has already been submitted."
+        "submittedBefore": "Test has already been submitted.",
+        "timeRemaining": "Time remaining",
+        "timesUp": "Time's up",
+        "copyLink": "Copy link",
+        "linkCopied": "Link copied",
+        "viewLeaderboard": "View leaderboard",
+        "title": "Test"
     },
     "LeaderboardModalTest": {
         "leaderboardTitle": "Leaderboard",

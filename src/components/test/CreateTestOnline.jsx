@@ -36,6 +36,7 @@ const CreateTestOnline = () => {
             const formData = new FormData();
             formData.append('file', docxFile);
             formData.append('title', testTitle.trim());
+            formData.append('time_limit', timeLimit);
             formData.append('username', localStorage.getItem('username') || '');
             const response = await fetch(`${apiUrl}/api/v1/process-docx`, {
                 method: 'POST',

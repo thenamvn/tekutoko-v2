@@ -555,7 +555,13 @@
         "chooseAnswer": "回答を選択",
         "detailedResults": "詳細結果",
         "clickToEnlarge": "クリックして拡大",
-        "submittedBefore": "テストは既に提出されています。"
+        "submittedBefore": "テストは既に提出されています。",
+        "timeRemaining": "残り時間",
+        "timesUp": "時間切れ",
+        "copyLink": "リンクをコピー",
+        "linkCopied": "リンクがコピーされました",
+        "viewLeaderboard": "リーダーボードを表示",
+        "title": "テスト"
     },
     "LeaderboardModalTest": {
         "leaderboardTitle": "リーダーボード",
