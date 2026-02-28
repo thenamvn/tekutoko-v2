@@ -6,7 +6,7 @@ const LineCallback = () => {
     const apiUrl = process.env.REACT_APP_API_URL;
     const { t } = useTranslation();
     const url = window.location.origin;
-    const apiLineLogin = url + '/api' + '/line/callback';
+    const apiLineLogin = apiUrl + '/line/callback';
     const navigate = useNavigate();
     const [error, setError] = useState(null);
 
