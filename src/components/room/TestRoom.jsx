@@ -149,6 +149,8 @@ const TestRoom = () => {
 
   // Check if current user is the creator of the test
   const [isCreator, setIsCreator] = useState(false);
+  // ✅ Đảm bảo chỉ start timer SAU KHI đã biết rõ user có phải creator không
+  const [isCreatorChecked, setIsCreatorChecked] = useState(false);
 
   // Check storage integrity on component mount
   useEffect(() => {
@@ -728,9 +730,13 @@ const TestRoom = () => {
           }
         }
 
+        // ✅ Đánh dấu đã check xong creator dù kết quả là gì
+        setIsCreatorChecked(true);
+
       } catch (err) {
         console.error('Error fetching test data:', err);
         setError(t('test.errorLoading'));
+        setIsCreatorChecked(true); // ✅ Vẫn set để không bị stuck
       } finally {
         setIsLoading(false);
       }
@@ -745,6 +751,7 @@ const TestRoom = () => {
   useEffect(() => {
     console.log('Timer useEffect triggered:', { 
       hasTestData: !!testData, 
+      isCreatorChecked,
       timerStarted, 
       isTestSubmitted, 
       blockedForCheating, 
@@ -752,11 +759,12 @@ const TestRoom = () => {
       timeLimit: testData?.time_limit 
     });
     
-    if (testData && !timerStarted && !isTestSubmitted && !blockedForCheating && !isCreator) {
+    // ✅ Chờ cho đến khi biết rõ user có phải creator không mới start timer
+    if (testData && isCreatorChecked && !timerStarted && !isTestSubmitted && !blockedForCheating && !isCreator) {
       console.log('Calling startTimer()...');
       startTimer();
     }
-  }, [testData, timerStarted, isTestSubmitted, blockedForCheating, isCreator, startTimer]);
+  }, [testData, isCreatorChecked, timerStarted, isTestSubmitted, blockedForCheating, isCreator, startTimer]);
 
   // ...existing helper functions (cleanTextContent, renderTextContent, etc.)...
   const cleanTextContent = (text) => {
