@@ -152,7 +152,7 @@ const DashBoard = () => {
                 deleteEndpoint = `${testApiUrl}/api/v1/test-room/${room.room_id}/${username}`;
             } else {
                 // Delete hosted room
-                deleteEndpoint = `${apiUrl}/user/delete/test/${room.room_id}/${username}`;
+                deleteEndpoint = `${apiUrl}/user/delete/room/${room.room_id}/${username}`;
             }
 
             const response = await fetch(deleteEndpoint, {
