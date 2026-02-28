@@ -7,6 +7,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 const LoginForm = () => {
   const url = window.location.origin;
   const apiUrl = process.env.REACT_APP_API_URL;
+  const client_id = process.env.REACT_APP_LINE_CLIENT_ID;
   const { t } = useTranslation();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -68,7 +69,7 @@ const LoginForm = () => {
   const handleLineLogin = async () => {
     const state = generateRandomString(16);
     localStorage.setItem('lineState', state);
-    const lineLoginUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=2006449227&redirect_uri=${url}/line&state=${state}&scope=profile%20openid%20email`;
+    const lineLoginUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${client_id}&redirect_uri=${url}/line&state=${state}&scope=profile%20openid%20email`;
     // Mở URL đăng nhập Line trong một tab mới
     window.open(lineLoginUrl, '_self');
   };
